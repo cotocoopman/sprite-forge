@@ -39,10 +39,14 @@ El MCP de **pixel art** más completo que encontré: 104 herramientas (canvas,
 dibujo, capas, animación, paletas, tilemaps, export). Claude crea/edita sprites y
 animaciones pixel por lenguaje natural.
 - **Valor:** alto si tu juego es pixel art; cubre el pipeline pixel entero.
-- **Requiere:** Python 3.13, `uv`, Aseprite (de pago, ~US$20, pero open source si
-  lo compilás). Repo: https://github.com/diivi/aseprite-mcp
+- **Requiere:** Python 3.13, `uv`, Aseprite (binario de pago ~US$20 **o compilás
+  el código gratis** — mismas features). Repo: https://github.com/diivi/aseprite-mcp
 - Alternativas activas: `willibrandon/pixel-mcp`, `Vollkorn-Games/aseprite-mcp`,
   `Shexiaoyun/aseprite-mcp` (varios lenguajes).
+- ⚠️ **LibreSprite (fork gratis) NO sirve con estos MCP.** Usa scripting
+  **JavaScript**, no la **API Lua** de Aseprite (v1.2.10+) en la que se basan los
+  MCP. Para el flujo con Claude necesitás **Aseprite** (comprado o compilado
+  gratis). LibreSprite = buen editor manual gratis, pero sin copiloto Claude.
 
 ## 3. ComfyUI MCP — oficial + comunidad
 Genera imágenes con Stable Diffusion **local** desde el chat de Claude (texturas,
@@ -83,6 +87,23 @@ ControlNet (Scribble, Line art, **Pose**, **Depth**, Canny…), IP-Adapter
 - **Por qué importa:** es el puente perfecto Sprite Forge → arte. Le das tu
   silueta como ControlNet y genera el arte siguiendo la pose exacta.
 - Repo: https://github.com/Acly/krita-ai-diffusion · Sitio: https://kritaaidiffusion.com/
+
+### Qué es Stable Diffusion y cómo instalarlo (local, gratis)
+
+**Stable Diffusion** = IA de imagen open source que corre en **tu GPU** (offline):
+texto/imagen guía → imagen. Es otra IA, no Claude. krita-ai-diffusion trae un
+instalador que baja ComfyUI + los modelos por vos.
+
+- **Requisitos:** GPU **6 GB+ VRAM** (ideal NVIDIA/CUDA; AMD ROCm / Intel XPU con
+  fricción), **~30 GB** de disco (SSD). Sin GPU → nube Interstice (tokens pagos).
+- **Pasos (Windows):**
+  1. Instalá **Krita** (krita.org).
+  2. Bajá el ZIP del plugin (releases del repo).
+  3. Krita: **Tools ▸ Scripts ▸ Import Python Plugin from File** → el ZIP → reiniciá.
+  4. **Settings ▸ Dockers ▸** marcá **AI Image Generation**.
+  5. En el panel: **Configure ▸ Local (managed) ▸ Install** → backend (CUDA para
+     NVIDIA) → baja ComfyUI + modelos.
+  6. Prompt, o ControlNet con tu silueta de Sprite Forge como molde.
 
 ---
 
