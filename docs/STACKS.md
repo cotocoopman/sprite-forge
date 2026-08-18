@@ -115,5 +115,24 @@ silueta guía (evita desproporción). No esperes pixel art directo de la silueta
 
 `*` = opcional / según el caso.
 
+---
+
+## Referencia: costo / Claude / output / Godot
+
+| Herramienta | Costo | Open source | ¿MCP? ¿usa tu Claude? | Local/Cloud | Output | Nodo Godot |
+|---|---|---|---|---|---|---|
+| **Sprite Forge** | Gratis | Sí (MIT) | No (app sola) | Local (browser) | PNG sheets/frames, SVG, `manifest.json`, **`.tres`** | **`AnimatedSprite2D`** (asignás el `.tres`) · o `Sprite2D`+`AtlasTexture` |
+| **Krita** | Gratis | Sí (GPL) | No | Local | PNG / sheet | `AnimatedSprite2D` / `Sprite2D` |
+| **krita-ai-diffusion** | Gratis local · opc. nube ~US$11/5k tokens | Sí (GPL-3) | **No** — usa Stable Diffusion, no Claude | Local (GPU ~6 GB) o nube Interstice | PNG (capas Krita) | `AnimatedSprite2D` / `Sprite2D` |
+| **Aseprite** | Binario **US$20** (1 pago) · o compilás gratis · o **LibreSprite** gratis | Aseprite: no (licencia propietaria) · LibreSprite: sí (GPL) | MCP comunidad → **sí, tu Claude** lo maneja | Local (escritorio) | **PNG sheet + JSON** | `AnimatedSprite2D` (addon *Aseprite Wizard*) / `Sprite2D` |
+| **ComfyUI** | Gratis | Sí (GPL-3) | MCP oficial+comunidad → **sí, tu Claude** | Local (GPU) o tu server | PNG | (vía Krita) → `AnimatedSprite2D` / `Sprite2D` |
+| **Blender** | Gratis | Sí (GPL) | **blender-mcp** → **sí, tu Claude** | Local | 3D→2D: PNG sprites · 3D: **glTF/GLB** | 2D: `AnimatedSprite2D` · 3D: escena (`MeshInstance3D` + `AnimationPlayer`) |
+| **Godot MCP** | Gratis | Sí | **Sí, tu Claude** (beta) | Local | — (controla el editor) | — |
+
+**Nota "usa tu Claude":** las IA de imagen (Stable Diffusion / ComfyUI /
+krita-ai-diffusion) **no** usan Claude, son otra IA. Tu cuenta de Claude entra
+solo como cerebro que **maneja apps vía MCP** (Aseprite, ComfyUI, Blender, Godot),
+usando un cliente con MCP (Claude Desktop / Claude Code).
+
 Detalle de cada herramienta y su madurez: [AI-COPILOT.md](./AI-COPILOT.md).
 Pipelines paso a paso: [WORKFLOW.md](./WORKFLOW.md).
