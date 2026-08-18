@@ -1,0 +1,5 @@
+node_modules
+dist
+.yarn
+*.local
+.DS_Store
