@@ -156,6 +156,8 @@ Ver [CONTRIBUTING.md](./CONTRIBUTING.md) si querés colaborar.
 
 - [docs/WORKFLOW.md](./docs/WORKFLOW.md) — cómo combinar Sprite Forge + Krita + IA
   para prototipar assets 2D rápido y sin ser diseñador.
+- [docs/STACKS.md](./docs/STACKS.md) — recetas precisas por estilo (silueta, 2D
+  painterly, pixel art, IA, 3D→2D, 3D) de qué herramienta usar y cómo entra a Godot.
 - [docs/AI-COPILOT.md](./docs/AI-COPILOT.md) — MCPs open source verificados para
   usar Claude como copiloto de assets (Godot, Blender, Aseprite, ComfyUI, Krita).
 
