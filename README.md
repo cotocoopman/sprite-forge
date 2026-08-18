@@ -152,6 +152,13 @@ construye por fases:
 
 Ver [CONTRIBUTING.md](./CONTRIBUTING.md) si querés colaborar.
 
+## Guías
+
+- [docs/WORKFLOW.md](./docs/WORKFLOW.md) — cómo combinar Sprite Forge + Krita + IA
+  para prototipar assets 2D rápido y sin ser diseñador.
+- [docs/AI-COPILOT.md](./docs/AI-COPILOT.md) — MCPs open source verificados para
+  usar Claude como copiloto de assets (Godot, Blender, Aseprite, ComfyUI, Krita).
+
 ---
 
 ## Licencia
