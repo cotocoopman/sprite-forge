@@ -127,7 +127,7 @@ export type Pose = {
 // Personaje por defecto — cabeza + torso + piernas = 35 + 22 + 43 = 100.
 export const DEFAULT_CHARACTER: CharacterDefinition = {
   id: 'default',
-  name: 'Silueta',
+  name: 'Silhouette',
   headDiameter: 35,
   torsoHeight: 22,
   legHeight: 43,

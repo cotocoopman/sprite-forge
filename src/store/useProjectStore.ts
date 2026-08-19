@@ -389,7 +389,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       const id = genId();
       const acc: Accessory = {
         id,
-        name: 'accesorio',
+        name: 'accessory',
         anchor: 'handNear',
         shape: 'capsule',
         offsetAlong: 0,
@@ -453,7 +453,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       const parentId = get().activeBoneId ?? customRig.bones[0]?.id ?? null;
       const newBone: Bone = {
         id,
-        name: 'hueso',
+        name: 'bone',
         parentId,
         attach: 1,
         angle: 0,
@@ -542,7 +542,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
 
     addRigClip: () => {
       const id = genId();
-      const clip: RigClip = { id, name: 'nuevo', frames: 8, fps: 10, loop: true, keyframes: [{ t: 0, pose: {} }, { t: 1, pose: {} }] };
+      const clip: RigClip = { id, name: 'new', frames: 8, fps: 10, loop: true, keyframes: [{ t: 0, pose: {} }, { t: 1, pose: {} }] };
       set((s) => ({
         project: { ...s.project, customRig: { ...s.project.customRig, animations: [...s.project.customRig.animations, clip] } },
         activeRigClipId: id,
@@ -695,7 +695,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       const id = genId();
       const clip: AnimationClip = {
         id,
-        name: 'nuevo',
+        name: 'new',
         frames: 8,
         fps: 10,
         loop: true,

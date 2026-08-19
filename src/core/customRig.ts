@@ -195,18 +195,18 @@ const bone = (b: Bone): Bone => b;
 // Cuadrúpedo simple (perro/caballo) de perfil.
 export const buildQuadrupedRig = (): CustomRig => ({
   id: 'quadruped',
-  name: 'Cuadrúpedo',
+  name: 'Quadruped',
   color: '#000000',
   origin: { x: -22, y: 55 },
   bones: [
-    bone({ id: 'spine', name: 'Lomo', parentId: null, attach: 0, angle: 90, length: 44, width: 16, shape: 'capsule', curve: 0, color: null, z: 1 }),
-    bone({ id: 'neck', name: 'Cuello', parentId: 'spine', attach: 0.92, angle: -55, length: 16, width: 11, shape: 'capsule', curve: 0, color: null, z: 2 }),
-    bone({ id: 'head', name: 'Cabeza', parentId: 'neck', attach: 1, angle: 20, length: 18, width: 18, shape: 'circle', curve: 0, color: null, z: 3 }),
-    bone({ id: 'tail', name: 'Cola', parentId: 'spine', attach: 0.05, angle: -135, length: 18, width: 6, shape: 'capsule', curve: 0.25, color: null, z: 1 }),
-    bone({ id: 'legFF', name: 'Pata del. lejana', parentId: 'spine', attach: 0.86, angle: 90, length: 40, width: 6, shape: 'capsule', curve: 0, color: null, z: 0 }),
-    bone({ id: 'legBF', name: 'Pata tras. lejana', parentId: 'spine', attach: 0.2, angle: 90, length: 40, width: 6, shape: 'capsule', curve: 0, color: null, z: 0 }),
-    bone({ id: 'legFN', name: 'Pata del. cercana', parentId: 'spine', attach: 0.8, angle: 90, length: 40, width: 7, shape: 'capsule', curve: 0, color: null, z: 2 }),
-    bone({ id: 'legBN', name: 'Pata tras. cercana', parentId: 'spine', attach: 0.14, angle: 90, length: 40, width: 7, shape: 'capsule', curve: 0, color: null, z: 2 }),
+    bone({ id: 'spine', name: 'Spine', parentId: null, attach: 0, angle: 90, length: 44, width: 16, shape: 'capsule', curve: 0, color: null, z: 1 }),
+    bone({ id: 'neck', name: 'Neck', parentId: 'spine', attach: 0.92, angle: -55, length: 16, width: 11, shape: 'capsule', curve: 0, color: null, z: 2 }),
+    bone({ id: 'head', name: 'Head', parentId: 'neck', attach: 1, angle: 20, length: 18, width: 18, shape: 'circle', curve: 0, color: null, z: 3 }),
+    bone({ id: 'tail', name: 'Tail', parentId: 'spine', attach: 0.05, angle: -135, length: 18, width: 6, shape: 'capsule', curve: 0.25, color: null, z: 1 }),
+    bone({ id: 'legFF', name: 'Front leg (far)', parentId: 'spine', attach: 0.86, angle: 90, length: 40, width: 6, shape: 'capsule', curve: 0, color: null, z: 0 }),
+    bone({ id: 'legBF', name: 'Back leg (far)', parentId: 'spine', attach: 0.2, angle: 90, length: 40, width: 6, shape: 'capsule', curve: 0, color: null, z: 0 }),
+    bone({ id: 'legFN', name: 'Front leg (near)', parentId: 'spine', attach: 0.8, angle: 90, length: 40, width: 7, shape: 'capsule', curve: 0, color: null, z: 2 }),
+    bone({ id: 'legBN', name: 'Back leg (near)', parentId: 'spine', attach: 0.14, angle: 90, length: 40, width: 7, shape: 'capsule', curve: 0, color: null, z: 2 }),
   ],
   animations: [
     idleClip(),
@@ -228,18 +228,18 @@ export const buildQuadrupedRig = (): CustomRig => ({
 // Ave de perfil: cuerpo ovalado, cabeza, pico, cola, alas y patas.
 export const buildBirdRig = (): CustomRig => ({
   id: 'bird',
-  name: 'Ave',
+  name: 'Bird',
   color: '#000000',
   origin: { x: 4, y: 52 },
   bones: [
-    bone({ id: 'body', name: 'Cuerpo', parentId: null, attach: 0, angle: 70, length: 30, width: 26, shape: 'capsule', curve: 0.15, color: null, z: 1 }),
-    bone({ id: 'tail', name: 'Cola', parentId: 'body', attach: 0.02, angle: -150, length: 20, width: 12, shape: 'capsule', curve: 0, color: null, z: 0 }),
-    bone({ id: 'neck', name: 'Cuello', parentId: 'body', attach: 0.95, angle: -35, length: 8, width: 9, shape: 'capsule', curve: 0, color: null, z: 2 }),
-    bone({ id: 'head', name: 'Cabeza', parentId: 'neck', attach: 1, angle: 10, length: 14, width: 14, shape: 'circle', curve: 0, color: null, z: 3 }),
-    bone({ id: 'beak', name: 'Pico', parentId: 'head', attach: 1, angle: 25, length: 8, width: 4, shape: 'capsule', curve: 0, color: null, z: 3 }),
-    bone({ id: 'wing', name: 'Ala', parentId: 'body', attach: 0.5, angle: -120, length: 20, width: 10, shape: 'capsule', curve: 0.3, color: null, z: 2 }),
-    bone({ id: 'legL', name: 'Pata izq.', parentId: 'body', attach: 0.4, angle: 100, length: 16, width: 3, shape: 'capsule', curve: 0, color: null, z: 0 }),
-    bone({ id: 'legR', name: 'Pata der.', parentId: 'body', attach: 0.5, angle: 100, length: 16, width: 3, shape: 'capsule', curve: 0, color: null, z: 2 }),
+    bone({ id: 'body', name: 'Body', parentId: null, attach: 0, angle: 70, length: 30, width: 26, shape: 'capsule', curve: 0.15, color: null, z: 1 }),
+    bone({ id: 'tail', name: 'Tail', parentId: 'body', attach: 0.02, angle: -150, length: 20, width: 12, shape: 'capsule', curve: 0, color: null, z: 0 }),
+    bone({ id: 'neck', name: 'Neck', parentId: 'body', attach: 0.95, angle: -35, length: 8, width: 9, shape: 'capsule', curve: 0, color: null, z: 2 }),
+    bone({ id: 'head', name: 'Head', parentId: 'neck', attach: 1, angle: 10, length: 14, width: 14, shape: 'circle', curve: 0, color: null, z: 3 }),
+    bone({ id: 'beak', name: 'Beak', parentId: 'head', attach: 1, angle: 25, length: 8, width: 4, shape: 'capsule', curve: 0, color: null, z: 3 }),
+    bone({ id: 'wing', name: 'Wing', parentId: 'body', attach: 0.5, angle: -120, length: 20, width: 10, shape: 'capsule', curve: 0.3, color: null, z: 2 }),
+    bone({ id: 'legL', name: 'Left leg', parentId: 'body', attach: 0.4, angle: 100, length: 16, width: 3, shape: 'capsule', curve: 0, color: null, z: 0 }),
+    bone({ id: 'legR', name: 'Right leg', parentId: 'body', attach: 0.5, angle: 100, length: 16, width: 3, shape: 'capsule', curve: 0, color: null, z: 2 }),
   ],
   animations: [idleClip()],
 });
@@ -251,9 +251,9 @@ export const buildSlimeRig = (): CustomRig => ({
   color: '#000000',
   origin: { x: 0, y: 82 },
   bones: [
-    bone({ id: 'body', name: 'Cuerpo', parentId: null, attach: 0, angle: 0, length: 4, width: 60, shape: 'circle', curve: 0, color: null, z: 0 }),
-    bone({ id: 'eyeL', name: 'Ojo izq.', parentId: 'body', attach: 0, angle: -30, length: 22, width: 8, shape: 'circle', curve: 0, color: '#ffffff', z: 1 }),
-    bone({ id: 'eyeR', name: 'Ojo der.', parentId: 'body', attach: 0, angle: 30, length: 22, width: 8, shape: 'circle', curve: 0, color: '#ffffff', z: 1 }),
+    bone({ id: 'body', name: 'Body', parentId: null, attach: 0, angle: 0, length: 4, width: 60, shape: 'circle', curve: 0, color: null, z: 0 }),
+    bone({ id: 'eyeL', name: 'Left eye', parentId: 'body', attach: 0, angle: -30, length: 22, width: 8, shape: 'circle', curve: 0, color: '#ffffff', z: 1 }),
+    bone({ id: 'eyeR', name: 'Right eye', parentId: 'body', attach: 0, angle: 30, length: 22, width: 8, shape: 'circle', curve: 0, color: '#ffffff', z: 1 }),
   ],
   animations: [idleClip()],
 });
@@ -261,20 +261,20 @@ export const buildSlimeRig = (): CustomRig => ({
 // Vacío: un solo hueso para empezar de cero.
 export const buildBlankRig = (): CustomRig => ({
   id: 'blank',
-  name: 'Nuevo rig',
+  name: 'New rig',
   color: '#000000',
   origin: { x: 0, y: 90 },
   bones: [
-    bone({ id: 'root', name: 'raíz', parentId: null, attach: 0, angle: 0, length: 40, width: 8, shape: 'capsule', curve: 0, color: null, z: 0 }),
+    bone({ id: 'root', name: 'root', parentId: null, attach: 0, angle: 0, length: 40, width: 8, shape: 'capsule', curve: 0, color: null, z: 0 }),
   ],
   animations: [idleClip()],
 });
 
 export const RIG_PRESETS: readonly { readonly id: string; readonly name: string; readonly build: () => CustomRig }[] = [
-  { id: 'quadruped', name: 'Cuadrúpedo', build: buildQuadrupedRig },
-  { id: 'bird', name: 'Ave', build: buildBirdRig },
+  { id: 'quadruped', name: 'Quadruped', build: buildQuadrupedRig },
+  { id: 'bird', name: 'Bird', build: buildBirdRig },
   { id: 'slime', name: 'Slime', build: buildSlimeRig },
-  { id: 'blank', name: 'Vacío', build: buildBlankRig },
+  { id: 'blank', name: 'Blank', build: buildBlankRig },
 ];
 
 // Rig por defecto del proyecto.
