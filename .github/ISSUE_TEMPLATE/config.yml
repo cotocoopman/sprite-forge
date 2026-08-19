@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 💬 Question / idea (Discussions)
+    url: https://github.com/cotocoopman/sprite-forge/discussions
+    about: For open-ended questions and ideas, prefer Discussions.
+  - name: ▶ Live demo
+    url: https://sprite-forge-sigma.vercel.app/
+    about: Try Sprite Forge in your browser.

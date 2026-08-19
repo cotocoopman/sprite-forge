@@ -19,6 +19,7 @@ import UploadIcon from '@mui/icons-material/Upload';
 import SaveAltIcon from '@mui/icons-material/SaveAlt';
 import UndoIcon from '@mui/icons-material/Undo';
 import RedoIcon from '@mui/icons-material/Redo';
+import KeyboardIcon from '@mui/icons-material/Keyboard';
 import TranslateIcon from '@mui/icons-material/Translate';
 import { useProjectStore } from '@store/useProjectStore';
 import { useT } from '@/i18n';
@@ -35,6 +36,7 @@ import { PreviewCanvas } from '@components/PreviewCanvas';
 import { DirectionDial } from '@components/DirectionDial';
 import { ReferenceControls } from '@components/ReferenceControls';
 import { PlaybackControls } from '@components/PlaybackControls';
+import { KeyboardShortcuts } from '@components/KeyboardShortcuts';
 import { RigEditor } from '@components/RigEditor';
 import { CustomPreview } from '@components/CustomPreview';
 import { RigAnimationPanel } from '@components/RigAnimationPanel';
@@ -111,32 +113,52 @@ export const App = (): ReactElement => {
   const redo = useProjectStore((s) => s.redo);
 
   const [exportOpen, setExportOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   usePlayback();
 
-  // Atajos de teclado: Ctrl/Cmd+Z = undo, Ctrl+Y / Ctrl+Shift+Z = redo.
+  // Atajos: Ctrl+Z/Y = undo/redo · Espacio = play/pausa · ←/→ = frame ant./sig.
   useEffect(() => {
     // Solo tipos de texto real cuentan como "editable" — un <input type="range">
     // (el thumb de un Slider MUI) NO, para que Ctrl+Z aplique al historial global.
     const TEXT_INPUT_TYPES = new Set(['text', 'number', 'search', 'email', 'url', 'password', 'tel']);
     const onKeyDown = (e: KeyboardEvent): void => {
-      if (!e.ctrlKey && !e.metaKey) return;
       const target = e.target as HTMLElement | null;
       const editable =
         !!target &&
         (target.tagName === 'TEXTAREA' ||
           target.isContentEditable ||
           (target.tagName === 'INPUT' && TEXT_INPUT_TYPES.has((target as HTMLInputElement).type)));
-      const key = e.key.toLowerCase();
-      if (key === 'z' && !e.shiftKey) {
-        if (editable) return; // dejá el undo nativo del campo de texto
+
+      if (e.ctrlKey || e.metaKey) {
+        const key = e.key.toLowerCase();
+        if (key === 'z' && !e.shiftKey) {
+          if (editable) return; // dejá el undo nativo del campo de texto
+          e.preventDefault();
+          useProjectStore.getState().undo();
+        } else if (key === 'y' || (key === 'z' && e.shiftKey)) {
+          if (editable) return;
+          e.preventDefault();
+          useProjectStore.getState().redo();
+        }
+        return;
+      }
+
+      // Reproducción (sin modificadores) — ignorar si hay un control con foco.
+      const onControl =
+        editable ||
+        (!!target && (target.tagName === 'BUTTON' || target.tagName === 'SELECT' || !!target.closest('[role="slider"]')));
+      if (onControl) return;
+      if (e.key === ' ') {
         e.preventDefault();
-        useProjectStore.getState().undo();
-      } else if (key === 'y' || (key === 'z' && e.shiftKey)) {
-        if (editable) return;
+        useProjectStore.getState().togglePlay();
+      } else if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        useProjectStore.getState().redo();
+        useProjectStore.getState().prevFrame();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        useProjectStore.getState().nextFrame();
       }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -202,19 +224,24 @@ export const App = (): ReactElement => {
             onChange={handleImportFile}
           />
           <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-            <Tooltip title="Deshacer (Ctrl+Z)">
+            <Tooltip title={t('Deshacer (Ctrl+Z)')}>
               <span>
                 <IconButton size="small" onClick={undo} disabled={!canUndo}>
                   <UndoIcon fontSize="small" />
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title="Rehacer (Ctrl+Y)">
+            <Tooltip title={t('Rehacer (Ctrl+Y)')}>
               <span>
                 <IconButton size="small" onClick={redo} disabled={!canRedo}>
                   <RedoIcon fontSize="small" />
                 </IconButton>
               </span>
+            </Tooltip>
+            <Tooltip title={t('Atajos de teclado')}>
+              <IconButton size="small" onClick={() => setShortcutsOpen(true)}>
+                <KeyboardIcon fontSize="small" />
+              </IconButton>
             </Tooltip>
             <Button startIcon={<UploadIcon />} onClick={() => fileInputRef.current?.click()}>
               {t('Importar')}
@@ -292,6 +319,7 @@ export const App = (): ReactElement => {
       )}
 
       <ExportDialog open={exportOpen} onClose={() => setExportOpen(false)} />
+      <KeyboardShortcuts open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
 
       <Snackbar
         open={notification.open}

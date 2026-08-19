@@ -3,11 +3,13 @@ import Stack from '@mui/material/Stack';
 import IconButton from '@mui/material/IconButton';
 import Slider from '@mui/material/Slider';
 import Typography from '@mui/material/Typography';
+import Tooltip from '@mui/material/Tooltip';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import { useProjectStore } from '@store/useProjectStore';
+import { useT } from '@/i18n';
 import { useActiveClip } from '@/hooks/useActiveClip';
 import { useActiveRigClip } from '@/hooks/useActiveRigClip';
 
@@ -22,19 +24,26 @@ export const PlaybackControls = (): ReactElement => {
   const humanoidClip = useActiveClip();
   const rigClip = useActiveRigClip();
 
+  const t = useT();
   const frames = (mode === 'custom' ? rigClip?.frames : humanoidClip?.frames) ?? 1;
 
   return (
     <Stack direction="row" spacing={1.5} alignItems="center">
-      <IconButton onClick={prevFrame} size="small">
-        <SkipPreviousIcon />
-      </IconButton>
-      <IconButton onClick={togglePlay} color="primary">
-        {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-      </IconButton>
-      <IconButton onClick={nextFrame} size="small">
-        <SkipNextIcon />
-      </IconButton>
+      <Tooltip title={t('Frame anterior (←)')}>
+        <IconButton onClick={prevFrame} size="small">
+          <SkipPreviousIcon />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title={t('Reproducir / pausar (Espacio)')}>
+        <IconButton onClick={togglePlay} color="primary">
+          {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+        </IconButton>
+      </Tooltip>
+      <Tooltip title={t('Frame siguiente (→)')}>
+        <IconButton onClick={nextFrame} size="small">
+          <SkipNextIcon />
+        </IconButton>
+      </Tooltip>
       <Slider
         size="small"
         value={currentFrame}

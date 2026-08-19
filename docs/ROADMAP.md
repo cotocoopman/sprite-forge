@@ -72,3 +72,12 @@ Project status — what's done and what's pending. Updated by hand.
 - Atlas packing (all animations in one sheet + JSON).
 - GIF/APNG preview export.
 - Color variants (skins) exported at once.
+- Randomize character (one click → random proportions/colors).
+
+## Community / infra (deferred — revisit when there's traffic)
+
+- **GitHub Actions CI** (typecheck + test on PR). Held off intentionally until the
+  repo sees contributors — no point automating gates with zero traffic yet.
+- **Example Godot project** — a tiny `.zip`/repo importing a Sprite Forge export so
+  people can open-and-run it. See [GODOT.md](./GODOT.md).
+- **Demo video / GIF walkthrough** — short screen recording for the README + socials.

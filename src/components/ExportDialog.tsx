@@ -13,6 +13,7 @@ import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 import Divider from '@mui/material/Divider';
 import Box from '@mui/material/Box';
+import Link from '@mui/material/Link';
 import { useProjectStore } from '@store/useProjectStore';
 import { NumberInput } from '@components/NumberInput';
 import { useT } from '@/i18n';
@@ -150,6 +151,19 @@ export const ExportDialog = ({ open, onClose }: Props): ReactElement => {
               label={t('Recurso Godot 4 (SpriteFrames .tres, usa los sheets)')}
             />
           </Stack>
+
+          {options.godot && (
+            <Typography variant="caption" color="text.secondary">
+              {t('¿Cómo lo uso en Godot?')}{' '}
+              <Link
+                href="https://github.com/cotocoopman/sprite-forge/blob/main/docs/GODOT.md"
+                target="_blank"
+                rel="noopener"
+              >
+                {t('Ver guía paso a paso')}
+              </Link>
+            </Typography>
+          )}
 
           <Typography variant="caption" color="text.secondary">
             {render.cellSize}×{render.cellSize}px · {project.animations.length} {t('animaciones')}

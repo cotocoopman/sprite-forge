@@ -164,6 +164,8 @@ Vitest · jszip. No `any`, arrow functions only. `nodeLinker: node-modules`.
 
 ## Guides & status
 
+- [docs/GODOT.md](./docs/GODOT.md) — step-by-step: use the exported `.tres` / sheets
+  in Godot 4 (AnimatedSprite2D), plus using frames as a base in Krita / AI.
 - [docs/ROADMAP.md](./docs/ROADMAP.md) — status, done, pending and known limits.
 - [docs/WORKFLOW.md](./docs/WORKFLOW.md) — combining Sprite Forge + Krita + AI to
   prototype 2D assets fast without being an artist.
