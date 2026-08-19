@@ -81,6 +81,15 @@ describe('validateProject', () => {
     }
   });
 
+  it('migra torsoWidthRatio viejo a torsoWidth absoluto (ratio × cabeza)', () => {
+    const project = buildDefaultProject();
+    const char = { ...project.character, headDiameter: 40, torsoWidthRatio: 0.5 } as Record<string, unknown>;
+    delete char.torsoWidth;
+    const result = validateProject({ ...project, character: char });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.project.character.torsoWidth).toBeCloseTo(20, 6); // 40 * 0.5
+  });
+
   it('migra el two-tone viejo (headColor) a parts.head', () => {
     const project = buildDefaultProject();
     const legacy = {

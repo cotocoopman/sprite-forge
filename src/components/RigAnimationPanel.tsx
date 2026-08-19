@@ -40,11 +40,11 @@ const BoneAngleSlider = ({ boneId, name }: { boneId: string; name: string }): Re
   const setBoneAngleOffset = useProjectStore((s) => s.setBoneAngleOffset);
   return (
     <Box>
-      <Stack direction="row" justifyContent="space-between">
-        <Typography variant="caption" color="text.secondary">{name}</Typography>
-        <Typography variant="caption">{value.toFixed(0)}°</Typography>
+      <Typography variant="caption" color="text.secondary">{name}</Typography>
+      <Stack direction="row" spacing={1} alignItems="center">
+        <Slider size="small" value={value} min={-180} max={180} step={1} onChange={(_, v) => setBoneAngleOffset(boneId, v as number)} sx={{ flex: 1 }} />
+        <NumberInput value={value} step={1} onChange={(v) => setBoneAngleOffset(boneId, v)} inputStyle={{ width: 52, padding: '2px 6px' }} />
       </Stack>
-      <Slider size="small" value={value} min={-180} max={180} step={1} onChange={(_, v) => setBoneAngleOffset(boneId, v as number)} />
     </Box>
   );
 };

@@ -21,10 +21,10 @@ export const PART_NAMES: readonly PartName[] = [
 export const PART_LABELS: Record<PartName, string> = {
   head: 'Cabeza',
   torso: 'Torso',
-  armNear: 'Brazo cercano',
-  armFar: 'Brazo lejano',
-  legNear: 'Pierna cercana',
-  legFar: 'Pierna lejana',
+  armNear: 'Brazo derecho',
+  armFar: 'Brazo izquierdo',
+  legNear: 'Pierna derecha',
+  legFar: 'Pierna izquierda',
 };
 
 export type Capsule = {
@@ -66,12 +66,12 @@ export const ANCHOR_LABELS: Record<AnchorName, string> = {
   head: 'Cabeza',
   torsoTop: 'Cuello / torso',
   hip: 'Cadera',
-  shoulderNear: 'Hombro cercano',
-  shoulderFar: 'Hombro lejano',
-  handNear: 'Mano cercana',
-  handFar: 'Mano lejana',
-  footNear: 'Pie cercano',
-  footFar: 'Pie lejano',
+  shoulderNear: 'Hombro derecho',
+  shoulderFar: 'Hombro izquierdo',
+  handNear: 'Mano derecha',
+  handFar: 'Mano izquierda',
+  footNear: 'Pie derecho',
+  footFar: 'Pie izquierdo',
 };
 
 export type Skeleton = {
@@ -88,7 +88,7 @@ export type CharacterDefinition = {
   readonly headDiameter: number;
   readonly torsoHeight: number;
   readonly legHeight: number;
-  readonly torsoWidthRatio: number;
+  readonly torsoWidth: number;        // ancho del torso (absoluto, independiente de la cabeza)
   readonly neckLength: number;        // separación cabeza ↔ cuerpo (0 = pegada)
   readonly shoulderDistance: number;
   readonly armSpacing: number;        // separación lateral de los brazos (0 = pegados)
@@ -131,7 +131,7 @@ export const DEFAULT_CHARACTER: CharacterDefinition = {
   headDiameter: 35,
   torsoHeight: 22,
   legHeight: 43,
-  torsoWidthRatio: 0.55,
+  torsoWidth: 19.25,
   neckLength: 0,
   shoulderDistance: 19,
   armSpacing: 0,
@@ -211,7 +211,7 @@ export const buildSkeleton = (char: CharacterDefinition, pose: Pose, facing = 0)
   const headRadius = char.headDiameter / 2;
   // neckLength separa la cabeza del cuerpo (?? 0 protege proyectos legacy).
   const headDistance = hipY - headRadius + (char.neckLength ?? 0);
-  const torsoWidth = char.headDiameter * char.torsoWidthRatio;
+  const torsoWidth = char.torsoWidth;
   const torsoDrawLength = char.torsoHeight + 5;
   const shoulderOffset = torsoWidth / 2 - 0.8;
   const bodyDepth = torsoWidth * 0.5; // separación frente↔atrás de miembros cercano/lejano

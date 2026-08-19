@@ -34,7 +34,6 @@ const CHARACTER_NUM_KEYS: readonly (keyof CharacterDefinition)[] = [
   'headDiameter',
   'torsoHeight',
   'legHeight',
-  'torsoWidthRatio',
   'shoulderDistance',
   'armWidth',
   'armUpperLength',
@@ -60,8 +59,16 @@ const validateCharacter = (v: unknown): CharacterDefinition | string => {
   const legacyLeg = isNum(v.legCurve) ? v.legCurve : 0;
   const target = (t: unknown): 'both' | 'near' | 'far' =>
     t === 'near' || t === 'far' ? t : 'both';
+  // torsoWidth: si falta, migra del viejo torsoWidthRatio (ancho = ratio × cabeza)
+  // para que el personaje guardado se vea igual; si no, default.
+  const torsoWidth = isNum(v.torsoWidth)
+    ? v.torsoWidth
+    : isNum(v.torsoWidthRatio) && isNum(v.headDiameter)
+      ? v.headDiameter * v.torsoWidthRatio
+      : 19.25;
   return {
     ...(v as unknown as CharacterDefinition),
+    torsoWidth,
     neckLength: isNum(v.neckLength) ? v.neckLength : 0,
     armSpacing: isNum(v.armSpacing) ? v.armSpacing : 0,
     armCurveUpper: isNum(v.armCurveUpper) ? v.armCurveUpper : legacyArm,

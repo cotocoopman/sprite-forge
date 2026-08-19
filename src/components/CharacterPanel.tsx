@@ -44,7 +44,7 @@ const GROUPS: readonly FieldGroup[] = [
     title: 'Torso',
     fields: [
       { key: 'torsoHeight', label: 'Alto torso', min: 5, max: 50, step: 0.1 },
-      { key: 'torsoWidthRatio', label: 'Ratio ancho torso', min: 0.2, max: 1.2, step: 0.01 },
+      { key: 'torsoWidth', label: 'Ancho torso', min: 5, max: 50, step: 0.1 },
     ],
   },
   {
@@ -126,8 +126,8 @@ const CurveTargetToggle = ({ kind }: { kind: CurveKind }): ReactElement => {
         onChange={(_, v) => v && apply(v as CurveTarget)}
       >
         <ToggleButton value="both">Ambos</ToggleButton>
-        <ToggleButton value="near">Cercano</ToggleButton>
-        <ToggleButton value="far">Lejano</ToggleButton>
+        <ToggleButton value="near">Derecha</ToggleButton>
+        <ToggleButton value="far">Izquierda</ToggleButton>
       </ToggleButtonGroup>
     </Box>
   );

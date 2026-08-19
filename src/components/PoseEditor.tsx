@@ -15,6 +15,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ContentPasteIcon from '@mui/icons-material/ContentPaste';
 import { useProjectStore } from '@store/useProjectStore';
 import { useActiveClip } from '@/hooks/useActiveClip';
+import { NumberInput } from '@components/NumberInput';
 import type { Pose } from '@core/rig';
 import type { EasingKind } from '@core/poses';
 
@@ -44,28 +45,28 @@ const GROUPS: readonly Group[] = [
     ],
   },
   {
-    title: 'Brazo cercano',
+    title: 'Brazo derecho',
     joints: [
       { key: 'armNearUpper', label: 'Superior', min: -180, max: 180 },
       { key: 'armNearLower', label: 'Antebrazo', min: -180, max: 180 },
     ],
   },
   {
-    title: 'Brazo lejano',
+    title: 'Brazo izquierdo',
     joints: [
       { key: 'armFarUpper', label: 'Superior', min: -180, max: 180 },
       { key: 'armFarLower', label: 'Antebrazo', min: -180, max: 180 },
     ],
   },
   {
-    title: 'Pierna cercana',
+    title: 'Pierna derecha',
     joints: [
       { key: 'legNearUpper', label: 'Muslo', min: -180, max: 180 },
       { key: 'legNearLower', label: 'Pantorrilla', min: -180, max: 180 },
     ],
   },
   {
-    title: 'Pierna lejana',
+    title: 'Pierna izquierda',
     joints: [
       { key: 'legFarUpper', label: 'Muslo', min: -180, max: 180 },
       { key: 'legFarLower', label: 'Pantorrilla', min: -180, max: 180 },
@@ -83,20 +84,21 @@ const JointSlider = ({ joint }: { joint: Joint }): ReactElement => {
 
   return (
     <Box>
-      <Stack direction="row" justifyContent="space-between">
-        <Typography variant="caption" color="text.secondary">
-          {joint.label}
-        </Typography>
-        <Typography variant="caption">{value.toFixed(0)}</Typography>
+      <Typography variant="caption" color="text.secondary">
+        {joint.label}
+      </Typography>
+      <Stack direction="row" spacing={1} alignItems="center">
+        <Slider
+          size="small"
+          value={value}
+          min={joint.min}
+          max={joint.max}
+          step={1}
+          onChange={(_, v) => setPoseField(joint.key, v as number)}
+          sx={{ flex: 1 }}
+        />
+        <NumberInput value={value} step={1} onChange={(v) => setPoseField(joint.key, v)} inputStyle={{ width: 52, padding: '2px 6px' }} />
       </Stack>
-      <Slider
-        size="small"
-        value={value}
-        min={joint.min}
-        max={joint.max}
-        step={1}
-        onChange={(_, v) => setPoseField(joint.key, v as number)}
-      />
     </Box>
   );
 };
