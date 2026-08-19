@@ -83,7 +83,7 @@ export const ExportDialog = ({ open, onClose }: Props): ReactElement => {
       const onProg = (done: number, total: number): void => setProgress(Math.round((done / total) * 100));
       const blob =
         mode === 'custom'
-          ? await buildRigZip(project.customRig, render, options, onProg)
+          ? await buildRigZip(project.customRig, render, options, onProg, project.effects)
           : await buildZip(project, options, onProg);
       const name = mode === 'custom' ? project.customRig.name : project.character.name;
       const filename = `${name.trim() || 'sprite'}.zip`;

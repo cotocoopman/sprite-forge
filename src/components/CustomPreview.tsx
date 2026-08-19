@@ -15,6 +15,7 @@ const CHECKER = 'repeating-conic-gradient(#3a3f4b 0% 25%, #2a2e38 0% 50%) 50% / 
 export const CustomPreview = (): ReactElement => {
   const rig = useProjectStore((s) => s.project.customRig);
   const render = useProjectStore((s) => s.project.render);
+  const effects = useProjectStore((s) => s.project.effects);
   const currentFrame = useProjectStore((s) => s.currentFrame);
   const clip = useActiveRigClip();
 
@@ -27,7 +28,7 @@ export const CustomPreview = (): ReactElement => {
 
   const poses = useMemo(() => (clip ? sampleRigClip(clip) : []), [clip]);
   const frame = poses.length > 0 ? Math.max(0, Math.min(poses.length - 1, currentFrame)) : 0;
-  const inner = renderCustomInner(rig, render, poses[frame]);
+  const inner = renderCustomInner(rig, render, poses[frame], effects);
 
   return (
     <Stack spacing={1} sx={{ height: '100%' }}>

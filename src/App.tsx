@@ -40,6 +40,7 @@ import { KeyboardShortcuts } from '@components/KeyboardShortcuts';
 import { RigEditor } from '@components/RigEditor';
 import { TemplateGallery } from '@components/TemplateGallery';
 import { AnimationIO } from '@components/AnimationIO';
+import { RigRotationControl } from '@components/RigRotationControl';
 import { CustomPreview } from '@components/CustomPreview';
 import { RigAnimationPanel } from '@components/RigAnimationPanel';
 import { RigFrameStrip } from '@components/RigFrameStrip';
@@ -266,6 +267,10 @@ export const App = (): ReactElement => {
               <TemplateGallery />
               <Divider />
               <RigEditor />
+              <Divider />
+              <RigRotationControl />
+              <Divider />
+              <EffectsPanel />
             </Stack>
           </Paper>
           {/* Centro — Preview animado del rig */}

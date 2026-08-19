@@ -369,44 +369,124 @@ export const renderSheet = (
 };
 
 // --- Rig personalizado (huesos genéricos) ---
-const customShapesMarkup = (bones: readonly RBone[], tf: PxTransform, offsetX: number): string =>
+const customShapesMarkup = (
+  bones: readonly RBone[],
+  tf: PxTransform,
+  offsetX: number,
+  forceColor?: string,
+): string =>
   bones
     .map((b) => {
+      const col = forceColor ?? b.color;
       if (b.kind === 'circle') {
         const c = toPx(b.cx, b.cy, tf);
-        return `<circle cx="${fmt(c.px + offsetX)}" cy="${fmt(c.py)}" r="${fmt(b.r * tf.scale)}" fill="${b.color}" stroke="${b.color}" />`;
+        return `<circle cx="${fmt(c.px + offsetX)}" cy="${fmt(c.py)}" r="${fmt(b.r * tf.scale)}" fill="${col}" stroke="${col}" />`;
       }
       if (b.kind === 'rect') {
         const pts = b.pts.map((p) => { const q = toPx(p.x, p.y, tf); return `${fmt(q.px + offsetX)},${fmt(q.py)}`; }).join(' ');
-        return `<polygon points="${pts}" fill="${b.color}" stroke="${b.color}" />`;
+        return `<polygon points="${pts}" fill="${col}" stroke="${col}" />`;
       }
       const a = toPx(b.from.x, b.from.y, tf);
       const t = toPx(b.to.x, b.to.y, tf);
       const w = fmt(b.width * tf.scale);
       if (b.ctrl) {
         const c = toPx(b.ctrl.x, b.ctrl.y, tf);
-        return `<path d="M ${fmt(a.px + offsetX)} ${fmt(a.py)} Q ${fmt(c.px + offsetX)} ${fmt(c.py)} ${fmt(t.px + offsetX)} ${fmt(t.py)}" stroke="${b.color}" stroke-width="${w}" stroke-linecap="round" fill="none" />`;
+        return `<path d="M ${fmt(a.px + offsetX)} ${fmt(a.py)} Q ${fmt(c.px + offsetX)} ${fmt(c.py)} ${fmt(t.px + offsetX)} ${fmt(t.py)}" stroke="${col}" stroke-width="${w}" stroke-linecap="round" fill="none" />`;
       }
-      return `<path d="M ${fmt(a.px + offsetX)} ${fmt(a.py)} L ${fmt(t.px + offsetX)} ${fmt(t.py)}" stroke="${b.color}" stroke-width="${w}" stroke-linecap="round" fill="none" />`;
+      return `<path d="M ${fmt(a.px + offsetX)} ${fmt(a.py)} L ${fmt(t.px + offsetX)} ${fmt(t.py)}" stroke="${col}" stroke-width="${w}" stroke-linecap="round" fill="none" />`;
     })
     .join('');
 
-export const renderCustomInner = (rig: CustomRig, render: RenderConfig, pose?: RigPose): string => {
-  const tf = makeTransform(render);
-  const bones = buildCustomSkeleton(rig, pose);
-  return `<g>${customShapesMarkup(bones, tf, 0)}</g>`;
+// Capas de efecto (sombra/brillo/contorno) para el rig, usando una versión
+// monocroma de los huesos como fuente del filtro.
+const customEffectLayers = (
+  monoShapes: string,
+  effects: EffectsConfig | undefined,
+  pcx: number,
+  groundY: number,
+  scale: number,
+): string[] => {
+  if (!effects || !monoShapes) return [];
+  const layers: string[] = [];
+  const { shadow, glow, outline } = effects;
+  if (shadow?.enabled) {
+    const blur = shadow.blur > 0 ? ' filter="url(#sf-shadow)"' : '';
+    let transform: string;
+    if (shadow.mode === 'ground') {
+      const flat = Math.max(0.02, Math.min(1, shadow.flatten));
+      const offX = fmt(shadow.length * scale);
+      const skew = fmt(Math.max(-80, Math.min(80, shadow.direction)));
+      transform =
+        `translate(${offX} 0) translate(${fmt(pcx)} ${fmt(groundY)}) ` +
+        `scale(1 ${fmt(flat)}) skewX(${skew}) translate(${fmt(-pcx)} ${fmt(-groundY)})`;
+    } else {
+      const dx = fmt(Math.sin((shadow.direction * Math.PI) / 180) * shadow.length * scale);
+      const dy = fmt(Math.cos((shadow.direction * Math.PI) / 180) * shadow.length * scale);
+      transform = `translate(${dx} ${dy})`;
+    }
+    layers.push(
+      `<g transform="${transform}" fill="${shadow.color}" stroke="${shadow.color}" opacity="${fmt(shadow.opacity)}"${blur}>${monoShapes}</g>`,
+    );
+  }
+  if (glow?.enabled) {
+    layers.push(`<g fill="#000" stroke="#000" filter="url(#sf-glow)">${monoShapes}</g>`);
+  }
+  if (outline?.enabled && outline.width > 0) {
+    layers.push(`<g fill="#000" stroke="#000" filter="url(#sf-outline)">${monoShapes}</g>`);
+  }
+  return layers;
 };
 
-export const renderCustomSvg = (rig: CustomRig, render: RenderConfig, pose?: RigPose): string =>
-  `<svg xmlns="http://www.w3.org/2000/svg" width="${render.cellSize}" height="${render.cellSize}" viewBox="0 0 ${render.cellSize} ${render.cellSize}">${renderCustomInner(rig, render, pose)}</svg>`;
+// Una celda del rig (efectos + huesos), con giro opcional en el plano.
+const customCellGroup = (
+  bones: readonly RBone[],
+  tf: PxTransform,
+  offsetX: number,
+  cellSize: number,
+  effects: EffectsConfig | undefined,
+  rotation: number,
+): string => {
+  const pcx = offsetX + cellSize / 2;
+  const mono = customShapesMarkup(bones, tf, offsetX, '#000');
+  const layers = customEffectLayers(mono, effects, pcx, tf.groundY, tf.scale);
+  layers.push(`<g>${customShapesMarkup(bones, tf, offsetX)}</g>`);
+  const rot = rotation ? ` transform="rotate(${fmt(rotation)} ${fmt(pcx)} ${fmt(cellSize / 2)})"` : '';
+  return `<g${rot}>${layers.join('')}</g>`;
+};
+
+export const renderCustomInner = (
+  rig: CustomRig,
+  render: RenderConfig,
+  pose?: RigPose,
+  effects?: EffectsConfig,
+): string => {
+  const tf = makeTransform(render);
+  const bones = buildCustomSkeleton(rig, pose);
+  const defs = effectDefs(effects, tf.scale);
+  return `${defs}${customCellGroup(bones, tf, 0, render.cellSize, effects, render.rotation)}`;
+};
+
+export const renderCustomSvg = (
+  rig: CustomRig,
+  render: RenderConfig,
+  pose?: RigPose,
+  effects?: EffectsConfig,
+): string =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${render.cellSize}" height="${render.cellSize}" viewBox="0 0 ${render.cellSize} ${render.cellSize}">${renderCustomInner(rig, render, pose, effects)}</svg>`;
 
 // Sprite sheet horizontal del rig animado: una celda por pose.
-export const renderCustomSheet = (rig: CustomRig, poses: readonly RigPose[], render: RenderConfig): string => {
+export const renderCustomSheet = (
+  rig: CustomRig,
+  poses: readonly RigPose[],
+  render: RenderConfig,
+  effects?: EffectsConfig,
+): string => {
   const tf = makeTransform(render);
   const cs = render.cellSize;
   const width = cs * Math.max(1, poses.length);
+  const defs = effectDefs(effects, tf.scale);
   const groups = poses
-    .map((pose, i) => `<g>${customShapesMarkup(buildCustomSkeleton(rig, pose), tf, i * cs)}</g>`)
+    .map((pose, i) => customCellGroup(buildCustomSkeleton(rig, pose), tf, i * cs, cs, effects, render.rotation))
     .join('');
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${cs}" viewBox="0 0 ${width} ${cs}">${groups}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${cs}" viewBox="0 0 ${width} ${cs}">${defs}${groups}</svg>`;
 };

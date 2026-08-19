@@ -59,6 +59,10 @@ const EN: Record<string, string> = {
   'Cada color genera una carpeta skins/ con sus sheets y frames.':
     'Each color generates a skins/ folder with its own sheets and frames.',
   'Agregar color': 'Add color',
+  'Giro (rotación)': 'Turn (rotation)',
+  'Girar 45°': 'Turn 45°',
+  'Exportá "las 8 direcciones" para generar _d0.._d7 automáticamente.':
+    'Export "all 8 directions" to generate _d0.._d7 automatically.',
   Importar: 'Import',
   'Exportar proyecto': 'Export project',
   'Exportar sprites': 'Export sprites',
