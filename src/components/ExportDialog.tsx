@@ -16,7 +16,7 @@ import Box from '@mui/material/Box';
 import { useProjectStore } from '@store/useProjectStore';
 import { NumberInput } from '@components/NumberInput';
 import type { ExportOptions } from '@core/export';
-import { buildZip, downloadBlob } from '@core/export';
+import { buildRigZip, buildZip, downloadBlob } from '@core/export';
 
 type Props = { readonly open: boolean; readonly onClose: () => void };
 
@@ -32,6 +32,7 @@ const RENDER_FIELDS: readonly {
 
 export const ExportDialog = ({ open, onClose }: Props): ReactElement => {
   const project = useProjectStore((s) => s.project);
+  const mode = useProjectStore((s) => s.project.mode);
   const render = useProjectStore((s) => s.project.render);
   const setRenderField = useProjectStore((s) => s.setRenderField);
   const toggleFlip = useProjectStore((s) => s.toggleFlip);
@@ -58,10 +59,13 @@ export const ExportDialog = ({ open, onClose }: Props): ReactElement => {
     setBusy(true);
     setProgress(0);
     try {
-      const blob = await buildZip(project, options, (done, total) =>
-        setProgress(Math.round((done / total) * 100)),
-      );
-      const filename = `${project.character.name.trim() || 'sprite'}.zip`;
+      const onProg = (done: number, total: number): void => setProgress(Math.round((done / total) * 100));
+      const blob =
+        mode === 'custom'
+          ? await buildRigZip(project.customRig, render, options, onProg)
+          : await buildZip(project, options, onProg);
+      const name = mode === 'custom' ? project.customRig.name : project.character.name;
+      const filename = `${name.trim() || 'sprite'}.zip`;
       downloadBlob(blob, filename);
       notify('Export completado', 'success');
       onClose();

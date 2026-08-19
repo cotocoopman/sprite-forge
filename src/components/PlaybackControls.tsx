@@ -9,6 +9,7 @@ import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import { useProjectStore } from '@store/useProjectStore';
 import { useActiveClip } from '@/hooks/useActiveClip';
+import { useActiveRigClip } from '@/hooks/useActiveRigClip';
 
 export const PlaybackControls = (): ReactElement => {
   const isPlaying = useProjectStore((s) => s.isPlaying);
@@ -17,9 +18,11 @@ export const PlaybackControls = (): ReactElement => {
   const nextFrame = useProjectStore((s) => s.nextFrame);
   const prevFrame = useProjectStore((s) => s.prevFrame);
   const setCurrentFrame = useProjectStore((s) => s.setCurrentFrame);
-  const clip = useActiveClip();
+  const mode = useProjectStore((s) => s.project.mode);
+  const humanoidClip = useActiveClip();
+  const rigClip = useActiveRigClip();
 
-  const frames = clip?.frames ?? 1;
+  const frames = (mode === 'custom' ? rigClip?.frames : humanoidClip?.frames) ?? 1;
 
   return (
     <Stack direction="row" spacing={1.5} alignItems="center">

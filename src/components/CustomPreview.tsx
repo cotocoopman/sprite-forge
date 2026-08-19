@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { ReactElement } from 'react';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import { useProjectStore } from '@store/useProjectStore';
+import { useActiveRigClip } from '@/hooks/useActiveRigClip';
+import { sampleRigClip } from '@core/customRig';
 import { makeTransform, renderCustomInner } from '@core/svg';
 
 const CHECKER = 'repeating-conic-gradient(#3a3f4b 0% 25%, #2a2e38 0% 50%) 50% / 20px 20px';
@@ -12,13 +14,18 @@ const CHECKER = 'repeating-conic-gradient(#3a3f4b 0% 25%, #2a2e38 0% 50%) 50% / 
 export const CustomPreview = (): ReactElement => {
   const rig = useProjectStore((s) => s.project.customRig);
   const render = useProjectStore((s) => s.project.render);
+  const currentFrame = useProjectStore((s) => s.currentFrame);
+  const clip = useActiveRigClip();
 
   const [lightBg, setLightBg] = useState(false);
   const [guides, setGuides] = useState(true);
 
   const cs = render.cellSize;
   const tf = makeTransform(render);
-  const inner = renderCustomInner(rig, render);
+
+  const poses = useMemo(() => (clip ? sampleRigClip(clip) : []), [clip]);
+  const frame = poses.length > 0 ? Math.max(0, Math.min(poses.length - 1, currentFrame)) : 0;
+  const inner = renderCustomInner(rig, render, poses[frame]);
 
   return (
     <Stack spacing={1} sx={{ height: '100%' }}>

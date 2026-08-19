@@ -11,7 +11,8 @@ import type {
   RigMode,
   ShadowConfig,
 } from '@core/poses';
-import type { Bone, CustomRig } from '@core/customRig';
+import type { Bone, CustomRig, RigClip, RigPose } from '@core/customRig';
+import { rigPoseAt } from '@core/customRig';
 import { buildDefaultProject, poseAt } from '@core/poses';
 import { validateProject } from '@core/validation';
 
@@ -105,6 +106,25 @@ export type ProjectState = {
   readonly setRigField: (patch: { name?: string; color?: string; originX?: number; originY?: number }) => void;
   readonly resetAllBoneColors: () => void;
   readonly loadRigPreset: (rig: CustomRig) => void;
+
+  // Animación del rig personalizado (fase 2)
+  readonly activeRigClipId: string | null;
+  readonly activeRigKeyframeIndex: number;
+  readonly selectRigClip: (id: string) => void;
+  readonly addRigClip: () => void;
+  readonly duplicateRigClip: (id: string) => void;
+  readonly renameRigClip: (id: string, name: string) => void;
+  readonly deleteRigClip: (id: string) => void;
+  readonly setRigClipFrames: (frames: number) => void;
+  readonly setRigClipFps: (fps: number) => void;
+  readonly setRigClipLoop: (loop: boolean) => void;
+  readonly selectRigKeyframe: (index: number) => void;
+  readonly addRigKeyframeAt: (t: number) => void;
+  readonly duplicateRigKeyframe: (index: number) => void;
+  readonly deleteRigKeyframe: (index: number) => void;
+  readonly moveRigKeyframe: (index: number, t: number) => void;
+  readonly setRigKeyframeEasing: (index: number, easing: EasingKind) => void;
+  readonly setBoneAngleOffset: (boneId: string, value: number) => void;
 
   // Render
   readonly setRenderField: (
@@ -231,6 +251,38 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     });
   };
 
+  // --- Rig personalizado (animación) ---
+  const updateActiveRigClip = (updater: (clip: RigClip) => RigClip): void => {
+    set((s) => {
+      const animations = s.project.customRig.animations.map((c) =>
+        c.id === s.activeRigClipId ? updater(c) : c,
+      );
+      return { project: { ...s.project, customRig: { ...s.project.customRig, animations } } };
+    });
+  };
+
+  const updateActiveRigPose = (updater: (pose: RigPose) => RigPose): void => {
+    const idx = get().activeRigKeyframeIndex;
+    updateActiveRigClip((clip) => {
+      if (idx < 0 || idx >= clip.keyframes.length) return clip;
+      const keyframes = clip.keyframes.map((kf, i) => (i === idx ? { ...kf, pose: updater(kf.pose) } : kf));
+      return { ...clip, keyframes };
+    });
+  };
+
+  const activeRigClip = (): RigClip | undefined =>
+    get().project.customRig.animations.find((c) => c.id === get().activeRigClipId);
+
+  // Frames del clip activo según el modo (humanoide o rig).
+  const framesFor = (s: ProjectState): number => {
+    if (s.project.mode === 'custom') {
+      const clip = s.project.customRig.animations.find((c) => c.id === s.activeRigClipId);
+      return clip?.frames ?? 1;
+    }
+    const clip = s.project.animations.find((c) => c.id === s.activeAnimationId);
+    return clip?.frames ?? 1;
+  };
+
   // Restaura un proyecto del historial, re-anclando índices/selección de forma segura.
   const restoreState = (p: Project): Partial<ProjectState> => {
     const st = get();
@@ -259,6 +311,8 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     copiedPose: null,
     presets: loadPresets(),
     notification: { open: false, type: 'info', message: '' },
+    activeRigClipId: initialProject.customRig.animations[0]?.id ?? null,
+    activeRigKeyframeIndex: 0,
 
     setCharacterField: (key, value) =>
       set((s) => ({ project: { ...s.project, character: { ...s.project.character, [key]: value } } })),
@@ -366,7 +420,13 @@ export const useProjectStore = create<ProjectState>((set, get) => {
 
     selectAccessory: (id) => set({ activeAccessoryId: id }),
 
-    setMode: (mode) => set((s) => ({ project: { ...s.project, mode } })),
+    setMode: (mode) =>
+      set((s) => ({
+        project: { ...s.project, mode },
+        currentFrame: 0,
+        isPlaying: false,
+        activeRigClipId: s.activeRigClipId ?? s.project.customRig.animations[0]?.id ?? null,
+      })),
 
     activeBoneId: null,
     selectBone: (id) => set({ activeBoneId: id }),
@@ -453,7 +513,120 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       })),
 
     loadRigPreset: (rig) =>
-      set({ project: { ...get().project, customRig: rig }, activeBoneId: rig.bones[0]?.id ?? null }),
+      set({
+        project: { ...get().project, customRig: rig },
+        activeBoneId: rig.bones[0]?.id ?? null,
+        activeRigClipId: rig.animations[0]?.id ?? null,
+        activeRigKeyframeIndex: 0,
+        currentFrame: 0,
+        isPlaying: false,
+      }),
+
+    selectRigClip: (id) => set({ activeRigClipId: id, activeRigKeyframeIndex: 0, currentFrame: 0, isPlaying: false }),
+
+    addRigClip: () => {
+      const id = genId();
+      const clip: RigClip = { id, name: 'nuevo', frames: 8, fps: 10, loop: true, keyframes: [{ t: 0, pose: {} }, { t: 1, pose: {} }] };
+      set((s) => ({
+        project: { ...s.project, customRig: { ...s.project.customRig, animations: [...s.project.customRig.animations, clip] } },
+        activeRigClipId: id,
+        activeRigKeyframeIndex: 0,
+        currentFrame: 0,
+        isPlaying: false,
+      }));
+    },
+
+    duplicateRigClip: (id) => {
+      const src = get().project.customRig.animations.find((c) => c.id === id);
+      if (!src) return;
+      const newId = genId();
+      set((s) => ({
+        project: { ...s.project, customRig: { ...s.project.customRig, animations: [...s.project.customRig.animations, { ...src, id: newId, name: `${src.name}_copy` }] } },
+        activeRigClipId: newId,
+      }));
+    },
+
+    renameRigClip: (id, name) =>
+      set((s) => ({
+        project: { ...s.project, customRig: { ...s.project.customRig, animations: s.project.customRig.animations.map((c) => (c.id === id ? { ...c, name } : c)) } },
+      })),
+
+    deleteRigClip: (id) => {
+      const anims = get().project.customRig.animations;
+      if (anims.length <= 1) {
+        get().notify('Debe quedar al menos una animación', 'warning');
+        return;
+      }
+      const remaining = anims.filter((c) => c.id !== id);
+      set((s) => ({
+        project: { ...s.project, customRig: { ...s.project.customRig, animations: remaining } },
+        activeRigClipId: remaining[0].id,
+        activeRigKeyframeIndex: 0,
+        currentFrame: 0,
+        isPlaying: false,
+      }));
+    },
+
+    setRigClipFrames: (frames) => {
+      const clamped = Math.max(1, Math.round(frames));
+      updateActiveRigClip((c) => ({ ...c, frames: clamped }));
+      set((s) => ({ currentFrame: clampFrame(s.currentFrame, clamped) }));
+    },
+
+    setRigClipFps: (fps) => updateActiveRigClip((c) => ({ ...c, fps: Math.max(1, Math.round(fps)) })),
+    setRigClipLoop: (loop) => updateActiveRigClip((c) => ({ ...c, loop })),
+
+    selectRigKeyframe: (index) => set({ activeRigKeyframeIndex: index }),
+
+    addRigKeyframeAt: (t) => {
+      const clip = activeRigClip();
+      if (!clip) return;
+      const clampedT = Math.max(0, Math.min(1, t));
+      const pose = rigPoseAt(clip.keyframes, clampedT);
+      const keyframes = [...clip.keyframes, { t: clampedT, pose }].sort((a, b) => a.t - b.t);
+      const index = keyframes.findIndex((kf) => kf.t === clampedT);
+      updateActiveRigClip((c) => ({ ...c, keyframes }));
+      set({ activeRigKeyframeIndex: index < 0 ? keyframes.length - 1 : index });
+    },
+
+    duplicateRigKeyframe: (index) => {
+      const clip = activeRigClip();
+      if (!clip || index < 0 || index >= clip.keyframes.length) return;
+      const src = clip.keyframes[index];
+      const nextT = Math.min(1, src.t + 0.05);
+      const dup = { t: nextT, pose: src.pose, easing: src.easing };
+      const keyframes = [...clip.keyframes, dup].sort((a, b) => a.t - b.t);
+      updateActiveRigClip((c) => ({ ...c, keyframes }));
+      set({ activeRigKeyframeIndex: Math.max(0, keyframes.indexOf(dup)) });
+    },
+
+    deleteRigKeyframe: (index) => {
+      const clip = activeRigClip();
+      if (!clip) return;
+      if (clip.keyframes.length <= 1) {
+        get().notify('El clip debe tener al menos un keyframe', 'warning');
+        return;
+      }
+      const keyframes = clip.keyframes.filter((_, i) => i !== index);
+      updateActiveRigClip((c) => ({ ...c, keyframes }));
+      set((s) => ({ activeRigKeyframeIndex: Math.min(s.activeRigKeyframeIndex, keyframes.length - 1) }));
+    },
+
+    moveRigKeyframe: (index, t) => {
+      const clampedT = Math.max(0, Math.min(1, t));
+      updateActiveRigClip((c) => {
+        if (index < 0 || index >= c.keyframes.length) return c;
+        return { ...c, keyframes: c.keyframes.map((kf, i) => (i === index ? { ...kf, t: clampedT } : kf)) };
+      });
+    },
+
+    setRigKeyframeEasing: (index, easing) =>
+      updateActiveRigClip((c) => {
+        if (index < 0 || index >= c.keyframes.length) return c;
+        return { ...c, keyframes: c.keyframes.map((kf, i) => (i === index ? { ...kf, easing } : kf)) };
+      }),
+
+    setBoneAngleOffset: (boneId, value) => updateActiveRigPose((pose) => ({ ...pose, [boneId]: value })),
 
     setRenderField: (key, value) =>
       set((s) => ({ project: { ...s.project, render: { ...s.project.render, [key]: value } } })),
@@ -571,27 +744,20 @@ export const useProjectStore = create<ProjectState>((set, get) => {
 
     setClipLoop: (loop) => updateActiveClip((c) => ({ ...c, loop })),
 
-    setCurrentFrame: (frame) =>
-      set((s) => {
-        const clip = s.project.animations.find((c) => c.id === s.activeAnimationId);
-        const frames = clip?.frames ?? 1;
-        return { currentFrame: clampFrame(frame, frames) };
-      }),
+    setCurrentFrame: (frame) => set((s) => ({ currentFrame: clampFrame(frame, framesFor(s)) })),
 
     setPlaying: (playing) => set({ isPlaying: playing }),
     togglePlay: () => set((s) => ({ isPlaying: !s.isPlaying })),
 
     nextFrame: () =>
       set((s) => {
-        const clip = s.project.animations.find((c) => c.id === s.activeAnimationId);
-        const frames = clip?.frames ?? 1;
+        const frames = framesFor(s);
         return { currentFrame: (s.currentFrame + 1) % frames, isPlaying: false };
       }),
 
     prevFrame: () =>
       set((s) => {
-        const clip = s.project.animations.find((c) => c.id === s.activeAnimationId);
-        const frames = clip?.frames ?? 1;
+        const frames = framesFor(s);
         return { currentFrame: (s.currentFrame - 1 + frames) % frames, isPlaying: false };
       }),
 

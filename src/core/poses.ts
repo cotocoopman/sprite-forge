@@ -5,24 +5,12 @@ import type { AnchorName, CharacterDefinition, PartName, Pose } from './rig';
 import { DEFAULT_CHARACTER, NEUTRAL_POSE, PART_NAMES, POSE_KEYS } from './rig';
 import type { CustomRig } from './customRig';
 import { buildDefaultCustomRig } from './customRig';
-
-export type EasingKind = 'linear' | 'easeIn' | 'easeOut' | 'easeInOut';
+import type { EasingKind } from './easing';
+import { applyEasing } from './easing';
+export type { EasingKind } from './easing';
+export { applyEasing } from './easing';
 
 export type Keyframe = { readonly t: number; readonly pose: Pose; readonly easing?: EasingKind };
-
-// Aplica la curva de easing a un factor lineal k (0..1).
-export const applyEasing = (k: number, easing: EasingKind | undefined): number => {
-  switch (easing) {
-    case 'easeIn':
-      return k * k;
-    case 'easeOut':
-      return 1 - (1 - k) * (1 - k);
-    case 'easeInOut':
-      return k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-    default:
-      return k;
-  }
-};
 
 export type AnimationClip = {
   readonly id: string;

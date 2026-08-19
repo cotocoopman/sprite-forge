@@ -4,7 +4,7 @@
 import type { Anchor, AnchorName, CharacterDefinition, PartName, Pose, Skeleton } from './rig';
 import { buildSkeleton, PART_NAMES } from './rig';
 import type { Accessory, EffectsConfig, PartsConfig, RenderConfig } from './poses';
-import type { CustomRig } from './customRig';
+import type { CustomRig, RBone, RigPose } from './customRig';
 import { buildCustomSkeleton } from './customRig';
 
 const rad = (deg: number): number => (deg * Math.PI) / 180;
@@ -369,17 +369,15 @@ export const renderSheet = (
 };
 
 // --- Rig personalizado (huesos genéricos) ---
-export const renderCustomInner = (rig: CustomRig, render: RenderConfig): string => {
-  const tf = makeTransform(render);
-  const bones = buildCustomSkeleton(rig);
-  const shapes = bones
+const customShapesMarkup = (bones: readonly RBone[], tf: PxTransform, offsetX: number): string =>
+  bones
     .map((b) => {
       if (b.kind === 'circle') {
         const c = toPx(b.cx, b.cy, tf);
-        return `<circle cx="${fmt(c.px)}" cy="${fmt(c.py)}" r="${fmt(b.r * tf.scale)}" fill="${b.color}" stroke="${b.color}" />`;
+        return `<circle cx="${fmt(c.px + offsetX)}" cy="${fmt(c.py)}" r="${fmt(b.r * tf.scale)}" fill="${b.color}" stroke="${b.color}" />`;
       }
       if (b.kind === 'rect') {
-        const pts = b.pts.map((p) => { const q = toPx(p.x, p.y, tf); return `${fmt(q.px)},${fmt(q.py)}`; }).join(' ');
+        const pts = b.pts.map((p) => { const q = toPx(p.x, p.y, tf); return `${fmt(q.px + offsetX)},${fmt(q.py)}`; }).join(' ');
         return `<polygon points="${pts}" fill="${b.color}" stroke="${b.color}" />`;
       }
       const a = toPx(b.from.x, b.from.y, tf);
@@ -387,13 +385,28 @@ export const renderCustomInner = (rig: CustomRig, render: RenderConfig): string 
       const w = fmt(b.width * tf.scale);
       if (b.ctrl) {
         const c = toPx(b.ctrl.x, b.ctrl.y, tf);
-        return `<path d="M ${fmt(a.px)} ${fmt(a.py)} Q ${fmt(c.px)} ${fmt(c.py)} ${fmt(t.px)} ${fmt(t.py)}" stroke="${b.color}" stroke-width="${w}" stroke-linecap="round" fill="none" />`;
+        return `<path d="M ${fmt(a.px + offsetX)} ${fmt(a.py)} Q ${fmt(c.px + offsetX)} ${fmt(c.py)} ${fmt(t.px + offsetX)} ${fmt(t.py)}" stroke="${b.color}" stroke-width="${w}" stroke-linecap="round" fill="none" />`;
       }
-      return `<path d="M ${fmt(a.px)} ${fmt(a.py)} L ${fmt(t.px)} ${fmt(t.py)}" stroke="${b.color}" stroke-width="${w}" stroke-linecap="round" fill="none" />`;
+      return `<path d="M ${fmt(a.px + offsetX)} ${fmt(a.py)} L ${fmt(t.px + offsetX)} ${fmt(t.py)}" stroke="${b.color}" stroke-width="${w}" stroke-linecap="round" fill="none" />`;
     })
     .join('');
-  return `<g>${shapes}</g>`;
+
+export const renderCustomInner = (rig: CustomRig, render: RenderConfig, pose?: RigPose): string => {
+  const tf = makeTransform(render);
+  const bones = buildCustomSkeleton(rig, pose);
+  return `<g>${customShapesMarkup(bones, tf, 0)}</g>`;
 };
 
-export const renderCustomSvg = (rig: CustomRig, render: RenderConfig): string =>
-  `<svg xmlns="http://www.w3.org/2000/svg" width="${render.cellSize}" height="${render.cellSize}" viewBox="0 0 ${render.cellSize} ${render.cellSize}">${renderCustomInner(rig, render)}</svg>`;
+export const renderCustomSvg = (rig: CustomRig, render: RenderConfig, pose?: RigPose): string =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${render.cellSize}" height="${render.cellSize}" viewBox="0 0 ${render.cellSize} ${render.cellSize}">${renderCustomInner(rig, render, pose)}</svg>`;
+
+// Sprite sheet horizontal del rig animado: una celda por pose.
+export const renderCustomSheet = (rig: CustomRig, poses: readonly RigPose[], render: RenderConfig): string => {
+  const tf = makeTransform(render);
+  const cs = render.cellSize;
+  const width = cs * Math.max(1, poses.length);
+  const groups = poses
+    .map((pose, i) => `<g>${customShapesMarkup(buildCustomSkeleton(rig, pose), tf, i * cs)}</g>`)
+    .join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${cs}" viewBox="0 0 ${width} ${cs}">${groups}</svg>`;
+};

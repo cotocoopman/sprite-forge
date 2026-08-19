@@ -4,7 +4,7 @@ import type { CharacterDefinition, Pose } from './rig';
 import { POSE_KEYS } from './rig';
 import { ANCHOR_NAMES, PART_NAMES } from './rig';
 import type { AnchorName, PartName } from './rig';
-import type { Bone, BoneShape, CustomRig } from './customRig';
+import type { Bone, BoneShape, CustomRig, RigClip, RigKeyframe } from './customRig';
 import { buildDefaultCustomRig } from './customRig';
 import type {
   Accessory,
@@ -209,6 +209,41 @@ const validateAccessories = (v: unknown): Accessory[] => {
   return out;
 };
 
+const validateRigPose = (v: unknown): Record<string, number> => {
+  if (!isRecord(v)) return {};
+  const out: Record<string, number> = {};
+  for (const [k, val] of Object.entries(v)) if (isNum(val)) out[k] = val;
+  return out;
+};
+
+const validateRigClips = (v: unknown): RigClip[] => {
+  const arr = Array.isArray(v) ? v : [];
+  const num = (x: unknown, d: number): number => (isNum(x) ? x : d);
+  const out: RigClip[] = [];
+  for (const item of arr) {
+    if (!isRecord(item) || !isStr(item.id) || !isStr(item.name)) continue;
+    const kfs = Array.isArray(item.keyframes) ? item.keyframes : [];
+    const keyframes: RigKeyframe[] = [];
+    for (const kf of kfs) {
+      if (!isRecord(kf) || !isNum(kf.t)) continue;
+      keyframes.push({ t: kf.t, pose: validateRigPose(kf.pose), easing: isEasing(kf.easing) ? kf.easing : 'linear' });
+    }
+    if (keyframes.length === 0) keyframes.push({ t: 0, pose: {} }, { t: 1, pose: {} });
+    out.push({
+      id: item.id,
+      name: item.name,
+      frames: Math.max(1, Math.round(num(item.frames, 8))),
+      fps: Math.max(1, Math.round(num(item.fps, 8))),
+      loop: isBool(item.loop) ? item.loop : true,
+      keyframes,
+    });
+  }
+  if (out.length === 0) {
+    out.push({ id: 'idle', name: 'idle', frames: 8, fps: 8, loop: true, keyframes: [{ t: 0, pose: {} }, { t: 1, pose: {} }] });
+  }
+  return out;
+};
+
 // Rig personalizado: tolerante. Si no hay huesos válidos, usa el default.
 const validateCustomRig = (v: unknown): CustomRig => {
   if (!isRecord(v)) return buildDefaultCustomRig();
@@ -243,6 +278,7 @@ const validateCustomRig = (v: unknown): CustomRig => {
     color: isStr(v.color) ? v.color : '#000000',
     origin,
     bones,
+    animations: validateRigClips(v.animations),
   };
 };
 

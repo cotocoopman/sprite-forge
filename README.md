@@ -147,7 +147,8 @@ Funcional y verificado (tests + typecheck + build). El **rig genérico** se
 construye por fases:
 
 - ✅ **Fase 1** — editor de huesos, render estático, presets, export PNG/SVG.
-- ⏳ **Fase 2** — animación por keyframes por hueso (hoy el rig custom es estático).
+- ✅ **Fase 2** — animación por keyframes por hueso: clips, timeline arrastrable,
+  editor de ángulo por hueso, easing, playback y export (sheets/frames/Godot `.tres`).
 - ⏳ **Fase 3** — más presets y biblioteca.
 
 Ver [CONTRIBUTING.md](./CONTRIBUTING.md) si querés colaborar.

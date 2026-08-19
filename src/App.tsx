@@ -21,6 +21,7 @@ import UndoIcon from '@mui/icons-material/Undo';
 import RedoIcon from '@mui/icons-material/Redo';
 import { useProjectStore } from '@store/useProjectStore';
 import { useActiveClip } from '@/hooks/useActiveClip';
+import { useActiveRigClip } from '@/hooks/useActiveRigClip';
 import { parseProjectJson } from '@core/validation';
 import { exportProjectJson } from '@core/export';
 import { CharacterPanel } from '@components/CharacterPanel';
@@ -34,6 +35,8 @@ import { ReferenceControls } from '@components/ReferenceControls';
 import { PlaybackControls } from '@components/PlaybackControls';
 import { RigEditor } from '@components/RigEditor';
 import { CustomPreview } from '@components/CustomPreview';
+import { RigAnimationPanel } from '@components/RigAnimationPanel';
+import { RigFrameStrip } from '@components/RigFrameStrip';
 import { FrameStrip } from '@components/FrameStrip';
 import { AnimationList } from '@components/AnimationList';
 import { KeyframeTimeline } from '@components/KeyframeTimeline';
@@ -51,7 +54,10 @@ const columnSx = {
 
 const usePlayback = (): void => {
   const isPlaying = useProjectStore((s) => s.isPlaying);
-  const clip = useActiveClip();
+  const mode = useProjectStore((s) => s.project.mode);
+  const humanoidClip = useActiveClip();
+  const rigClip = useActiveRigClip();
+  const clip = mode === 'custom' ? rigClip : humanoidClip;
 
   useEffect(() => {
     if (!isPlaying || !clip) return;
@@ -195,25 +201,31 @@ export const App = (): ReactElement => {
             <Button startIcon={<SaveAltIcon />} onClick={() => exportProjectJson(project)}>
               Exportar proyecto
             </Button>
-            {mode !== 'custom' && (
-              <Button variant="contained" startIcon={<DownloadIcon />} onClick={() => setExportOpen(true)}>
-                Exportar sprites
-              </Button>
-            )}
+            <Button variant="contained" startIcon={<DownloadIcon />} onClick={() => setExportOpen(true)}>
+              Exportar sprites
+            </Button>
           </Stack>
         </Toolbar>
       </AppBar>
 
       {mode === 'custom' ? (
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, flexGrow: 1, minHeight: 0 }}>
-          {/* Izquierda — Editor de rig */}
+          {/* Izquierda — Editor de huesos */}
           <Paper square sx={{ ...columnSx, width: { xs: '100%', md: 340 }, flexShrink: { md: 0 } }}>
             <RigEditor />
           </Paper>
-          {/* Centro — Preview del rig */}
-          <Box sx={{ flexGrow: 1, minWidth: 0, p: 2, minHeight: { xs: '70vh', md: 0 } }}>
-            <CustomPreview />
+          {/* Centro — Preview animado del rig */}
+          <Box sx={{ flexGrow: 1, minWidth: 0, p: 2, display: 'flex', flexDirection: 'column', gap: 1.5, minHeight: { xs: '70vh', md: 0 } }}>
+            <Box sx={{ flexGrow: 1, minHeight: 0 }}>
+              <CustomPreview />
+            </Box>
+            <PlaybackControls />
+            <RigFrameStrip />
           </Box>
+          {/* Derecha — Animación del rig */}
+          <Paper square sx={{ ...columnSx, width: { xs: '100%', md: 360 }, flexShrink: { md: 0 } }}>
+            <RigAnimationPanel />
+          </Paper>
         </Box>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, flexGrow: 1, minHeight: 0 }}>

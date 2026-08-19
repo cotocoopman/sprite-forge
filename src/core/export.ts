@@ -2,9 +2,11 @@
 // Única parte del core que toca el DOM (canvas/Image), permitido por diseño.
 
 import JSZip from 'jszip';
-import type { Project } from './poses';
+import type { Project, RenderConfig } from './poses';
 import { sampleClip } from './poses';
-import { renderSheet, renderSvg } from './svg';
+import type { CustomRig } from './customRig';
+import { sampleRigClip } from './customRig';
+import { renderCustomSheet, renderCustomSvg, renderSheet, renderSvg } from './svg';
 
 export type ExportOptions = {
   readonly sheets: boolean;
@@ -214,6 +216,99 @@ export const buildZip = async (
   }
   if (options.projectJson) {
     root.file('project.json', JSON.stringify(project, null, 2));
+  }
+
+  onProgress?.(total, total);
+  return zip.generateAsync({ type: 'blob' });
+};
+
+// Recurso Godot 4 (SpriteFrames) para un rig personalizado.
+const buildGodotRig = (rig: CustomRig, folder: string, cs: number): string => {
+  const extLines: string[] = [];
+  const subLines: string[] = [];
+  const animBlocks: string[] = [];
+  let subCount = 0;
+  rig.animations.forEach((clip, idx) => {
+    const base = safeName(clip.name);
+    const eid = `${idx + 1}_${base}`;
+    extLines.push(`[ext_resource type="Texture2D" path="res://${folder}/sheets/${base}.png" id="${eid}"]`);
+    const frameRefs: string[] = [];
+    for (let i = 0; i < clip.frames; i += 1) {
+      subCount += 1;
+      const sid = `AtlasTexture_${base}_${i}`;
+      subLines.push(
+        `[sub_resource type="AtlasTexture" id="${sid}"]\natlas = ExtResource("${eid}")\nregion = Rect2(${i * cs}, 0, ${cs}, ${cs})`,
+      );
+      frameRefs.push(`{\n"duration": 1.0,\n"texture": SubResource("${sid}")\n}`);
+    }
+    animBlocks.push(
+      `{\n"frames": [${frameRefs.join(', ')}],\n"loop": ${clip.loop},\n"name": &"${base}",\n"speed": ${clip.fps}.0\n}`,
+    );
+  });
+  const loadSteps = extLines.length + subCount + 1;
+  return (
+    `[gd_resource type="SpriteFrames" load_steps=${loadSteps} format=3]\n\n` +
+    `${extLines.join('\n')}\n\n${subLines.join('\n\n')}\n\n` +
+    `[resource]\nanimations = [${animBlocks.join(', ')}]\n`
+  );
+};
+
+// Arma el ZIP de un rig personalizado animado (sheets/frames/svg/manifest/godot).
+export const buildRigZip = async (
+  rig: CustomRig,
+  render: RenderConfig,
+  options: ExportOptions,
+  onProgress?: ProgressCallback,
+): Promise<Blob> => {
+  const zip = new JSZip();
+  const folder = safeName(rig.name);
+  const root = zip.folder(folder) ?? zip;
+  const cs = render.cellSize;
+
+  let total = 0;
+  for (const clip of rig.animations) {
+    if (options.sheets || options.godot) total += 1;
+    if (options.frames) total += clip.frames;
+  }
+  total = total || 1;
+  let done = 0;
+  const tick = (): void => {
+    done += 1;
+    onProgress?.(done, total);
+  };
+
+  for (const clip of rig.animations) {
+    const poses = sampleRigClip(clip);
+    const base = safeName(clip.name);
+    if (options.sheets || options.godot) {
+      const blob = await svgToPngBlob(renderCustomSheet(rig, poses, render), cs * poses.length, cs);
+      root.file(`sheets/${base}.png`, blob);
+      tick();
+    }
+    if (options.frames) {
+      for (let i = 0; i < poses.length; i += 1) {
+        const blob = await svgToPngBlob(renderCustomSvg(rig, render, poses[i]), cs, cs);
+        root.file(`frames/${base}_${pad2(i)}.png`, blob);
+        tick();
+      }
+    }
+    if (options.svg) {
+      root.file(`svg/${base}.svg`, renderCustomSheet(rig, poses, render));
+    }
+  }
+
+  if (options.godot) {
+    root.file(`${folder}.tres`, buildGodotRig(rig, folder, cs));
+  }
+  if (options.manifest) {
+    const manifest = {
+      cellSize: cs,
+      animations: rig.animations.map((c) => ({ name: c.name, frames: c.frames, fps: c.fps, loop: c.loop, sheet: `sheets/${safeName(c.name)}.png` })),
+    };
+    root.file('manifest.json', JSON.stringify(manifest, null, 2));
+  }
+  if (options.projectJson) {
+    root.file('rig.json', JSON.stringify(rig, null, 2));
   }
 
   onProgress?.(total, total);

@@ -2,8 +2,24 @@
 // Núcleo puro: FK del árbol → huesos renderizables. Sin React ni DOM.
 
 import type { Vec2 } from './rig';
+import type { EasingKind } from './easing';
+import { applyEasing } from './easing';
 
 export type BoneShape = 'capsule' | 'circle' | 'rect';
+
+// Pose de un rig: offset de ángulo por hueso (se suma al ángulo de reposo).
+export type RigPose = Record<string, number>;
+
+export type RigKeyframe = { readonly t: number; readonly pose: RigPose; readonly easing?: EasingKind };
+
+export type RigClip = {
+  readonly id: string;
+  readonly name: string;
+  readonly frames: number;
+  readonly fps: number;
+  readonly loop: boolean;
+  readonly keyframes: readonly RigKeyframe[];
+};
 
 export type Bone = {
   readonly id: string;
@@ -25,6 +41,7 @@ export type CustomRig = {
   readonly color: string;
   readonly origin: Vec2; // posición del hueso raíz (espacio de 100 de alto, y abajo)
   readonly bones: readonly Bone[];
+  readonly animations: readonly RigClip[];
 };
 
 export type RBone =
@@ -37,16 +54,21 @@ const dirOf = (angleDeg: number): Vec2 => ({ x: Math.sin(rad(angleDeg)), y: -Mat
 
 // Cinemática directa: resuelve la posición/ángulo mundial de cada hueso y lo
 // convierte a una forma renderizable. Tolerante a padres faltantes o ciclos.
-export const buildCustomSkeleton = (rig: CustomRig): RBone[] => {
+// `pose` suma offsets de ángulo por hueso (para animar).
+export const buildCustomSkeleton = (rig: CustomRig, pose?: RigPose): RBone[] => {
   const byId = new Map(rig.bones.map((b) => [b.id, b]));
   const waCache = new Map<string, number>();
   const baseCache = new Map<string, Vec2>();
+
+  const localAngle = (b: Bone): number => b.angle + (pose?.[b.id] ?? 0);
 
   const worldAngle = (b: Bone, seen: ReadonlySet<string>): number => {
     const cached = waCache.get(b.id);
     if (cached !== undefined) return cached;
     const parent = b.parentId ? byId.get(b.parentId) : undefined;
-    const wa = parent && !seen.has(parent.id) ? worldAngle(parent, new Set([...seen, b.id])) + b.angle : b.angle;
+    const wa = parent && !seen.has(parent.id)
+      ? worldAngle(parent, new Set([...seen, b.id])) + localAngle(b)
+      : localAngle(b);
     waCache.set(b.id, wa);
     return wa;
   };
@@ -114,6 +136,60 @@ export const buildCustomSkeleton = (rig: CustomRig): RBone[] => {
   return out.sort((a, b) => a.z - b.z);
 };
 
+// --- Animación del rig ---
+export const lerpRigPose = (a: RigPose, b: RigPose, k: number): RigPose => {
+  const out: RigPose = {};
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  for (const key of keys) {
+    const av = a[key] ?? 0;
+    const bv = b[key] ?? 0;
+    out[key] = av + (bv - av) * k;
+  }
+  return out;
+};
+
+export const rigPoseAt = (keyframes: readonly RigKeyframe[], t: number): RigPose => {
+  if (keyframes.length === 0) return {};
+  if (keyframes.length === 1) return keyframes[0].pose;
+  const sorted = [...keyframes].sort((x, y) => x.t - y.t);
+  if (t <= sorted[0].t) return sorted[0].pose;
+  const last = sorted[sorted.length - 1];
+  if (t >= last.t) return last.pose;
+  for (let i = 0; i < sorted.length - 1; i += 1) {
+    const cur = sorted[i];
+    const next = sorted[i + 1];
+    if (t >= cur.t && t <= next.t) {
+      const span = next.t - cur.t;
+      const k = span === 0 ? 0 : (t - cur.t) / span;
+      return lerpRigPose(cur.pose, next.pose, applyEasing(k, cur.easing));
+    }
+  }
+  return last.pose;
+};
+
+export const sampleRigClip = (clip: RigClip): RigPose[] => {
+  const out: RigPose[] = [];
+  const n = Math.max(1, clip.frames);
+  for (let i = 0; i < n; i += 1) {
+    const denom = clip.loop ? n : Math.max(1, n - 1);
+    const t = n === 1 ? 0 : i / denom;
+    out.push(rigPoseAt(clip.keyframes, t));
+  }
+  return out;
+};
+
+const idleClip = (): RigClip => ({
+  id: 'idle',
+  name: 'idle',
+  frames: 8,
+  fps: 8,
+  loop: true,
+  keyframes: [
+    { t: 0, pose: {} },
+    { t: 1, pose: {} },
+  ],
+});
+
 const bone = (b: Bone): Bone => b;
 
 // Cuadrúpedo simple (perro/caballo) de perfil.
@@ -131,6 +207,21 @@ export const buildQuadrupedRig = (): CustomRig => ({
     bone({ id: 'legBF', name: 'Pata tras. lejana', parentId: 'spine', attach: 0.2, angle: 90, length: 40, width: 6, shape: 'capsule', curve: 0, color: null, z: 0 }),
     bone({ id: 'legFN', name: 'Pata del. cercana', parentId: 'spine', attach: 0.8, angle: 90, length: 40, width: 7, shape: 'capsule', curve: 0, color: null, z: 2 }),
     bone({ id: 'legBN', name: 'Pata tras. cercana', parentId: 'spine', attach: 0.14, angle: 90, length: 40, width: 7, shape: 'capsule', curve: 0, color: null, z: 2 }),
+  ],
+  animations: [
+    idleClip(),
+    {
+      id: 'walk',
+      name: 'walk',
+      frames: 8,
+      fps: 10,
+      loop: true,
+      keyframes: [
+        { t: 0, pose: { legFF: 24, legBN: 24, legFN: -24, legBF: -24, neck: 4 } },
+        { t: 0.5, pose: { legFF: -24, legBN: -24, legFN: 24, legBF: 24, neck: -4 } },
+        { t: 1, pose: { legFF: 24, legBN: 24, legFN: -24, legBF: -24, neck: 4 } },
+      ],
+    },
   ],
 });
 
@@ -150,6 +241,7 @@ export const buildBirdRig = (): CustomRig => ({
     bone({ id: 'legL', name: 'Pata izq.', parentId: 'body', attach: 0.4, angle: 100, length: 16, width: 3, shape: 'capsule', curve: 0, color: null, z: 0 }),
     bone({ id: 'legR', name: 'Pata der.', parentId: 'body', attach: 0.5, angle: 100, length: 16, width: 3, shape: 'capsule', curve: 0, color: null, z: 2 }),
   ],
+  animations: [idleClip()],
 });
 
 // Slime: cuerpo grande y bajo con dos ojos.
@@ -163,6 +255,7 @@ export const buildSlimeRig = (): CustomRig => ({
     bone({ id: 'eyeL', name: 'Ojo izq.', parentId: 'body', attach: 0, angle: -30, length: 22, width: 8, shape: 'circle', curve: 0, color: '#ffffff', z: 1 }),
     bone({ id: 'eyeR', name: 'Ojo der.', parentId: 'body', attach: 0, angle: 30, length: 22, width: 8, shape: 'circle', curve: 0, color: '#ffffff', z: 1 }),
   ],
+  animations: [idleClip()],
 });
 
 // Vacío: un solo hueso para empezar de cero.
@@ -174,6 +267,7 @@ export const buildBlankRig = (): CustomRig => ({
   bones: [
     bone({ id: 'root', name: 'raíz', parentId: null, attach: 0, angle: 0, length: 40, width: 8, shape: 'capsule', curve: 0, color: null, z: 0 }),
   ],
+  animations: [idleClip()],
 });
 
 export const RIG_PRESETS: readonly { readonly id: string; readonly name: string; readonly build: () => CustomRig }[] = [
