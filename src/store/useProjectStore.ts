@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { AnchorName, CharacterDefinition, CurveTarget, PartName, Pose } from '@core/rig';
-import { DEFAULT_CHARACTER, NEUTRAL_POSE } from '@core/rig';
+import { DEFAULT_CHARACTER, NEUTRAL_POSE, PART_NAMES } from '@core/rig';
 import { PROP_TEMPLATES } from '@core/props';
 import type {
   Accessory,
@@ -8,6 +8,7 @@ import type {
   EasingKind,
   GlowConfig,
   OutlineConfig,
+  PartsConfig,
   Project,
   RigMode,
   ShadowConfig,
@@ -17,7 +18,7 @@ import { rigPoseAt } from '@core/customRig';
 import type { Lang } from '@/i18n';
 import { buildDefaultProject, poseAt } from '@core/poses';
 import { validateProject } from '@core/validation';
-import { randomCharacter } from '@core/templates';
+import { CHARACTER_TEMPLATES, randomCharacter } from '@core/templates';
 
 const PROJECT_KEY = 'sprite-forge_project';
 const PRESETS_KEY = 'sprite-forge_presets';
@@ -115,6 +116,7 @@ export type ProjectState = {
   readonly setName: (name: string) => void;
   readonly resetCharacter: () => void;
   readonly randomizeCharacter: () => void;
+  readonly applyHumanoidTemplate: (id: string) => void;
   readonly applyCharacter: (character: CharacterDefinition) => void;
   readonly setArmCurveTarget: (target: CurveTarget) => void;
   readonly setLegCurveTarget: (target: CurveTarget) => void;
@@ -381,6 +383,23 @@ export const useProjectStore = create<ProjectState>((set, get) => {
           character: { ...randomCharacter(), id: s.project.character.id },
         },
       })),
+
+    applyHumanoidTemplate: (id) => {
+      const tpl = CHARACTER_TEMPLATES.find((t) => t.id === id);
+      if (!tpl) return;
+      const character = { ...tpl.build(), id: get().project.character.id };
+      const accessories: Accessory[] = (tpl.accessories ?? []).map((a) => ({ ...a, id: genId() }));
+      const hidden = new Set(tpl.hiddenParts ?? []);
+      const parts = PART_NAMES.reduce((accP, name) => {
+        accP[name] = { visible: !hidden.has(name), color: null };
+        return accP;
+      }, {} as PartsConfig);
+      set((s) => ({
+        project: { ...s.project, character, accessories, parts },
+        activeAccessoryId: accessories[accessories.length - 1]?.id ?? null,
+      }));
+      get().notify('Plantilla aplicada', 'success');
+    },
 
     applyCharacter: (character) =>
       set((s) => ({ project: { ...s.project, character } })),

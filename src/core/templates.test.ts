@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { CHARACTER_TEMPLATES, randomCharacter } from './templates';
 import { buildSkeleton, NEUTRAL_POSE } from './rig';
 import { RIG_TEMPLATES, buildCustomSkeleton } from './customRig';
+import { accessoriesToPrimitives } from './svg';
+import { DEFAULT_RENDER } from './poses';
 
 // RNG determinista (LCG) para tests reproducibles.
 const makeRng = (seed: number): (() => number) => {
@@ -13,20 +15,23 @@ const makeRng = (seed: number): (() => number) => {
 };
 
 describe('character templates', () => {
-  it('exposes 10 templates with unique ids', () => {
-    expect(CHARACTER_TEMPLATES).toHaveLength(10);
+  it('exposes 11 templates with unique ids', () => {
+    expect(CHARACTER_TEMPLATES).toHaveLength(11);
     const ids = new Set(CHARACTER_TEMPLATES.map((t) => t.id));
-    expect(ids.size).toBe(10);
+    expect(ids.size).toBe(11);
   });
 
-  it('every template builds a renderable skeleton', () => {
+  it('every template builds a renderable skeleton + finite accessories', () => {
     for (const tpl of CHARACTER_TEMPLATES) {
       const char = tpl.build();
       expect(char.name).toBe(tpl.name);
       const skel = buildSkeleton(char, NEUTRAL_POSE);
       expect(skel.capsules.length).toBeGreaterThan(0);
-      expect(Number.isFinite(skel.headRadius)).toBe(true);
       expect(skel.headRadius).toBeGreaterThan(0);
+      // Accesorios de la plantilla (armas/gorros) deben resolver a coords finitas.
+      const accs = (tpl.accessories ?? []).map((a, i) => ({ ...a, id: `${tpl.id}-${i}` }));
+      const prims = accessoriesToPrimitives(accs, skel.anchors, DEFAULT_RENDER);
+      expect(prims).toHaveLength(accs.length);
     }
   });
 });

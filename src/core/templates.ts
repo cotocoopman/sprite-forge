@@ -1,7 +1,9 @@
 // Plantillas built-in (humanoides). Puntos de partida listos, distintos de los
 // presets guardados por el usuario. Cada una es una variación de DEFAULT_CHARACTER.
 import { DEFAULT_CHARACTER } from './rig';
-import type { CharacterDefinition, CurveTarget } from './rig';
+import type { AnchorName, CharacterDefinition, CurveTarget, PartName } from './rig';
+import type { Accessory } from './poses';
+import { PROP_TEMPLATES } from './props';
 
 // --- Personaje aleatorio -------------------------------------------------
 // Rangos sanos por campo. La altura total se mantiene ~100 normalizando
@@ -80,11 +82,18 @@ export const randomCharacter = (rand: () => number = Math.random): CharacterDefi
   };
 };
 
+// Accesorio de plantilla: un accesorio sin id (se genera al aplicar).
+export type TemplateAccessory = Omit<Accessory, 'id'>;
+
 export type CharacterTemplate = {
   readonly id: string;
   readonly name: string;
   readonly emoji: string;
   readonly build: () => CharacterDefinition;
+  // Props/armas/gorros que trae la plantilla (siguen la animación).
+  readonly accessories?: readonly TemplateAccessory[];
+  // Partes apagadas (ej. slime sin brazos ni piernas).
+  readonly hiddenParts?: readonly PartName[];
 };
 
 const make = (name: string, overrides: Partial<CharacterDefinition>): CharacterDefinition => ({
@@ -93,17 +102,43 @@ const make = (name: string, overrides: Partial<CharacterDefinition>): CharacterD
   name,
 });
 
+// Toma las piezas de un prop (props.ts) y las ancla a una mano.
+const weapon = (propId: string, anchor: AnchorName): TemplateAccessory[] => {
+  const tpl = PROP_TEMPLATES.find((p) => p.id === propId);
+  if (!tpl) return [];
+  return tpl.parts.map((part) => ({ ...part, anchor }));
+};
+
+const acc = (a: Partial<TemplateAccessory> & Pick<TemplateAccessory, 'name' | 'anchor' | 'shape'>): TemplateAccessory => ({
+  offsetAlong: 0,
+  offsetPerp: 0,
+  angle: 0,
+  length: 10,
+  width: 4,
+  color: '#000000',
+  opacity: 1,
+  front: true,
+  ...a,
+});
+
+// Gorro de mago (ala + cono), anclado a la cabeza (el anchor apunta hacia arriba).
+const wizardHat = (color: string): TemplateAccessory[] => [
+  acc({ name: 'Hat brim', anchor: 'head', shape: 'rect', offsetAlong: 10, offsetPerp: -10, angle: 90, length: 20, width: 4, color }),
+  acc({ name: 'Hat cone', anchor: 'head', shape: 'capsule', offsetAlong: 11, offsetPerp: 0, angle: 0, length: 18, width: 11, color }),
+];
+
 export const CHARACTER_TEMPLATES: readonly CharacterTemplate[] = [
   {
     id: 'hero',
     name: 'Hero',
     emoji: '🦸',
     build: () => make('Hero', { color: '#2c3e6b' }),
+    accessories: [...weapon('sword', 'handNear')],
   },
   {
     id: 'chibi',
     name: 'Chibi',
-    emoji: '🍼',
+    emoji: '🧸',
     build: () =>
       make('Chibi', {
         headDiameter: 52,
@@ -120,7 +155,7 @@ export const CHARACTER_TEMPLATES: readonly CharacterTemplate[] = [
   {
     id: 'warrior',
     name: 'Warrior',
-    emoji: '🛡️',
+    emoji: '⚔️',
     build: () =>
       make('Warrior', {
         headDiameter: 32,
@@ -133,6 +168,8 @@ export const CHARACTER_TEMPLATES: readonly CharacterTemplate[] = [
         legWidth: 7,
         color: '#5d4037',
       }),
+    // Espada en la derecha, escudo en la izquierda → "attack" y "defend" acordes.
+    accessories: [...weapon('sword', 'handNear'), ...weapon('shield', 'handFar')],
   },
   {
     id: 'mage',
@@ -147,6 +184,8 @@ export const CHARACTER_TEMPLATES: readonly CharacterTemplate[] = [
         armWidth: 5,
         color: '#4527a0',
       }),
+    // Bastón + gorro puntiagudo.
+    accessories: [...weapon('staff', 'handNear'), ...wizardHat('#311b6b')],
   },
   {
     id: 'ninja',
@@ -162,11 +201,16 @@ export const CHARACTER_TEMPLATES: readonly CharacterTemplate[] = [
         armLowerLength: 10,
         color: '#212121',
       }),
+    // Katana oscura.
+    accessories: [
+      acc({ name: 'Katana grip', anchor: 'handNear', shape: 'capsule', offsetAlong: -5, angle: 0, length: 6, width: 3, color: '#1a1a1a' }),
+      acc({ name: 'Katana blade', anchor: 'handNear', shape: 'capsule', offsetAlong: 3, angle: 0, length: 30, width: 2.6, color: '#9aa4b0' }),
+    ],
   },
   {
     id: 'dwarf',
     name: 'Dwarf',
-    emoji: '⛏️',
+    emoji: '🪓',
     build: () =>
       make('Dwarf', {
         headDiameter: 40,
@@ -175,8 +219,9 @@ export const CHARACTER_TEMPLATES: readonly CharacterTemplate[] = [
         torsoWidth: 28,
         armWidth: 6,
         legWidth: 7,
-        color: '#6d4c41',
+        color: '#6d7b8d', // gris pizarra: el mango de madera del hacha contrasta
       }),
+    accessories: [...weapon('axe', 'handNear')],
   },
   {
     id: 'child',
@@ -194,6 +239,26 @@ export const CHARACTER_TEMPLATES: readonly CharacterTemplate[] = [
       }),
   },
   {
+    id: 'slime',
+    name: 'Slime',
+    emoji: '🫠',
+    build: () =>
+      make('Slime', {
+        headDiameter: 26,
+        torsoHeight: 46,
+        legHeight: 28,
+        torsoWidth: 46,
+        neckLength: -12,
+        color: '#3fa34d',
+      }),
+    // Sin brazos ni piernas: un blob. Dos ojos sobre el cuerpo.
+    hiddenParts: ['armNear', 'armFar', 'legNear', 'legFar'],
+    accessories: [
+      acc({ name: 'Eye L', anchor: 'torsoTop', shape: 'circle', offsetAlong: -14, offsetPerp: -7, width: 7, color: '#ffffff' }),
+      acc({ name: 'Eye R', anchor: 'torsoTop', shape: 'circle', offsetAlong: -14, offsetPerp: 7, width: 7, color: '#ffffff' }),
+    ],
+  },
+  {
     id: 'zombie',
     name: 'Zombie',
     emoji: '🧟',
@@ -201,11 +266,15 @@ export const CHARACTER_TEMPLATES: readonly CharacterTemplate[] = [
       make('Zombie', {
         headDiameter: 34,
         torsoWidth: 18,
-        armUpperLength: 12,
-        armLowerLength: 11,
-        armCurveUpper: 0.15,
+        armUpperLength: 13,
+        armLowerLength: 12,
+        armCurveUpper: 0.2,
+        armCurveLower: 0.25,
+        legCurveUpper: 0.12,
         color: '#4b6b3a',
       }),
+    // Un brazo caído (apagado) → silueta desbalanceada, más "monstruo".
+    hiddenParts: ['armFar'],
   },
   {
     id: 'skeleton',
@@ -238,5 +307,10 @@ export const CHARACTER_TEMPLATES: readonly CharacterTemplate[] = [
         footLength: 10,
         color: '#546e7a',
       }),
+    // Antena con luz.
+    accessories: [
+      acc({ name: 'Antenna', anchor: 'head', shape: 'capsule', offsetAlong: 12, angle: 0, length: 9, width: 1.6, color: '#37474f' }),
+      acc({ name: 'Antenna tip', anchor: 'head', shape: 'circle', offsetAlong: 22, width: 5, color: '#ff5252' }),
+    ],
   },
 ];

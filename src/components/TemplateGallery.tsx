@@ -14,7 +14,7 @@ type Item = { readonly id: string; readonly name: string; readonly emoji: string
 
 export const TemplateGallery = (): ReactElement => {
   const mode = useProjectStore((s) => s.project.mode);
-  const applyCharacter = useProjectStore((s) => s.applyCharacter);
+  const applyHumanoidTemplate = useProjectStore((s) => s.applyHumanoidTemplate);
   const loadRigPreset = useProjectStore((s) => s.loadRigPreset);
   const notify = useProjectStore((s) => s.notify);
   const t = useT();
@@ -34,10 +34,7 @@ export const TemplateGallery = (): ReactElement => {
           id: c.id,
           name: c.name,
           emoji: c.emoji,
-          apply: () => {
-            applyCharacter(c.build());
-            notify('Plantilla aplicada', 'success');
-          },
+          apply: () => applyHumanoidTemplate(c.id),
         }));
 
   return (

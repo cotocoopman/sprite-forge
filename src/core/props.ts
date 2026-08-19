@@ -47,8 +47,8 @@ export const PROP_TEMPLATES: readonly PropTemplate[] = [
     name: 'Axe',
     emoji: '🪓',
     parts: [
-      part('Handle', { shape: 'capsule', offsetAlong: -6, offsetPerp: 0, angle: 0, length: 28, width: 3, color: WOOD }),
-      part('Head', { shape: 'rect', offsetAlong: 18, offsetPerp: -6, angle: 0, length: 12, width: 13, color: STEEL }),
+      part('Handle', { shape: 'capsule', offsetAlong: -8, offsetPerp: 0, angle: 0, length: 26, width: 3, color: WOOD }),
+      part('Head', { shape: 'rect', offsetAlong: 6, offsetPerp: -7, angle: 0, length: 11, width: 13, color: STEEL }),
     ],
   },
   {
