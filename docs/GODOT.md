@@ -1,5 +1,7 @@
 # Using Sprite Forge exports in Godot
 
+> 🌐 **Español:** [GODOT.es.md](./GODOT.es.md)
+
 Step-by-step to get an exported animation running in **Godot 4.x**. Also covers
 using the frames as a base for Krita / AI art.
 

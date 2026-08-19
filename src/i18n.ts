@@ -35,6 +35,12 @@ const EN: Record<string, string> = {
   'Frame siguiente (→)': 'Next frame (→)',
   '¿Cómo lo uso en Godot?': 'How do I use it in Godot?',
   'Ver guía paso a paso': 'See step-by-step guide',
+  Plantillas: 'Templates',
+  'listas para usar': 'ready to use',
+  PLANTILLA: 'TEMPLATE',
+  'Plantilla aplicada': 'Template applied',
+  'Elegí una plantilla como punto de partida. Después ajustá todo a gusto.':
+    'Pick a template as a starting point. Then tweak everything to taste.',
   Importar: 'Import',
   'Exportar proyecto': 'Export project',
   'Exportar sprites': 'Export sprites',

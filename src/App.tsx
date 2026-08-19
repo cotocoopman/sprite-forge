@@ -38,6 +38,7 @@ import { ReferenceControls } from '@components/ReferenceControls';
 import { PlaybackControls } from '@components/PlaybackControls';
 import { KeyboardShortcuts } from '@components/KeyboardShortcuts';
 import { RigEditor } from '@components/RigEditor';
+import { TemplateGallery } from '@components/TemplateGallery';
 import { CustomPreview } from '@components/CustomPreview';
 import { RigAnimationPanel } from '@components/RigAnimationPanel';
 import { RigFrameStrip } from '@components/RigFrameStrip';
@@ -260,7 +261,11 @@ export const App = (): ReactElement => {
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, flexGrow: 1, minHeight: 0 }}>
           {/* Izquierda — Editor de huesos */}
           <Paper square sx={{ ...columnSx, width: { xs: '100%', md: 340 }, flexShrink: { md: 0 } }}>
-            <RigEditor />
+            <Stack spacing={3}>
+              <TemplateGallery />
+              <Divider />
+              <RigEditor />
+            </Stack>
           </Paper>
           {/* Centro — Preview animado del rig */}
           <Box sx={{ flexGrow: 1, minWidth: 0, p: 2, display: 'flex', flexDirection: 'column', gap: 1.5, minHeight: { xs: '70vh', md: 0 } }}>
@@ -280,6 +285,8 @@ export const App = (): ReactElement => {
           {/* Izquierda — Personaje */}
           <Paper square sx={{ ...columnSx, width: { xs: '100%', md: 320 }, flexShrink: { md: 0 } }}>
             <Stack spacing={3}>
+              <TemplateGallery />
+              <Divider />
               <CharacterPanel />
               <Divider />
               <PartsPanel />
