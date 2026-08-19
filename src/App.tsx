@@ -20,6 +20,7 @@ import SaveAltIcon from '@mui/icons-material/SaveAlt';
 import UndoIcon from '@mui/icons-material/Undo';
 import RedoIcon from '@mui/icons-material/Redo';
 import KeyboardIcon from '@mui/icons-material/Keyboard';
+import GitHubIcon from '@mui/icons-material/GitHub';
 import TranslateIcon from '@mui/icons-material/Translate';
 import { useProjectStore } from '@store/useProjectStore';
 import { useT } from '@/i18n';
@@ -244,6 +245,18 @@ export const App = (): ReactElement => {
             <Tooltip title={t('Atajos de teclado')}>
               <IconButton size="small" onClick={() => setShortcutsOpen(true)}>
                 <KeyboardIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={t('Ver en GitHub (open source)')}>
+              <IconButton
+                size="small"
+                component="a"
+                href="https://github.com/cotocoopman/sprite-forge"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="GitHub"
+              >
+                <GitHubIcon fontSize="small" />
               </IconButton>
             </Tooltip>
             <Button startIcon={<UploadIcon />} onClick={() => fileInputRef.current?.click()}>

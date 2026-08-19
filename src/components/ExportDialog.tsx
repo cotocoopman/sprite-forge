@@ -178,7 +178,7 @@ export const ExportDialog = ({ open, onClose }: Props): ReactElement => {
             <Typography variant="caption" color="text.secondary">
               {t('¿Cómo lo uso en Godot?')}{' '}
               <Link
-                href="https://github.com/cotocoopman/sprite-forge/blob/main/docs/GODOT.md"
+                href="https://github.com/cotocoopman/sprite-forge/blob/master/docs/GODOT.md"
                 target="_blank"
                 rel="noopener"
               >
