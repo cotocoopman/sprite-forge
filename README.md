@@ -98,7 +98,11 @@ Hay **dos modos** (toggle en la barra superior):
   con preview en vivo. Cinemática directa a prueba de ciclos.
 - **Presets**: Cuadrúpedo, Ave, Slime, Vacío.
 - Color por hueso + reset individual o **resetear todos al color base**.
-- Export estático PNG / SVG del rig.
+- **Animación** (igual que el humanoide): clips del rig con `frames`/`fps`/`loop`,
+  timeline de keyframes arrastrables, **editor de ángulo por hueso** por keyframe,
+  easing, playback en vivo y tira de miniaturas. El cuadrúpedo trae un `walk` demo.
+- Export estático PNG / SVG del rig, y del **rig animado**: sheets / frames / SVG /
+  manifest / **Godot 4 `.tres`** (desde "Exportar sprites" en modo custom).
 
 ### Persistencia y proyecto
 - Autoguardado en `localStorage` (debounce 500 ms).
@@ -151,10 +155,13 @@ construye por fases:
   editor de ángulo por hueso, easing, playback y export (sheets/frames/Godot `.tres`).
 - ⏳ **Fase 3** — más presets y biblioteca.
 
+Estado completo, pendientes y limitaciones conocidas: **[docs/ROADMAP.md](./docs/ROADMAP.md)**.
+
 Ver [CONTRIBUTING.md](./CONTRIBUTING.md) si querés colaborar.
 
 ## Guías
 
+- [docs/ROADMAP.md](./docs/ROADMAP.md) — estado, hecho, pendiente y limitaciones.
 - [docs/WORKFLOW.md](./docs/WORKFLOW.md) — cómo combinar Sprite Forge + Krita + IA
   para prototipar assets 2D rápido y sin ser diseñador.
 - [docs/STACKS.md](./docs/STACKS.md) — recetas precisas por estilo (silueta, 2D
