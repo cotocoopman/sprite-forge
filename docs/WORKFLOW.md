@@ -1,97 +1,95 @@
-# Workflow: Sprite Forge + Krita + IA como copiloto de assets
+# Workflow: Sprite Forge + Krita + AI as an asset copilot
 
-Guía práctica para prototipar assets 2D para tu juego (Godot) **rápido y sin ser
-diseñador**, combinando Sprite Forge con Krita y (opcional) IA local.
+Practical guide to prototype 2D assets for your game (Godot) **fast and without
+being a designer**, combining Sprite Forge with Krita and (optionally) local AI.
 
-La idea de fondo: **separá el problema en dos**.
+The core idea: **split the problem in two.**
 
-- **Movimiento / proporción / timing / 8 direcciones** → **Sprite Forge**
-  (no hay que dibujar; ajustás sliders y keyframes).
-- **Arte / color / textura / estilo** → **Krita** (a mano) y/o **IA local**
-  (Stable Diffusion vía el plugin de Krita).
+- **Motion / proportion / timing / 8 directions** → **Sprite Forge**
+  (no drawing; you adjust sliders and keyframes).
+- **Art / color / texture / style** → **Krita** (by hand) and/or **local AI**
+  (Stable Diffusion via the Krita plugin).
 
-Sprite Forge te da una base **on-model y consistente entre frames** (la línea de
-suelo `groundY` es constante), que es exactamente lo que necesita cualquier paso
-de pintura o de IA para no "bailar".
-
----
-
-## Pipeline A — Pintar encima (control total, look a mano)
-
-1. **Sprite Forge:** diseñá proporciones y animá el clip (walk, run, attack…).
-   Exportá **frames sueltos PNG** (transparentes) al tamaño final (ej. 128 o 256).
-2. **Krita:** Krita tiene animación frame-by-frame + onion skin. Importá los
-   frames como capa base (silueta) y **pintá encima** frame por frame o solo los
-   keyframes. La silueta garantiza que proporción, pose y suelo queden fijos, así
-   tu dibujo no se sale de modelo.
-3. Exportá el spritesheet desde Krita → a Godot.
-
-> Truco: en Sprite Forge podés **apagar partes** y exportar cabeza/brazos/piernas
-> por separado. Pintás cada pieza aparte y las recombinás, o las usás como rig
-> 2D (huesos) en Godot.
+Sprite Forge gives you an **on-model, frame-consistent** base (the `groundY`
+ground line is constant), which is exactly what any painting or AI step needs to
+avoid "swimming".
 
 ---
 
-## Pipeline B — IA guiada por la silueta (mitiga "no sé dibujar")
+## Pipeline A — Paint over it (full control, hand-made look)
 
-Requiere el plugin **[krita-ai-diffusion](https://github.com/Acly/krita-ai-diffusion)**
-(free, local, open source; backend ComfyUI; ~6 GB VRAM NVIDIA recomendado).
+1. **Sprite Forge:** design proportions and animate the clip (walk, run, attack…).
+   Export **individual PNG frames** (transparent) at the final size.
+2. **Krita:** Krita has frame-by-frame animation + onion skin. Import the frames
+   as a base layer (silhouette) and **paint over** the keyframes, then the
+   in-betweens. The silhouette keeps proportion, pose and ground fixed, so your
+   painting stays on-model.
+3. Export the spritesheet from Krita → into Godot.
 
-La clave es **ControlNet**: le das a la IA tu silueta como "molde" y genera arte
-que **respeta la pose exacta**, con tu prompt de estilo.
+> Trick: in Sprite Forge you can **turn parts off** and export head/arms/legs
+> separately. Paint each piece apart and recombine them, or use them as a 2D
+> (bone) rig in Godot.
 
-1. En Sprite Forge, exportá el/los frame(s) de la silueta.
-2. En Krita, con krita-ai-diffusion, usá la silueta como control **Scribble /
-   Line art / Pose / Depth** y escribí el prompt de estilo (ej. *"knight in dark
+---
+
+## Pipeline B — AI guided by the silhouette (mitigates "I can't draw")
+
+Requires the **[krita-ai-diffusion](https://github.com/Acly/krita-ai-diffusion)**
+plugin (free, local, open source; ComfyUI backend; ~6 GB NVIDIA VRAM recommended).
+
+The key is **ControlNet**: you feed the AI your silhouette as a "mold" and it
+generates art that **respects the exact pose**, with your style prompt.
+
+1. In Sprite Forge, export the silhouette frame(s).
+2. In Krita, with krita-ai-diffusion, use the silhouette as a **Scribble / Line
+   art / Pose / Depth** control and write the style prompt (e.g. *"knight in dark
    armor, top-down, clean shading"*).
-3. Para **consistencia entre frames**: fijá la semilla (seed), usá **img2img con
-   denoise bajo**, y **IP-Adapter** con el frame 1 como imagen de referencia de
-   estilo/personaje. Como la silueta ya bloquea pose y proporción, cada frame
-   sale coherente.
-4. Retoque final en Krita, exportás el sheet, a Godot.
+3. For **frame consistency**: fix the seed, use **img2img with low denoise**, and
+   **IP-Adapter** with frame 1 as the style/character reference. Since the
+   silhouette already locks pose and proportion, each frame comes out coherent.
+4. Final touch-up in Krita, export the sheet, into Godot.
 
-Ideal para: personajes, retratos, props, tilesets, fondos. Vos dirigís (prompt +
-silueta), la IA hace el "dibujo".
-
----
-
-## Pipeline C — 3D simple → sprites 2D (8 direcciones consistentes)
-
-Para props/personajes donde querés 8 direcciones perfectamente consistentes, el
-truco indie clásico es modelar en 3D **bajo-poly** y renderizar a 2D.
-
-- **[Blender MCP](https://github.com/ahujasid/blender-mcp)** (o Blender a mano):
-  Claude arma un prop low-poly, lo renderiza desde 8 ángulos → sprites, o exporta
-  **depth/normal maps** para usarlos como ControlNet en el Pipeline B.
-- Combina muy bien con el giro 3D de Sprite Forge para bloquear las direcciones.
+Great for: characters, portraits, props, tilesets, backgrounds. You direct
+(prompt + silhouette), the AI does the "drawing".
 
 ---
 
-## Dónde encaja cada herramienta
+## Pipeline C — simple 3D → 2D sprites (consistent 8 directions)
 
-| Necesidad | Herramienta |
+For props/characters where you want perfectly consistent 8 directions, the classic
+indie trick is to model low-poly in 3D and render to 2D.
+
+- **[Blender MCP](https://github.com/ahujasid/blender-mcp)** (or Blender by hand):
+  Claude builds a low-poly prop, renders it from 8 angles → sprites, or exports
+  **depth/normal maps** to use as ControlNet in Pipeline B.
+- Pairs well with Sprite Forge's 3D turn to lock the directions.
+
+---
+
+## Where each tool fits
+
+| Need | Tool |
 |---|---|
-| Esqueleto, pose, timing, 8-dir, prototipo de movimiento | **Sprite Forge** |
-| Pintura a mano, color, retoque, animación frame-by-frame | **Krita** |
-| Generar arte desde la silueta / textura / concept (local) | **krita-ai-diffusion** (SD + ControlNet) |
-| Props 3D → sprites / mapas de control | **Blender (+ MCP)** |
-| Pixel art dedicado | **Aseprite (+ MCP)** |
-| Motor, escenas, animar sprites | **Godot** |
+| Skeleton, pose, timing, 8-dir, motion prototype | **Sprite Forge** |
+| Hand painting, color, touch-up, frame animation | **Krita** |
+| Generate art from the silhouette / texture (local) | **krita-ai-diffusion** (SD + ControlNet) |
+| 3D props → sprites / control maps | **Blender (+ MCP)** |
+| Dedicated pixel art | **Aseprite (+ MCP)** |
+| Engine, scenes, animate sprites | **Godot** |
 
 ---
 
-## Consejos para mitigar la falta de diseño
+## Tips to mitigate a lack of design skill
 
-- **No dibujes movimiento de cero:** definilo en Sprite Forge (es lo más difícil
-  a mano). Reservá tu energía para color/estilo, donde la IA y Krita ayudan más.
-- **Trabajá on-model:** la silueta constante = base perfecta para ControlNet y
-  para pintar sin desproporcionar.
-- **Fijá seed + IP-Adapter** para que los frames de una animación no cambien de
-  estilo entre sí.
-- **Paleta primero:** definí 4–8 colores en Krita y reutilizalos; da cohesión
-  aunque no seas artista.
-- **Prototipá en gris:** Sprite Forge en negro/silueta ya sirve para *probar el
-  juego* en Godot hoy; el arte final lo agregás después sin tocar la animación.
+- **Don't draw motion from scratch:** define it in Sprite Forge (the hardest part
+  by hand). Save your energy for color/style, where AI and Krita help most.
+- **Work on-model:** the constant silhouette = perfect base for ControlNet and for
+  painting without breaking proportions.
+- **Fix seed + IP-Adapter** so an animation's frames don't change style between them.
+- **Palette first:** define 4–8 colors in Krita and reuse them; it gives cohesion
+  even if you're not an artist.
+- **Prototype in grey:** Sprite Forge in black/silhouette is already enough to
+  *test the game* in Godot today; add final art later without touching the animation.
 
-Ver también [AI-COPILOT.md](./AI-COPILOT.md) para el detalle de qué MCPs sirven
-para usar Claude como copiloto de assets.
+See also [AI-COPILOT.md](./AI-COPILOT.md) for which MCPs are worth using to make
+Claude an asset copilot.

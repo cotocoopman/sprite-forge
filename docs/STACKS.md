@@ -1,138 +1,122 @@
-# Recetas por estilo de asset (stacks precisos)
+# Recipes by asset style (precise stacks)
 
-Qué herramienta usar, en qué rol, en qué orden, y cómo entra a Godot — según el
-look que busques. En todas, **Sprite Forge aporta lo mismo**: la base de
-**movimiento / pose / proporción / 8-dir**, con línea de suelo constante.
+Which tool to use, in what role, in what order, and how it enters Godot — based on
+the look you want. In all of them, **Sprite Forge provides the same thing**: the
+**motion / pose / proportion / 8-dir** base, with a constant ground line.
 
-Leyenda de roles: **[MOV]** movimiento/pose · **[ART]** arte/color · **[GEN]**
-generación IA · **[ENGINE]** motor.
+Role legend: **[MOV]** motion/pose · **[ART]** art/color · **[GEN]** AI generation ·
+**[ENGINE]** engine.
 
 ---
 
-## 1. 2D silueta / minimalista (prototipo jugable HOY)
+## 1. 2D silhouette / minimalist (playable prototype TODAY)
 
-**Solo Sprite Forge.** Sin dibujar nada.
+**Sprite Forge only.** No drawing.
 
-1. **[MOV] Sprite Forge:** proporciones + clips + (opcional) 8-dir.
-2. Export → **Godot 4 SpriteFrames `.tres`** (o sheets PNG + `manifest.json`).
-3. **[ENGINE] Godot:** dropear la carpeta en `res://`, usar el `.tres` en un
+1. **[MOV] Sprite Forge:** proportions + clips + (optional) 8-dir.
+2. Export → **Godot 4 SpriteFrames `.tres`** (or PNG sheets + `manifest.json`).
+3. **[ENGINE] Godot:** drop the folder in `res://`, use the `.tres` in an
    `AnimatedSprite2D`.
 
-**Salida:** PNG/SVG + `.tres`. **Consistencia:** `groundY` constante = sin vibración.
-**Cuándo:** para jugar/testear el juego ya, con arte final después.
+**Output:** PNG/SVG + `.tres`. **Consistency:** constant `groundY` = no jitter.
+**When:** to play/test the game now, with final art later.
 
 ---
 
-## 2. 2D pintado / painterly (personajes con "mano")
+## 2. 2D painterly (characters with a hand-made feel)
 
-**Sprite Forge → Krita** (+ opcional IA).
+**Sprite Forge → Krita** (+ optional AI).
 
-1. **[MOV] Sprite Forge:** animá el clip. Export **frames PNG transparentes** al
-   tamaño final (128/256).
-2. **[ART] Krita:** importá los frames como animación (Krita tiene timeline +
-   onion skin). Silueta = capa base; **pintá encima** los keyframes, luego los
-   intermedios.
-3. *(Opcional [GEN])* **krita-ai-diffusion** con ControlNet **Line art/Pose** para
-   generar el primer frame y calcarlo o refinarlo.
-4. Export **spritesheet** desde Krita → Godot (sheet + AnimatedSprite2D).
+1. **[MOV] Sprite Forge:** animate the clip. Export **transparent PNG frames** at
+   the final size (128/256).
+2. **[ART] Krita:** import the frames as animation (Krita has a timeline + onion
+   skin). Silhouette = base layer; **paint over** the keyframes, then the in-betweens.
+3. *(Optional [GEN])* **krita-ai-diffusion** with ControlNet **Line art/Pose** to
+   generate the first frame and trace or refine it.
+4. Export the **spritesheet** from Krita → Godot (sheet + AnimatedSprite2D).
 
-**Consistencia:** pintá sobre la silueta (pose/proporción fijas). **Truco:**
-"apagar partes" en Sprite Forge → exportás y pintás cabeza/brazos/piernas aparte.
+**Consistency:** paint over the silhouette (fixed pose/proportion). **Trick:** turn
+parts off in Sprite Forge → export and paint head/arms/legs separately.
 
 ---
 
 ## 3. 2D pixel art
 
-**Sprite Forge (referencia) → Aseprite (pixel real).**
+**Sprite Forge (reference) → Aseprite (real pixels).**
 
-1. **[MOV] Sprite Forge:** animá; export frames PNG a **baja resolución** (32/48/64)
-   — usá el preset de tamaño chico.
-2. **[ART] Aseprite:** importá los frames como **capa de referencia / rotoscopio**
-   y **pixelá encima** (Aseprite tiene animación + onion skin nativos). Definí
-   una **paleta** de 8–16 colores.
-3. *(Opcional)* **aseprite-mcp** (`diivi/aseprite-mcp`, 104 tools): que Claude
-   ayude con capas, paleta, dithering, sombreado y export del sheet.
-4. Export **spritesheet + JSON** de Aseprite → Godot.
+1. **[MOV] Sprite Forge:** animate; export PNG frames at **low resolution** (32/48/64)
+   — use the small size preset.
+2. **[ART] Aseprite:** import the frames as a **reference / rotoscope layer** and
+   **pixel over** them (Aseprite has native animation + onion skin). Define a
+   **palette** of 8–16 colors.
+3. *(Optional)* **aseprite-mcp** (`diivi/aseprite-mcp`, 104 tools): let Claude help
+   with layers, palette, dithering, shading and sheet export.
+4. Export **spritesheet + JSON** from Aseprite → Godot.
 
-**Nota:** el pixel final se hace a mano/Aseprite; Sprite Forge da el timing y la
-silueta guía (evita desproporción). No esperes pixel art directo de la silueta.
-
----
-
-## 4. 2D generado por IA (concept, tilesets, fondos, props sueltos)
-
-**ComfyUI / krita-ai-diffusion** como fuente; Krita para retoque.
-
-1. **[GEN]** Local, gratis:
-   - En chat con Claude: **ComfyUI MCP** (oficial comfy.org o `Nikolaibibo/claude-comfyui-mcp`) → generás tilesets/props/fondos con prompt.
-   - Dentro de Krita: **krita-ai-diffusion** (inpaint/outpaint, ControlNet, IP-Adapter).
-2. *(Para personajes)* alimentá la **silueta de Sprite Forge** como ControlNet
-   (Scribble/Pose/Depth) → arte que respeta la pose. **Seed fija + IP-Adapter**
-   (frame 1 como referencia) = estilo consistente entre frames.
-3. **[ART] Krita:** limpieza, recorte, paleta, export sheet → Godot.
-
-**Cuándo:** lo que más mitiga "no sé dibujar". Vos dirigís (prompt + silueta).
+**Note:** the final pixels are done by hand/Aseprite; Sprite Forge gives the timing
+and the guide silhouette (avoids off proportions). Don't expect pixel art straight
+from the silhouette.
 
 ---
 
-## 5. 3D → sprites 2D (props / 8 direcciones perfectas)
+## 4. 2D generated by AI (concept, tilesets, backgrounds, standalone props)
 
-**Blender → render → 2D → Godot.** Truco indie clásico.
+**ComfyUI / krita-ai-diffusion** as the source; Krita for touch-up.
 
-1. **[ART/GEN] Blender** (a mano o con **`ahujasid/blender-mcp`**, ⭐~26k): modelá
-   low-poly; Claude puede armar/ajustar por prompt.
-2. Renderizá desde **8 ángulos** (o los que uses) → sprites PNG; o exportá
-   **depth/normal maps** para usarlos como ControlNet en la receta 4.
-3. *(Opcional)* usá el **giro 3D de Sprite Forge** para bloquear las direcciones
-   antes de modelar.
+1. **[GEN]** Local, free:
+   - In chat with Claude: **ComfyUI MCP** (official comfy.org or `Nikolaibibo/claude-comfyui-mcp`) → generate tilesets/props/backgrounds from a prompt.
+   - Inside Krita: **krita-ai-diffusion** (inpaint/outpaint, ControlNet, IP-Adapter).
+2. *(For characters)* feed the **Sprite Forge silhouette** as a ControlNet
+   (Scribble/Pose/Depth) → art that respects the pose. **Fixed seed + IP-Adapter**
+   (frame 1 as reference) = consistent style across frames.
+3. **[ART] Krita:** cleanup, cropping, palette, export sheet → Godot.
+
+**When:** the biggest help for "I can't draw". You direct (prompt + silhouette).
+
+---
+
+## 5. 3D → 2D sprites (props / perfect 8 directions)
+
+**Blender → render → 2D → Godot.** Classic indie trick.
+
+1. **[ART/GEN] Blender** (by hand or with **`ahujasid/blender-mcp`**, ⭐~26k): model
+   low-poly; Claude can build/tweak it by prompt.
+2. Render from **8 angles** (or the ones you use) → PNG sprites; or export
+   **depth/normal maps** to use as ControlNet in recipe 4.
+3. *(Optional)* use Sprite Forge's **3D turn** to lock the directions before modeling.
 4. **[ENGINE] Godot:** sheets → AnimatedSprite2D (8-dir).
 
-**Cuándo:** props que necesitan rotación consistente, o para bakear iluminación 2D.
-⚠️ `execute_blender_code` corre Python arbitrario — guardá antes.
+**When:** props that need consistent rotation, or to bake 2D lighting.
+⚠️ `execute_blender_code` runs arbitrary Python — save before using.
 
 ---
 
-## 6. 3D real (juego 3D o 2.5D)
+## 6. Real 3D (3D or 2.5D game)
 
 **Blender → glTF → Godot.**
 
-1. **[ART] Blender (+ blender-mcp):** modelado/materiales por prompt + ajuste manual.
-2. Export **glTF/GLB** (formato nativo recomendado por Godot).
-3. **[ENGINE] Godot:** importás el `.glb`; materiales/animaciones ya vienen.
+1. **[ART] Blender (+ blender-mcp):** modeling/materials by prompt + manual tweak.
+2. Export **glTF/GLB** (Godot's recommended native format).
+3. **[ENGINE] Godot:** import the `.glb`; materials/animations come with it.
 
 ---
 
-## Tabla rápida
+## Reference table
 
-| Estilo | [MOV] | [ART] | [GEN] | → Godot |
-|---|---|---|---|---|
-| Silueta / prototipo | Sprite Forge | — | — | `.tres` / sheets |
-| 2D painterly | Sprite Forge | Krita | krita-ai-diffusion* | sheet |
-| 2D pixel art | Sprite Forge | Aseprite (+mcp) | — | sheet + JSON |
-| 2D IA (fondos/props) | Sprite Forge* | Krita | ComfyUI / krita-ai-diffusion | sheet |
-| 3D → 2D sprites | Sprite Forge* | Blender (+mcp) | — | sheets 8-dir |
-| 3D real | — | Blender (+mcp) | — | glTF/GLB |
-
-`*` = opcional / según el caso.
-
----
-
-## Referencia: costo / Claude / output / Godot
-
-| Herramienta | Costo | Open source | ¿MCP? ¿usa tu Claude? | Local/Cloud | Output | Nodo Godot |
+| Tool | Cost | Open source | MCP / uses your Claude? | Local/Cloud | Output | Godot node |
 |---|---|---|---|---|---|---|
-| **Sprite Forge** | Gratis | Sí (MIT) | No (app sola) | Local (browser) | PNG sheets/frames, SVG, `manifest.json`, **`.tres`** | **`AnimatedSprite2D`** (asignás el `.tres`) · o `Sprite2D`+`AtlasTexture` |
-| **Krita** | Gratis | Sí (GPL) | No | Local | PNG / sheet | `AnimatedSprite2D` / `Sprite2D` |
-| **krita-ai-diffusion** | Gratis local · opc. nube ~US$11/5k tokens | Sí (GPL-3) | **No** — usa Stable Diffusion, no Claude | Local (GPU ~6 GB) o nube Interstice | PNG (capas Krita) | `AnimatedSprite2D` / `Sprite2D` |
-| **Aseprite** | Binario **US$20** (1 pago) · o compilás gratis · o **LibreSprite** gratis | Aseprite: no (licencia propietaria) · LibreSprite: sí (GPL) | MCP comunidad → **sí, tu Claude** lo maneja | Local (escritorio) | **PNG sheet + JSON** | `AnimatedSprite2D` (addon *Aseprite Wizard*) / `Sprite2D` |
-| **ComfyUI** | Gratis | Sí (GPL-3) | MCP oficial+comunidad → **sí, tu Claude** | Local (GPU) o tu server | PNG | (vía Krita) → `AnimatedSprite2D` / `Sprite2D` |
-| **Blender** | Gratis | Sí (GPL) | **blender-mcp** → **sí, tu Claude** | Local | 3D→2D: PNG sprites · 3D: **glTF/GLB** | 2D: `AnimatedSprite2D` · 3D: escena (`MeshInstance3D` + `AnimationPlayer`) |
-| **Godot MCP** | Gratis | Sí | **Sí, tu Claude** (beta) | Local | — (controla el editor) | — |
+| **Sprite Forge** | Free | Yes (MIT) | No (standalone) | Local (browser) | PNG sheets/frames, SVG, `manifest.json`, **`.tres`** | **`AnimatedSprite2D`** (assign the `.tres`) · or `Sprite2D`+`AtlasTexture` |
+| **Krita** | Free | Yes (GPL) | No | Local | PNG / sheet | `AnimatedSprite2D` / `Sprite2D` |
+| **krita-ai-diffusion** | Free local · opt. cloud ~US$11/5k tokens | Yes (GPL-3) | **No** — uses Stable Diffusion, not Claude | Local (GPU ~6 GB) or Interstice cloud | PNG (Krita layers) | `AnimatedSprite2D` / `Sprite2D` |
+| **Aseprite** | Binary **US$20** (one-time) · or compile free · or **LibreSprite** free | Aseprite: no (proprietary license) · LibreSprite: yes (GPL) | Community MCP → **yes, your Claude** drives it | Local (desktop) | **PNG sheet + JSON** | `AnimatedSprite2D` (via *Aseprite Wizard* addon) / `Sprite2D` |
+| **ComfyUI** | Free | Yes (GPL-3) | Official+community MCP → **yes, your Claude** | Local (GPU) or your server | PNG | (via Krita) → `AnimatedSprite2D` / `Sprite2D` |
+| **Blender** | Free | Yes (GPL) | **blender-mcp** → **yes, your Claude** | Local | 3D→2D: PNG sprites · 3D: **glTF/GLB** | 2D: `AnimatedSprite2D` · 3D: scene (`MeshInstance3D` + `AnimationPlayer`) |
+| **Godot MCP** | Free | Yes | **Yes, your Claude** (beta) | Local | — (controls the editor) | — |
 
-**Nota "usa tu Claude":** las IA de imagen (Stable Diffusion / ComfyUI /
-krita-ai-diffusion) **no** usan Claude, son otra IA. Tu cuenta de Claude entra
-solo como cerebro que **maneja apps vía MCP** (Aseprite, ComfyUI, Blender, Godot),
-usando un cliente con MCP (Claude Desktop / Claude Code).
+**Note on "uses your Claude":** the image AIs (Stable Diffusion / ComfyUI /
+krita-ai-diffusion) do **not** use Claude — they're a separate AI. Your Claude only
+comes in as the brain that **drives apps via MCP** (Aseprite, ComfyUI, Blender,
+Godot), using an MCP-capable client (Claude Desktop / Claude Code).
 
-Detalle de cada herramienta y su madurez: [AI-COPILOT.md](./AI-COPILOT.md).
-Pipelines paso a paso: [WORKFLOW.md](./WORKFLOW.md).
+Tool details and maturity: [AI-COPILOT.md](./AI-COPILOT.md).
+Step-by-step pipelines: [WORKFLOW.md](./WORKFLOW.md).

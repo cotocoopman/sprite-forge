@@ -1,53 +1,52 @@
-# Contribuir a Sprite Forge
+# Contributing to Sprite Forge
 
-¡Gracias por el interés! Esta es una herramienta local (sin backend) para generar
-sprites 2D silueta.
+Thanks for your interest! This is a local (no backend) tool to generate 2D
+silhouette sprites.
 
-## Cómo empezar
+## Getting started
 
 ```bash
 yarn install
 yarn dev
-yarn test        # antes de abrir un PR: que pasen
-yarn typecheck   # sin errores y sin `any`
+yarn test        # before opening a PR: make it pass
+yarn typecheck   # no errors and no `any`
 ```
 
-## Flujo de trabajo (fork + PR)
+## Workflow (fork + PR)
 
-La rama `main` está protegida: no se puede pushear directo. Para proponer cambios:
+The `main` branch is protected: you can't push to it directly. To propose changes:
 
-1. Hacé **fork** del repo a tu cuenta.
-2. Cloná tu fork y creá una rama: `git checkout -b fix/mi-cambio`.
-3. Hacé tus cambios; corré `yarn test` y `yarn typecheck`.
-4. Push a tu fork y abrí un **Pull Request** contra `main` de este repo.
-5. Se revisa y se mergea.
+1. **Fork** the repo to your account.
+2. Clone your fork and create a branch: `git checkout -b fix/my-change`.
+3. Make your changes; run `yarn test` and `yarn typecheck`.
+4. Push to your fork and open a **Pull Request** against this repo's `main`.
+5. It gets reviewed and merged.
 
-No hace falta pedir acceso de escritura: todo entra por PR desde forks.
+No write access needed: everything comes in via PRs from forks.
 
-## Convenciones de código
+## Code conventions
 
-- **TypeScript strict**, prohibido `any`.
-- Solo arrow functions (`const f = () => {}`), nunca `function`.
-- MUI v7 (sin Tailwind). Zustand con selector pattern: `useStore((s) => s.campo)`.
-- Naming: `PascalCase` componentes, `camelCase` variables/funciones,
-  `UPPER_SNAKE_CASE` constantes.
-- `src/core/` debe seguir siendo **puro** (sin React/MUI/DOM salvo el rasterizado
-  en `export.ts`). La lógica nueva de core va con su test `*.test.ts` al lado.
-- Los cambios al shape del proyecto deben ser **retrocompatibles**: agregá el
-  campo con default tolerante en `core/validation.ts` para no romper proyectos
-  guardados.
+- **TypeScript strict**, no `any`.
+- Arrow functions only (`const f = () => {}`), never `function`.
+- MUI v7 (no Tailwind). Zustand with the selector pattern: `useStore((s) => s.field)`.
+- Naming: `PascalCase` components, `camelCase` variables/functions,
+  `UPPER_SNAKE_CASE` constants.
+- `src/core/` must stay **pure** (no React/MUI/DOM except the rasterizer in
+  `export.ts`). New core logic ships with its `*.test.ts` next to it.
+- Changes to the project shape must be **backward compatible**: add the field with a
+  tolerant default in `core/validation.ts` so saved projects don't break.
+- UI strings are wrapped with `useT` from `src/i18n.ts` — add the English text to the
+  dictionary (the Spanish string is the key).
 
-## Dónde vive cada cosa
+## Where things live
 
-- Rig humanoide y matemática → `core/rig.ts`
-- Rig genérico (huesos) → `core/customRig.ts`
-- Animación / tipos del proyecto → `core/poses.ts`
-- Render SVG → `core/svg.ts` · Export/PNG/ZIP/Godot → `core/export.ts`
-- Estado y acciones → `store/useProjectStore.ts`
+- Humanoid rig and math → `core/rig.ts`
+- Generic (bone) rig → `core/customRig.ts`
+- Animation / project types → `core/poses.ts`
+- SVG rendering → `core/svg.ts` · Export/PNG/ZIP/Godot → `core/export.ts`
+- State and actions → `store/useProjectStore.ts`
 - UI → `components/`
 
-## Ideas abiertas
+## Open ideas
 
-- Fase 2 del rig genérico: animación por keyframes por hueso.
-- Armas/props como mini-rigs de huesos.
-- Más presets de criaturas.
+See [docs/ROADMAP.md](./docs/ROADMAP.md) for pending work and the backlog.

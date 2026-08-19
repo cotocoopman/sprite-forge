@@ -10,7 +10,21 @@ keyframes, and export sprite sheets / frames / SVG / Godot resources.
 The UI ships in **English and Spanish** (auto-detected from the browser,
 toggle in the top bar).
 
+**▶ Live demo: [sprite-forge-sigma.vercel.app](https://sprite-forge-sigma.vercel.app/)**
+
 ![local](https://img.shields.io/badge/mode-100%25%20local-informational) ![tests](https://img.shields.io/badge/tests-vitest-green) ![license](https://img.shields.io/badge/license-MIT-blue)
+
+<p align="center">
+  <img src="docs/img/walk.gif" width="240" alt="Silhouette walk cycle" />
+  <img src="docs/img/rig-walk.gif" width="240" alt="Quadruped walk cycle" />
+</p>
+
+Design proportions, keyframe the motion, and export sprite sheets or a Godot
+`SpriteFrames` resource — no drawing required.
+
+![Humanoid mode](docs/img/01-app.png)
+
+![Custom rig mode](docs/img/02-custom-rig.png)
 
 ---
 
@@ -152,11 +166,11 @@ Vitest · jszip. No `any`, arrow functions only. `nodeLinker: node-modules`.
 
 - [docs/ROADMAP.md](./docs/ROADMAP.md) — status, done, pending and known limits.
 - [docs/WORKFLOW.md](./docs/WORKFLOW.md) — combining Sprite Forge + Krita + AI to
-  prototype 2D assets fast without being an artist. *(Spanish)*
+  prototype 2D assets fast without being an artist.
 - [docs/STACKS.md](./docs/STACKS.md) — precise per-style recipes (silhouette, 2D
-  painterly, pixel art, AI, 3D→2D, 3D) and how each maps to Godot nodes. *(Spanish)*
+  painterly, pixel art, AI, 3D→2D, 3D) and how each maps to Godot nodes.
 - [docs/AI-COPILOT.md](./docs/AI-COPILOT.md) — verified open-source MCP servers to
-  use Claude as an asset copilot. *(Spanish)*
+  use Claude as an asset copilot.
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) to contribute (fork + PR).
 

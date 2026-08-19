@@ -1,121 +1,115 @@
-# Claude como copiloto de assets — MCPs útiles (investigado, no inventado)
+# Claude as an asset copilot — useful MCPs (researched, not invented)
 
-Relevamiento real de servidores **MCP (Model Context Protocol)** open source para
-usar Claude como asistente de diseño/assets orientado a Godot. Datos verificados
-en GitHub en **agosto 2026** — las estrellas y el estado cambian con el tiempo,
-reverificá antes de instalar. Todo lo listado es **free / open source**.
+A real survey of open-source **MCP (Model Context Protocol)** servers to use Claude
+as a design/asset assistant for Godot. Data verified on GitHub in **August 2026** —
+stars and status change over time, re-verify before installing. Everything listed is
+**free / open source**.
 
-> Regla de oro: probá en un proyecto de descarte y **guardá tu trabajo** antes de
-> darle control de escritura a la IA. Varios de estos ejecutan código/acciones
-> reales sobre tus archivos.
+> Golden rule: try it on a throwaway project and **save your work** before giving the
+> AI write access. Several of these run real code/actions on your files.
 
 ---
 
-## Resumen: qué instalar según el objetivo
+## Summary: what to install by goal
 
-| Objetivo | Recomendación | Madurez |
+| Goal | Recommendation | Maturity |
 |---|---|---|
-| **Arte/textura 2D generada localmente** | Krita + `krita-ai-diffusion` (no es MCP, pero es *lo más valioso*) o ComfyUI MCP | Alta |
-| **Pixel art asistido** | Aseprite + `diivi/aseprite-mcp` | Media-alta |
-| **Props/personajes 3D → sprites 2D** | `ahujasid/blender-mcp` | **Alta (el más maduro)** |
-| **Control del editor Godot (correr/inspeccionar/screenshot)** | alguno de los `godot-mcp` (experimental) | Baja / naciente |
-| **Pintar dentro de Krita vía IA** | `nanayax3/krita-mcp` | Baja (inmaduro) |
+| **Local 2D art/texture generation** | Krita + `krita-ai-diffusion` (not MCP, but *the most valuable*) or ComfyUI MCP | High |
+| **Assisted pixel art** | Aseprite + `diivi/aseprite-mcp` | Medium-high |
+| **3D props/characters → 2D sprites** | `ahujasid/blender-mcp` | **High (most mature)** |
+| **Godot editor control (run/inspect/screenshot)** | one of the `godot-mcp`s (experimental) | Low / nascent |
+| **Painting inside Krita via AI** | `nanayax3/krita-mcp` | Low (immature) |
 
 ---
 
-## 1. Blender MCP — `ahujasid/blender-mcp`  ⭐ ~26.000
-El MCP de arte más maduro y popular. Claude controla Blender (crear/modificar
-objetos, materiales, escenas) por lenguaje natural. Para tu caso 2D: modelás un
-prop/personaje low-poly y lo renderizás a sprites, o sacás depth/normal maps para
-ControlNet.
-- **Valor:** altísimo para 3D→2D y props; comunidad grande, muy probado.
-- **Reviews:** consenso = "prototipado rápido, no reemplaza a un artista 3D";
-  fiable para tool-calling. Advertencia oficial: `execute_blender_code` corre
-  Python arbitrario — **guardá antes de usar**. Trae telemetría anónima (opt-out).
-- **Requiere:** Blender 3.0+, Python 3.10+, `uv`. Repo: https://github.com/ahujasid/blender-mcp
+## 1. Blender MCP — `ahujasid/blender-mcp`  ⭐ ~26,000
+The most mature and popular art MCP. Claude controls Blender (create/modify objects,
+materials, scenes) via natural language. For your 2D case: model a low-poly
+prop/character and render it to sprites, or export depth/normal maps for ControlNet.
+- **Value:** very high for 3D→2D and props; large, battle-tested community.
+- **Reviews:** consensus = "rapid prototyping, not a replacement for a 3D artist";
+  reliable for tool-calling. Official warning: `execute_blender_code` runs arbitrary
+  Python — **save before using**. Ships anonymous telemetry (opt-out).
+- **Requires:** Blender 3.0+, Python 3.10+, `uv`. Repo: https://github.com/ahujasid/blender-mcp
 
 ## 2. Aseprite MCP — `diivi/aseprite-mcp`  ⭐ ~420
-El MCP de **pixel art** más completo que encontré: 104 herramientas (canvas,
-dibujo, capas, animación, paletas, tilemaps, export). Claude crea/edita sprites y
-animaciones pixel por lenguaje natural.
-- **Valor:** alto si tu juego es pixel art; cubre el pipeline pixel entero.
-- **Requiere:** Python 3.13, `uv`, Aseprite (binario de pago ~US$20 **o compilás
-  el código gratis** — mismas features). Repo: https://github.com/diivi/aseprite-mcp
-- Alternativas activas: `willibrandon/pixel-mcp`, `Vollkorn-Games/aseprite-mcp`,
-  `Shexiaoyun/aseprite-mcp` (varios lenguajes).
-- ⚠️ **LibreSprite (fork gratis) NO sirve con estos MCP.** Usa scripting
-  **JavaScript**, no la **API Lua** de Aseprite (v1.2.10+) en la que se basan los
-  MCP. Para el flujo con Claude necesitás **Aseprite** (comprado o compilado
-  gratis). LibreSprite = buen editor manual gratis, pero sin copiloto Claude.
+The most complete **pixel art** MCP I found: 104 tools (canvas, drawing, layers,
+animation, palettes, tilemaps, export). Claude creates/edits pixel sprites and
+animations via natural language.
+- **Value:** high if your game is pixel art; covers the whole pixel pipeline.
+- **Requires:** Python 3.13, `uv`, Aseprite (paid binary ~US$20 **or compile the
+  source for free** — same features). Repo: https://github.com/diivi/aseprite-mcp
+- ⚠️ **LibreSprite (free fork) does NOT work with these MCPs.** It uses **JavaScript**
+  scripting, not Aseprite's **Lua API** (v1.2.10+) that the MCPs rely on. For the
+  Claude workflow you need **Aseprite** (bought or compiled free). LibreSprite = a
+  fine free manual editor, but no Claude copilot.
+- Active alternatives: `willibrandon/pixel-mcp`, `Vollkorn-Games/aseprite-mcp`,
+  `Shexiaoyun/aseprite-mcp` (various languages).
 
-## 3. ComfyUI MCP — oficial + comunidad
-Genera imágenes con Stable Diffusion **local** desde el chat de Claude (texturas,
-concept art, tilesets, img2img sobre tus siluetas).
-- **Oficial:** Comfy MCP de comfy.org (conexión local open source). https://comfy.org/mcp/
-- **Comunidad:** `Nikolaibibo/claude-comfyui-mcp` (15 tools, plantillas Flux/SD/SDXL),
-  `artokun/comfyui-mcp` (178 tools, funciona incluso offline con Ollama).
-- **Valor:** alto para generar assets/referencias sin saber dibujar. Es el mismo
-  motor que usa krita-ai-diffusion por debajo.
+## 3. ComfyUI MCP — official + community
+Generate images with **local** Stable Diffusion from Claude's chat (textures, concept
+art, tilesets, img2img over your silhouettes).
+- **Official:** comfy.org's Comfy MCP (open-source local connection). https://comfy.org/mcp/
+- **Community:** `Nikolaibibo/claude-comfyui-mcp` (15 tools, Flux/SD/SDXL templates),
+  `artokun/comfyui-mcp` (178 tools, works even offline with Ollama).
+- **Value:** high to generate assets/references without drawing. It's the same engine
+  krita-ai-diffusion uses under the hood.
 
-## 4. Godot MCP — **espacio naciente y fragmentado** ⚠️
-Hay muchos, todos **con pocas estrellas (3–11) y jóvenes**; ninguno domina aún.
-Dan control del editor: inspeccionar/editar el árbol de escena, correr el juego,
-screenshots, simular clics.
-- `PiMPStudios/Claude-GoDot-MCP` ⭐ ~11 — 170 tools, Godot 4.2+ (el más completo).
-- `mkdevkit/godot-mcp` ⭐ ~10 — 173 tools, Godot 4.4+, soporta Claude Code/Cursor/Codex.
-- `slangwald/godot-mcp` ⭐ ~3 — Godot 4.6, foco práctico: correr el juego,
-  screenshot, inspeccionar árbol en runtime, simular clics (buen loop de debug).
-- Otros: `LeeSinLiang`, `bradypp`, `Dokujaa`, `DaRealDaHoodie`.
-- **Reality check:** **Claude Code ya lee/escribe tu GDScript y `.tscn` directo en
-  disco sin MCP.** El plus de un Godot MCP es el **control en vivo** (correr,
-  ver, inspeccionar el editor). Si eso te sirve, empezá por `slangwald` (debug
-  loop) o `PiMPStudios/mkdevkit` (control amplio), tratándolos como beta.
+## 4. Godot MCP — **nascent, fragmented space** ⚠️
+There are many, all **low-starred (3–11) and young**; none dominates yet. They give
+editor control: inspect/edit the scene tree, run the game, screenshots, simulate clicks.
+- `PiMPStudios/Claude-GoDot-MCP` ⭐ ~11 — 170 tools, Godot 4.2+ (most complete).
+- `mkdevkit/godot-mcp` ⭐ ~10 — 173 tools, Godot 4.4+, supports Claude Code/Cursor/Codex.
+- `slangwald/godot-mcp` ⭐ ~3 — Godot 4.6, practical focus: run the game, screenshot,
+  inspect the runtime scene tree, simulate clicks (good debug loop).
+- Others: `LeeSinLiang`, `bradypp`, `Dokujaa`, `DaRealDaHoodie`.
+- **Reality check:** **Claude Code already reads/writes your GDScript and `.tscn`
+  directly on disk without MCP.** A Godot MCP's extra value is **live control** (run,
+  see, inspect the editor). If that helps you, start with `slangwald` (debug loop) or
+  `PiMPStudios/mkdevkit` (broad control), treating them as beta.
 
 ## 5. Krita MCP — `nanayax3/krita-mcp`  ⭐ ~30  ⚠️
-Deja a Claude pintar dentro de Krita (canvas, trazos, formas, export).
-- **Limitación importante:** pinta por **manipulación de píxeles**, NO usa el motor
-  de pinceles de Krita → resultado básico. Timeouts en export de canvas grandes.
-- **Veredicto:** todavía inmaduro. Para "Krita + IA" hoy conviene **más el plugin
-  `krita-ai-diffusion`** (ver abajo) que este MCP. Repo: https://github.com/nanayax3/krita-mcp
+Lets Claude paint inside Krita (canvas, strokes, shapes, export).
+- **Important limitation:** it paints via **pixel manipulation**, NOT Krita's brush
+  engine → basic result. Timeouts exporting large canvases.
+- **Verdict:** still immature. For "Krita + AI" today, the **`krita-ai-diffusion`
+  plugin** is a much better fit than this MCP. Repo: https://github.com/nanayax3/krita-mcp
 
 ---
 
-## Bonus (no es MCP pero es el más valioso): `Acly/krita-ai-diffusion`  ⭐ ~10.000
-Plugin de Krita para generar imágenes con IA **local, open, free**. Soporta
-ControlNet (Scribble, Line art, **Pose**, **Depth**, Canny…), IP-Adapter
-(referencia/estilo), inpaint/outpaint. Backend ComfyUI.
-- **Por qué importa:** es el puente perfecto Sprite Forge → arte. Le das tu
-  silueta como ControlNet y genera el arte siguiendo la pose exacta.
-- Repo: https://github.com/Acly/krita-ai-diffusion · Sitio: https://kritaaidiffusion.com/
+## Bonus (not an MCP but the most valuable): `Acly/krita-ai-diffusion`  ⭐ ~10,000
+A Krita plugin to generate images with **local, open, free** AI. Supports ControlNet
+(Scribble, Line art, **Pose**, **Depth**, Canny…), IP-Adapter (reference/style),
+inpaint/outpaint. ComfyUI backend.
+- **Why it matters:** it's the perfect Sprite Forge → art bridge. Feed your silhouette
+  as ControlNet and it generates art following the exact pose.
+- Repo: https://github.com/Acly/krita-ai-diffusion · Site: https://kritaaidiffusion.com/
 
-### Qué es Stable Diffusion y cómo instalarlo (local, gratis)
-
-**Stable Diffusion** = IA de imagen open source que corre en **tu GPU** (offline):
-texto/imagen guía → imagen. Es otra IA, no Claude. krita-ai-diffusion trae un
-instalador que baja ComfyUI + los modelos por vos.
-
-- **Requisitos:** GPU **6 GB+ VRAM** (ideal NVIDIA/CUDA; AMD ROCm / Intel XPU con
-  fricción), **~30 GB** de disco (SSD). Sin GPU → nube Interstice (tokens pagos).
-- **Pasos (Windows):**
-  1. Instalá **Krita** (krita.org).
-  2. Bajá el ZIP del plugin (releases del repo).
-  3. Krita: **Tools ▸ Scripts ▸ Import Python Plugin from File** → el ZIP → reiniciá.
-  4. **Settings ▸ Dockers ▸** marcá **AI Image Generation**.
-  5. En el panel: **Configure ▸ Local (managed) ▸ Install** → backend (CUDA para
-     NVIDIA) → baja ComfyUI + modelos.
-  6. Prompt, o ControlNet con tu silueta de Sprite Forge como molde.
+### What is Stable Diffusion and how to install it (local, free)
+**Stable Diffusion** = an open-source image AI that runs on **your GPU** (offline):
+text/guide image → image. It's a separate AI, not Claude. krita-ai-diffusion ships an
+installer that downloads ComfyUI + the models for you.
+- **Requirements:** GPU with **6 GB+ VRAM** (ideally NVIDIA/CUDA; AMD ROCm / Intel XPU
+  with friction), **~30 GB** disk (SSD). No GPU → Interstice cloud (paid tokens).
+- **Steps (Windows):**
+  1. Install **Krita** (krita.org).
+  2. Download the plugin ZIP (repo releases).
+  3. Krita: **Tools ▸ Scripts ▸ Import Python Plugin from File** → the ZIP → restart.
+  4. **Settings ▸ Dockers ▸** check **AI Image Generation**.
+  5. In the panel: **Configure ▸ Local (managed) ▸ Install** → backend (CUDA for
+     NVIDIA) → downloads ComfyUI + models.
+  6. Prompt, or ControlNet with your Sprite Forge silhouette as the mold.
 
 ---
 
-## Stack recomendado para vos (Godot, 2D, "poco diseño")
+## Recommended stack for you (Godot, 2D, "little design")
 
-1. **Krita + krita-ai-diffusion** → generar/pintar arte desde las siluetas de
-   Sprite Forge (lo más alto valor/esfuerzo).
-2. **ComfyUI MCP** → si querés que Claude genere referencias/tilesets desde el chat.
-3. **Blender MCP** → props 3D → sprites y mapas de control, cuando necesites 8-dir
-   perfectas.
-4. **Aseprite MCP** → solo si tu estilo final es pixel art.
-5. **Godot MCP (opcional, beta)** → si querés que Claude corra/inspeccione el juego
-   en vivo; para editar código ya alcanza Claude Code sin MCP.
+1. **Krita + krita-ai-diffusion** → generate/paint art from Sprite Forge silhouettes
+   (highest value/effort).
+2. **ComfyUI MCP** → if you want Claude to generate references/tilesets from chat.
+3. **Blender MCP** → 3D props → sprites and control maps, when you need perfect 8-dir.
+4. **Aseprite MCP** → only if your final style is pixel art.
+5. **Godot MCP (optional, beta)** → if you want Claude to run/inspect the game live;
+   for editing code, Claude Code is enough without MCP.
 
-Ver [WORKFLOW.md](./WORKFLOW.md) para cómo encadenarlas.
+See [WORKFLOW.md](./WORKFLOW.md) for how to chain them.
