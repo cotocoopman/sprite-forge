@@ -22,6 +22,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import { useProjectStore } from '@store/useProjectStore';
 import { useActiveRigClip } from '@/hooks/useActiveRigClip';
 import { NumberInput } from '@components/NumberInput';
+import { useT } from '@/i18n';
 import type { EasingKind } from '@core/poses';
 
 const EASINGS: readonly { value: EasingKind; label: string }[] = [
@@ -70,6 +71,7 @@ export const RigAnimationPanel = (): ReactElement => {
   const moveRigKeyframe = useProjectStore((s) => s.moveRigKeyframe);
   const setRigKeyframeEasing = useProjectStore((s) => s.setRigKeyframeEasing);
   const clip = useActiveRigClip();
+  const tr = useT();
 
   const [renaming, setRenaming] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
@@ -89,8 +91,8 @@ export const RigAnimationPanel = (): ReactElement => {
   return (
     <Stack spacing={2}>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography variant="h6">Animación del rig</Typography>
-        <Tooltip title="Agregar clip">
+        <Typography variant="h6">{tr('Animación del rig')}</Typography>
+        <Tooltip title={tr('Agregar clip')}>
           <IconButton size="small" color="primary" onClick={addRigClip}><AddIcon /></IconButton>
         </Tooltip>
       </Stack>
@@ -116,19 +118,19 @@ export const RigAnimationPanel = (): ReactElement => {
       {clip && (
         <>
           <Stack direction="row" spacing={1} alignItems="center">
-            <Box sx={{ width: 90 }}><NumberInput label="Frames" value={clip.frames} step={1} min={1} onChange={setRigClipFrames} fullWidth /></Box>
-            <Box sx={{ width: 90 }}><NumberInput label="FPS" value={clip.fps} step={1} min={1} onChange={setRigClipFps} fullWidth /></Box>
-            <FormControlLabel control={<Switch checked={clip.loop} onChange={(e) => setRigClipLoop(e.target.checked)} />} label="Loop" />
+            <Box sx={{ width: 90 }}><NumberInput label={tr('Frames')} value={clip.frames} step={1} min={1} onChange={setRigClipFrames} fullWidth /></Box>
+            <Box sx={{ width: 90 }}><NumberInput label={tr('FPS')} value={clip.fps} step={1} min={1} onChange={setRigClipFps} fullWidth /></Box>
+            <FormControlLabel control={<Switch checked={clip.loop} onChange={(e) => setRigClipLoop(e.target.checked)} />} label={tr('Loop')} />
           </Stack>
 
           <Divider />
 
           <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Typography variant="subtitle2">Keyframes</Typography>
+            <Typography variant="subtitle2">{tr('Keyframes')}</Typography>
             <Stack direction="row" spacing={0.5}>
-              <Button size="small" startIcon={<AddIcon />} onClick={() => addRigKeyframeAt(scrubT)}>Agregar</Button>
-              <Button size="small" startIcon={<ContentCopyIcon />} onClick={() => duplicateRigKeyframe(activeKf)}>Dup</Button>
-              <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={() => deleteRigKeyframe(activeKf)}>Del</Button>
+              <Button size="small" startIcon={<AddIcon />} onClick={() => addRigKeyframeAt(scrubT)}>{tr('Agregar')}</Button>
+              <Button size="small" startIcon={<ContentCopyIcon />} onClick={() => duplicateRigKeyframe(activeKf)}>{tr('Dup')}</Button>
+              <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={() => deleteRigKeyframe(activeKf)}>{tr('Del')}</Button>
             </Stack>
           </Stack>
 
@@ -148,14 +150,14 @@ export const RigAnimationPanel = (): ReactElement => {
             ))}
           </Box>
 
-          <TextField select size="small" label="Easing (salida del keyframe)" value={easing}
+          <TextField select size="small" label={tr('Easing (salida del keyframe)')} value={easing}
             onChange={(e) => setRigKeyframeEasing(activeKf, e.target.value as EasingKind)} fullWidth>
-            {EASINGS.map((e) => <MenuItem key={e.value} value={e.value}>{e.label}</MenuItem>)}
+            {EASINGS.map((e) => <MenuItem key={e.value} value={e.value}>{tr(e.label)}</MenuItem>)}
           </TextField>
 
           <Divider />
 
-          <Typography variant="subtitle2">Ángulos por hueso (kf {activeKf})</Typography>
+          <Typography variant="subtitle2">{tr('Ángulos por hueso')} (kf {activeKf})</Typography>
           <Stack spacing={1}>
             {bones.map((b) => <BoneAngleSlider key={b.id} boneId={b.id} name={b.name} />)}
           </Stack>

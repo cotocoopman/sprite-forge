@@ -23,6 +23,7 @@ import { NumberInput } from '@components/NumberInput';
 import { renderCustomSvg } from '@core/svg';
 import { downloadBlob, svgToPngBlob } from '@core/export';
 import { RIG_PRESETS } from '@core/customRig';
+import { useT } from '@/i18n';
 import type { Bone, BoneShape } from '@core/customRig';
 
 const Row = ({
@@ -53,50 +54,51 @@ const BoneEditor = ({ bone, others }: { bone: Bone; others: readonly Bone[] }): 
   const update = useProjectStore((s) => s.updateBone);
   const rigColor = useProjectStore((s) => s.project.customRig.color);
   const set = (patch: Partial<Bone>): void => update(bone.id, patch);
+  const t = useT();
 
   return (
     <Stack spacing={1}>
-      <TextField size="small" label="Nombre" value={bone.name} onChange={(e) => set({ name: e.target.value })} fullWidth />
+      <TextField size="small" label={t('Nombre')} value={bone.name} onChange={(e) => set({ name: e.target.value })} fullWidth />
       <TextField
         select
         size="small"
-        label="Padre"
+        label={t('Padre')}
         value={bone.parentId ?? ''}
         onChange={(e) => set({ parentId: e.target.value || null })}
         fullWidth
       >
-        <MenuItem value="">(raíz — sin padre)</MenuItem>
+        <MenuItem value="">{t('(raíz — sin padre)')}</MenuItem>
         {others.map((b) => (
           <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>
         ))}
       </TextField>
 
       <ToggleButtonGroup size="small" exclusive fullWidth value={bone.shape} onChange={(_, v) => v && set({ shape: v as BoneShape })}>
-        <ToggleButton value="capsule">Barra</ToggleButton>
-        <ToggleButton value="circle">Círculo</ToggleButton>
-        <ToggleButton value="rect">Rect</ToggleButton>
+        <ToggleButton value="capsule">{t('Barra')}</ToggleButton>
+        <ToggleButton value="circle">{t('Círculo')}</ToggleButton>
+        <ToggleButton value="rect">{t('Rect')}</ToggleButton>
       </ToggleButtonGroup>
 
       {bone.parentId && (
-        <Row label="Nace sobre el padre (0=base, 1=punta)" value={bone.attach} min={0} max={1} step={0.02} onChange={(v) => set({ attach: v })} />
+        <Row label={t('Nace sobre el padre (0=base, 1=punta)')} value={bone.attach} min={0} max={1} step={0.02} onChange={(v) => set({ attach: v })} />
       )}
-      <Row label="Ángulo (relativo al padre)" value={bone.angle} min={-180} max={180} step={1} onChange={(v) => set({ angle: v })} />
-      <Row label={bone.shape === 'circle' ? 'Largo (para hijos)' : 'Largo'} value={bone.length} min={0} max={70} step={0.5} onChange={(v) => set({ length: v })} />
-      <Row label={bone.shape === 'circle' ? 'Diámetro' : 'Grosor'} value={bone.width} min={0.5} max={40} step={0.5} onChange={(v) => set({ width: v })} />
+      <Row label={t('Ángulo (relativo al padre)')} value={bone.angle} min={-180} max={180} step={1} onChange={(v) => set({ angle: v })} />
+      <Row label={bone.shape === 'circle' ? t('Largo (para hijos)') : t('Largo')} value={bone.length} min={0} max={70} step={0.5} onChange={(v) => set({ length: v })} />
+      <Row label={bone.shape === 'circle' ? t('Diámetro') : t('Grosor')} value={bone.width} min={0.5} max={40} step={0.5} onChange={(v) => set({ width: v })} />
       {bone.shape === 'capsule' && (
-        <Row label="Curvatura" value={bone.curve} min={-0.6} max={0.6} step={0.02} onChange={(v) => set({ curve: v })} />
+        <Row label={t('Curvatura')} value={bone.curve} min={-0.6} max={0.6} step={0.02} onChange={(v) => set({ curve: v })} />
       )}
-      <Row label="Orden (z)" value={bone.z} min={0} max={10} step={1} onChange={(v) => set({ z: v })} />
+      <Row label={t('Orden (z)')} value={bone.z} min={0} max={10} step={1} onChange={(v) => set({ z: v })} />
 
       <Stack direction="row" alignItems="center" spacing={1}>
-        <Typography variant="caption" color="text.secondary">Color</Typography>
+        <Typography variant="caption" color="text.secondary">{t('Color')}</Typography>
         <input
           type="color"
           value={bone.color ?? rigColor}
           onChange={(e) => set({ color: e.target.value })}
           style={{ width: 36, height: 26, border: 'none', background: 'none', cursor: 'pointer' }}
         />
-        <Tooltip title="Volver al color base">
+        <Tooltip title={t('Volver al color base')}>
           <span>
             <IconButton size="small" disabled={bone.color === null} onClick={() => set({ color: null })}>
               <RestartAltIcon fontSize="small" />
@@ -119,6 +121,7 @@ export const RigEditor = (): ReactElement => {
   const resetAllBoneColors = useProjectStore((s) => s.resetAllBoneColors);
   const loadRigPreset = useProjectStore((s) => s.loadRigPreset);
   const notify = useProjectStore((s) => s.notify);
+  const t = useT();
 
   const active = rig.bones.find((b) => b.id === activeBoneId);
   const safe = (rig.name.trim() || 'rig').replace(/[^a-zA-Z0-9_-]+/g, '_');
@@ -128,7 +131,7 @@ export const RigEditor = (): ReactElement => {
       const blob = await svgToPngBlob(renderCustomSvg(rig, render), render.cellSize, render.cellSize);
       downloadBlob(blob, `${safe}.png`);
     } catch (e) {
-      notify(`Error al exportar: ${e instanceof Error ? e.message : 'desconocido'}`, 'error');
+      notify(`${t('Error al exportar')}: ${e instanceof Error ? e.message : '?'}`, 'error');
     }
   };
   const exportSvg = (): void => {
@@ -137,12 +140,12 @@ export const RigEditor = (): ReactElement => {
 
   return (
     <Stack spacing={1.5}>
-      <Typography variant="h6">Rig personalizado</Typography>
+      <Typography variant="h6">{t('Rig personalizado')}</Typography>
 
       <TextField
         select
         size="small"
-        label="Cargar preset"
+        label={t('Cargar preset')}
         value=""
         onChange={(e) => {
           const p = RIG_PRESETS.find((r) => r.id === e.target.value);
@@ -156,14 +159,14 @@ export const RigEditor = (): ReactElement => {
       </TextField>
 
       <Stack direction="row" spacing={1} alignItems="center">
-        <TextField size="small" label="Nombre" value={rig.name} onChange={(e) => setRigField({ name: e.target.value })} fullWidth />
+        <TextField size="small" label={t('Nombre')} value={rig.name} onChange={(e) => setRigField({ name: e.target.value })} fullWidth />
         <input
           type="color"
           value={rig.color}
           onChange={(e) => setRigField({ color: e.target.value })}
           style={{ width: 40, height: 30, border: 'none', background: 'none', cursor: 'pointer' }}
         />
-        <Tooltip title="Resetear todos los huesos al color base">
+        <Tooltip title={t('Resetear todos los huesos al color base')}>
           <IconButton size="small" onClick={resetAllBoneColors}>
             <RestartAltIcon fontSize="small" />
           </IconButton>
@@ -171,11 +174,11 @@ export const RigEditor = (): ReactElement => {
       </Stack>
       <Stack direction="row" spacing={1}>
         <Box sx={{ flex: 1 }}>
-          <Typography variant="caption" color="text.secondary">Origen X</Typography>
+          <Typography variant="caption" color="text.secondary">{t('Origen X')}</Typography>
           <NumberInput value={rig.origin.x} step={1} onChange={(v) => setRigField({ originX: v })} fullWidth />
         </Box>
         <Box sx={{ flex: 1 }}>
-          <Typography variant="caption" color="text.secondary">Origen Y</Typography>
+          <Typography variant="caption" color="text.secondary">{t('Origen Y')}</Typography>
           <NumberInput value={rig.origin.y} step={1} onChange={(v) => setRigField({ originY: v })} fullWidth />
         </Box>
       </Stack>
@@ -183,8 +186,8 @@ export const RigEditor = (): ReactElement => {
       <Divider />
 
       <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography variant="subtitle2">Huesos ({rig.bones.length})</Typography>
-        <Tooltip title="Agregar hueso (hijo del seleccionado)">
+        <Typography variant="subtitle2">{t('Huesos')} ({rig.bones.length})</Typography>
+        <Tooltip title={t('Agregar hueso (hijo del seleccionado)')}>
           <IconButton size="small" color="primary" onClick={addBone}>
             <AddIcon />
           </IconButton>
@@ -196,9 +199,9 @@ export const RigEditor = (): ReactElement => {
           <ListItemButton key={b.id} selected={b.id === activeBoneId} onClick={() => selectBone(b.id)} sx={{ borderRadius: 1 }}>
             <ListItemText
               primary={b.name}
-              secondary={b.parentId ? rig.bones.find((p) => p.id === b.parentId)?.name ?? '—' : 'raíz'}
+              secondary={b.parentId ? rig.bones.find((p) => p.id === b.parentId)?.name ?? '—' : t('raíz')}
             />
-            <Tooltip title="Eliminar (y sus hijos)">
+            <Tooltip title={t('Eliminar (y sus hijos)')}>
               <IconButton size="small" onClick={(e) => { e.stopPropagation(); removeBone(b.id); }}>
                 <DeleteIcon fontSize="inherit" />
               </IconButton>
@@ -220,7 +223,7 @@ export const RigEditor = (): ReactElement => {
         <Button size="small" variant="outlined" onClick={exportSvg}>SVG</Button>
       </Stack>
       <Typography variant="caption" color="text.secondary">
-        Fase 1: rig estático. Animación por keyframes y presets (cuadrúpedo/ave) vienen después.
+        {t('Animá el rig en el panel derecho. Exportá con "Exportar sprites".')}
       </Typography>
     </Stack>
   );

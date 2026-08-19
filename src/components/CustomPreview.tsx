@@ -5,6 +5,7 @@ import Stack from '@mui/material/Stack';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import { useProjectStore } from '@store/useProjectStore';
+import { useT } from '@/i18n';
 import { useActiveRigClip } from '@/hooks/useActiveRigClip';
 import { sampleRigClip } from '@core/customRig';
 import { makeTransform, renderCustomInner } from '@core/svg';
@@ -19,6 +20,7 @@ export const CustomPreview = (): ReactElement => {
 
   const [lightBg, setLightBg] = useState(false);
   const [guides, setGuides] = useState(true);
+  const t = useT();
 
   const cs = render.cellSize;
   const tf = makeTransform(render);
@@ -32,11 +34,11 @@ export const CustomPreview = (): ReactElement => {
       <Stack direction="row" spacing={2}>
         <FormControlLabel
           control={<Switch size="small" checked={lightBg} onChange={(e) => setLightBg(e.target.checked)} />}
-          label="Fondo claro"
+          label={t('Fondo claro')}
         />
         <FormControlLabel
           control={<Switch size="small" checked={guides} onChange={(e) => setGuides(e.target.checked)} />}
-          label="Guías"
+          label={t('Guías')}
         />
       </Stack>
       <Box

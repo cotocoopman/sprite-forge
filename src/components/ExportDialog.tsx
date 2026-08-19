@@ -15,6 +15,7 @@ import Divider from '@mui/material/Divider';
 import Box from '@mui/material/Box';
 import { useProjectStore } from '@store/useProjectStore';
 import { NumberInput } from '@components/NumberInput';
+import { useT } from '@/i18n';
 import type { ExportOptions } from '@core/export';
 import { buildRigZip, buildZip, downloadBlob } from '@core/export';
 
@@ -37,6 +38,7 @@ export const ExportDialog = ({ open, onClose }: Props): ReactElement => {
   const setRenderField = useProjectStore((s) => s.setRenderField);
   const toggleFlip = useProjectStore((s) => s.toggleFlip);
   const notify = useProjectStore((s) => s.notify);
+  const t = useT();
 
   const [options, setOptions] = useState<ExportOptions>({
     sheets: true,
@@ -70,7 +72,7 @@ export const ExportDialog = ({ open, onClose }: Props): ReactElement => {
       notify('Export completado', 'success');
       onClose();
     } catch (e) {
-      notify(`Error al exportar: ${e instanceof Error ? e.message : 'desconocido'}`, 'error');
+      notify(`${t('Error al exportar')}: ${e instanceof Error ? e.message : '?'}`, 'error');
     } finally {
       setBusy(false);
     }
@@ -78,10 +80,10 @@ export const ExportDialog = ({ open, onClose }: Props): ReactElement => {
 
   return (
     <Dialog open={open} onClose={busy ? undefined : onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Exportar sprites</DialogTitle>
+      <DialogTitle>{t('Exportar sprites')}</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2}>
-          <Typography variant="subtitle2">Tamaño de celda (px)</Typography>
+          <Typography variant="subtitle2">{t('Tamaño de celda (px)')}</Typography>
           <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
             {[16, 32, 48, 64, 96, 128, 256, 512, 1024].map((size) => (
               <Button
@@ -96,12 +98,12 @@ export const ExportDialog = ({ open, onClose }: Props): ReactElement => {
             ))}
           </Stack>
 
-          <Typography variant="subtitle2">Configuración de render</Typography>
+          <Typography variant="subtitle2">{t('Configuración de render')}</Typography>
           <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
             {RENDER_FIELDS.map((f) => (
               <Box key={f.key} sx={{ width: 170 }}>
                 <NumberInput
-                  label={f.label}
+                  label={t(f.label)}
                   value={render[f.key]}
                   step={f.step}
                   onChange={(v) => setRenderField(f.key, v)}
@@ -111,25 +113,25 @@ export const ExportDialog = ({ open, onClose }: Props): ReactElement => {
             ))}
             <FormControlLabel
               control={<Switch checked={render.flip} onChange={toggleFlip} />}
-              label="Espejo horizontal"
+              label={t('Espejo horizontal')}
             />
           </Stack>
 
           <Divider />
 
-          <Typography variant="subtitle2">Qué incluir</Typography>
+          <Typography variant="subtitle2">{t('Qué incluir')}</Typography>
           <Stack>
             <FormControlLabel
               control={<Checkbox checked={options.sheets} onChange={toggle('sheets')} />}
-              label="Sprite sheet por animación (tira horizontal)"
+              label={t('Sprite sheet por animación (tira horizontal)')}
             />
             <FormControlLabel
               control={<Checkbox checked={options.frames} onChange={toggle('frames')} />}
-              label="Frames sueltos (un PNG por frame)"
+              label={t('Frames sueltos (un PNG por frame)')}
             />
             <FormControlLabel
               control={<Checkbox checked={options.svg} onChange={toggle('svg')} />}
-              label="SVG por animación"
+              label={t('SVG por animación')}
             />
             <FormControlLabel
               control={<Checkbox checked={options.manifest} onChange={toggle('manifest')} />}
@@ -141,24 +143,24 @@ export const ExportDialog = ({ open, onClose }: Props): ReactElement => {
             />
             <FormControlLabel
               control={<Checkbox checked={options.directions8} onChange={toggle('directions8')} />}
-              label="Las 8 direcciones (giro cada 45°) — sufijo _d0.._d7"
+              label={t('Las 8 direcciones (giro cada 45°) — sufijo _d0.._d7')}
             />
             <FormControlLabel
               control={<Checkbox checked={options.godot} onChange={toggle('godot')} />}
-              label="Recurso Godot 4 (SpriteFrames .tres, usa los sheets)"
+              label={t('Recurso Godot 4 (SpriteFrames .tres, usa los sheets)')}
             />
           </Stack>
 
           <Typography variant="caption" color="text.secondary">
-            Celda: {render.cellSize}×{render.cellSize}px · {project.animations.length} animaciones
-            {options.directions8 ? ' · ×8 direcciones' : ''}
+            {render.cellSize}×{render.cellSize}px · {project.animations.length} {t('animaciones')}
+            {options.directions8 ? ' · ×8' : ''}
           </Typography>
 
           {busy && (
             <Stack spacing={0.5}>
               <LinearProgress variant="determinate" value={progress} />
               <Typography variant="caption" align="center">
-                Rasterizando… {progress}%
+                {progress}%
               </Typography>
             </Stack>
           )}
@@ -166,10 +168,10 @@ export const ExportDialog = ({ open, onClose }: Props): ReactElement => {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={busy}>
-          Cancelar
+          {t('Cancelar')}
         </Button>
         <Button variant="contained" onClick={handleExport} disabled={busy || nothingSelected}>
-          Exportar ZIP
+          {t('Exportar ZIP')}
         </Button>
       </DialogActions>
     </Dialog>

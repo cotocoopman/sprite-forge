@@ -9,6 +9,7 @@ import AddIcon from '@mui/icons-material/Add';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useProjectStore } from '@store/useProjectStore';
+import { useT } from '@/i18n';
 import { useActiveClip } from '@/hooks/useActiveClip';
 
 export const KeyframeTimeline = (): ReactElement => {
@@ -23,8 +24,9 @@ export const KeyframeTimeline = (): ReactElement => {
 
   const trackRef = useRef<HTMLDivElement>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const t = useT();
 
-  if (!clip) return <Typography variant="body2">Sin clip activo</Typography>;
+  if (!clip) return <Typography variant="body2">{t('Sin clip activo')}</Typography>;
 
   const frames = Math.max(1, clip.frames);
   const scrubT = frames > 1 ? currentFrame / (frames - 1) : 0;
@@ -52,26 +54,26 @@ export const KeyframeTimeline = (): ReactElement => {
   return (
     <Stack spacing={1}>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography variant="subtitle2">Keyframes</Typography>
+        <Typography variant="subtitle2">{t('Keyframes')}</Typography>
         <Stack direction="row" spacing={0.5}>
-          <Tooltip title="Agregar en el scrubber">
+          <Tooltip title={t('Agregar en el scrubber')}>
             <Button size="small" startIcon={<AddIcon />} onClick={() => addKeyframeAt(scrubT)}>
-              Agregar
+              {t('Agregar')}
             </Button>
           </Tooltip>
-          <Tooltip title="Duplicar seleccionado">
+          <Tooltip title={t('Duplicar seleccionado')}>
             <Button size="small" startIcon={<ContentCopyIcon />} onClick={() => duplicateKeyframe(activeKeyframeIndex)}>
-              Duplicar
+              {t('Duplicar')}
             </Button>
           </Tooltip>
-          <Tooltip title="Eliminar seleccionado">
+          <Tooltip title={t('Eliminar seleccionado')}>
             <Button
               size="small"
               color="error"
               startIcon={<DeleteIcon />}
               onClick={() => deleteKeyframe(activeKeyframeIndex)}
             >
-              Eliminar
+              {t('Eliminar')}
             </Button>
           </Tooltip>
         </Stack>

@@ -15,6 +15,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { useProjectStore } from '@store/useProjectStore';
 import { NumberInput } from '@components/NumberInput';
+import { useT } from '@/i18n';
 import type { CharacterDefinition, CurveTarget } from '@core/rig';
 
 type FieldConfig = {
@@ -79,12 +80,13 @@ const GROUPS: readonly FieldGroup[] = [
 const NumberField = ({ config }: { config: FieldConfig }): ReactElement => {
   const value = useProjectStore((s) => s.project.character[config.key] as number);
   const setCharacterField = useProjectStore((s) => s.setCharacterField);
+  const t = useT();
 
   return (
     <Box>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Typography variant="caption" color="text.secondary">
-          {config.label}
+          {t(config.label)}
         </Typography>
         <NumberInput
           value={value}
@@ -111,12 +113,13 @@ const CurveTargetToggle = ({ kind }: { kind: CurveKind }): ReactElement => {
   );
   const setArm = useProjectStore((s) => s.setArmCurveTarget);
   const setLeg = useProjectStore((s) => s.setLegCurveTarget);
-  const apply = (t: CurveTarget): void => (kind === 'arm' ? setArm(t) : setLeg(t));
+  const apply = (tgt: CurveTarget): void => (kind === 'arm' ? setArm(tgt) : setLeg(tgt));
+  const t = useT();
 
   return (
     <Box>
       <Typography variant="caption" color="text.secondary">
-        Curvatura aplica a
+        {t('Curvatura aplica a')}
       </Typography>
       <ToggleButtonGroup
         size="small"
@@ -125,9 +128,9 @@ const CurveTargetToggle = ({ kind }: { kind: CurveKind }): ReactElement => {
         value={target ?? 'both'}
         onChange={(_, v) => v && apply(v as CurveTarget)}
       >
-        <ToggleButton value="both">Ambos</ToggleButton>
-        <ToggleButton value="near">Derecha</ToggleButton>
-        <ToggleButton value="far">Izquierda</ToggleButton>
+        <ToggleButton value="both">{t('Ambos')}</ToggleButton>
+        <ToggleButton value="near">{t('Derecha')}</ToggleButton>
+        <ToggleButton value="far">{t('Izquierda')}</ToggleButton>
       </ToggleButtonGroup>
     </Box>
   );
@@ -143,15 +146,16 @@ export const CharacterPanel = (): ReactElement => {
   const setColor = useProjectStore((s) => s.setColor);
   const resetCharacter = useProjectStore((s) => s.resetCharacter);
 
+  const t = useT();
   const sum = headDiameter + torsoHeight + legHeight;
   const sumOk = Math.abs(sum - 100) < 0.05;
 
   return (
     <Stack spacing={2}>
-      <Typography variant="h6">Personaje</Typography>
+      <Typography variant="h6">{t('Personaje')}</Typography>
 
       <TextField
-        label="Nombre"
+        label={t('Nombre')}
         size="small"
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -161,14 +165,14 @@ export const CharacterPanel = (): ReactElement => {
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Box>
           <Typography variant="caption" color="text.secondary">
-            Suma cabeza + torso + piernas
+            {t('Suma cabeza + torso + piernas')}
           </Typography>
           <Typography variant="body2" color={sumOk ? 'success.main' : 'error.main'} fontWeight={700}>
-            {sum.toFixed(1)} / 100 {sumOk ? '✓' : '(no cierra)'}
+            {sum.toFixed(1)} / 100 {sumOk ? '✓' : t('(no cierra)')}
           </Typography>
         </Box>
         <Stack direction="row" alignItems="center" spacing={1}>
-          <Typography variant="body2">Color</Typography>
+          <Typography variant="body2">{t('Color')}</Typography>
           <input
             type="color"
             value={color}
@@ -184,7 +188,7 @@ export const CharacterPanel = (): ReactElement => {
         <Accordion key={group.title} disableGutters defaultExpanded={gi === 0}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Typography variant="body2" fontWeight={600}>
-              {group.title}
+              {t(group.title)}
             </Typography>
           </AccordionSummary>
           <AccordionDetails>
@@ -199,7 +203,7 @@ export const CharacterPanel = (): ReactElement => {
       ))}
 
       <Button variant="outlined" startIcon={<RestartAltIcon />} onClick={resetCharacter}>
-        Restaurar defaults
+        {t('Restaurar defaults')}
       </Button>
     </Stack>
   );

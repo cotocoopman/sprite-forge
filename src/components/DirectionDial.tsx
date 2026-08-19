@@ -7,6 +7,7 @@ import Slider from '@mui/material/Slider';
 import Tooltip from '@mui/material/Tooltip';
 import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
 import { useProjectStore } from '@store/useProjectStore';
+import { useT } from '@/i18n';
 
 // Giro 3D en 8 direcciones (top-down, sentido horario):
 // abajo = de frente (0), derecha = perfil (90), arriba = de espaldas (180),
@@ -26,13 +27,14 @@ const DIRS: readonly Dir[] = [
 export const DirectionDial = (): ReactElement => {
   const facing = useProjectStore((s) => s.project.render.facing);
   const setFacing = useProjectStore((s) => s.setFacing);
+  const t = useT();
 
   const norm = ((facing % 360) + 360) % 360;
 
   return (
     <Stack spacing={1} alignItems="center">
       <Typography variant="caption" color="text.secondary">
-        Giro 3D (dirección)
+        {t('Giro 3D (dirección)')}
       </Typography>
       <Box
         sx={{
@@ -61,7 +63,7 @@ export const DirectionDial = (): ReactElement => {
             {d.glyph}
           </IconButton>
         ))}
-        <Tooltip title="De frente (0°)">
+        <Tooltip title={t('De frente (0°)')}>
           <IconButton
             size="small"
             onClick={() => setFacing(0)}

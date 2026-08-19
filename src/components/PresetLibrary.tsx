@@ -13,6 +13,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import CheckIcon from '@mui/icons-material/Check';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useProjectStore } from '@store/useProjectStore';
+import { useT } from '@/i18n';
 
 export const PresetLibrary = (): ReactElement => {
   const presets = useProjectStore((s) => s.presets);
@@ -20,6 +21,7 @@ export const PresetLibrary = (): ReactElement => {
   const applyPreset = useProjectStore((s) => s.applyPreset);
   const deletePreset = useProjectStore((s) => s.deletePreset);
 
+  const t = useT();
   const [name, setName] = useState('');
 
   const handleSave = (): void => {
@@ -31,11 +33,11 @@ export const PresetLibrary = (): ReactElement => {
 
   return (
     <Stack spacing={1.5}>
-      <Typography variant="h6">Biblioteca de personajes</Typography>
+      <Typography variant="h6">{t('Biblioteca de personajes')}</Typography>
       <Stack direction="row" spacing={1}>
         <TextField
           size="small"
-          placeholder="Nombre del preset"
+          placeholder={t('Nombre del preset')}
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => {
@@ -44,13 +46,13 @@ export const PresetLibrary = (): ReactElement => {
           fullWidth
         />
         <Button variant="contained" startIcon={<SaveIcon />} onClick={handleSave} disabled={!name.trim()}>
-          Guardar
+          {t('Guardar')}
         </Button>
       </Stack>
 
       {presets.length === 0 ? (
         <Typography variant="caption" color="text.secondary">
-          Sin presets guardados.
+          {t('Sin presets guardados.')}
         </Typography>
       ) : (
         <List dense disablePadding>
@@ -60,12 +62,12 @@ export const PresetLibrary = (): ReactElement => {
               disablePadding
               secondaryAction={
                 <Stack direction="row">
-                  <Tooltip title="Aplicar">
+                  <Tooltip title={t('Aplicar')}>
                     <IconButton size="small" onClick={() => applyPreset(p.id)}>
                       <CheckIcon fontSize="inherit" />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title="Eliminar">
+                  <Tooltip title={t('Eliminar')}>
                     <IconButton size="small" onClick={() => deletePreset(p.id)}>
                       <DeleteIcon fontSize="inherit" />
                     </IconButton>

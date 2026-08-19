@@ -6,6 +6,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
 import { useProjectStore } from '@store/useProjectStore';
+import { useT } from '@/i18n';
 import { useActiveClip } from '@/hooks/useActiveClip';
 import { buildSkeleton } from '@core/rig';
 import type { Pose } from '@core/rig';
@@ -80,6 +81,7 @@ export const PreviewCanvas = (): ReactElement => {
   const refScale = useProjectStore((s) => s.refScale);
   const refVisible = useProjectStore((s) => s.refVisible);
   const clip = useActiveClip();
+  const t = useT();
 
   const [lightBg, setLightBg] = useState(false);
   const [onion, setOnion] = useState(false);
@@ -115,15 +117,15 @@ export const PreviewCanvas = (): ReactElement => {
       <Stack direction="row" spacing={2} flexWrap="wrap">
         <FormControlLabel
           control={<Switch size="small" checked={lightBg} onChange={(e) => setLightBg(e.target.checked)} />}
-          label="Fondo claro"
+          label={t('Fondo claro')}
         />
         <FormControlLabel
           control={<Switch size="small" checked={onion} onChange={(e) => setOnion(e.target.checked)} />}
-          label="Onion skin"
+          label={t('Onion skin')}
         />
         <FormControlLabel
           control={<Switch size="small" checked={guides} onChange={(e) => setGuides(e.target.checked)} />}
-          label="Guías"
+          label={t('Guías')}
         />
       </Stack>
 
@@ -187,7 +189,7 @@ export const PreviewCanvas = (): ReactElement => {
       </Box>
 
       <Typography variant="caption" color="text.secondary" align="center">
-        {clip ? `${clip.name} — frame ${frame + 1}/${n}` : 'Sin clip activo'}
+        {clip ? `${clip.name} · ${frame + 1}/${n}` : t('Sin clip activo')}
       </Typography>
     </Stack>
   );

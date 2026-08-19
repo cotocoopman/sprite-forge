@@ -19,7 +19,9 @@ import UploadIcon from '@mui/icons-material/Upload';
 import SaveAltIcon from '@mui/icons-material/SaveAlt';
 import UndoIcon from '@mui/icons-material/Undo';
 import RedoIcon from '@mui/icons-material/Redo';
+import TranslateIcon from '@mui/icons-material/Translate';
 import { useProjectStore } from '@store/useProjectStore';
+import { useT } from '@/i18n';
 import { useActiveClip } from '@/hooks/useActiveClip';
 import { useActiveRigClip } from '@/hooks/useActiveRigClip';
 import { parseProjectJson } from '@core/validation';
@@ -98,8 +100,11 @@ export const App = (): ReactElement => {
   const notify = useProjectStore((s) => s.notify);
   const hideNotification = useProjectStore((s) => s.hideNotification);
 
+  const t = useT();
   const mode = useProjectStore((s) => s.project.mode);
   const setMode = useProjectStore((s) => s.setMode);
+  const lang = useProjectStore((s) => s.lang);
+  const setLang = useProjectStore((s) => s.setLang);
   const canUndo = useProjectStore((s) => s.canUndo);
   const canRedo = useProjectStore((s) => s.canRedo);
   const undo = useProjectStore((s) => s.undo);
@@ -147,12 +152,12 @@ export const App = (): ReactElement => {
       const result = parseProjectJson(String(reader.result));
       if (result.ok) {
         importProject(result.project);
-        notify('Proyecto importado', 'success');
+        notify(t('Proyecto importado'), 'success');
       } else {
-        notify(`Import inválido: ${result.error}`, 'error');
+        notify(`${t('Importar')}: ${result.error}`, 'error');
       }
     };
-    reader.onerror = () => notify('No se pudo leer el archivo', 'error');
+    reader.onerror = () => notify(t('No se pudo leer el archivo'), 'error');
     reader.readAsText(file);
   };
 
@@ -169,10 +174,16 @@ export const App = (): ReactElement => {
             value={mode}
             onChange={(_, v) => v && setMode(v)}
           >
-            <ToggleButton value="humanoid">Humanoide</ToggleButton>
-            <ToggleButton value="custom">Rig personalizado</ToggleButton>
+            <ToggleButton value="humanoid">{t('Humanoide')}</ToggleButton>
+            <ToggleButton value="custom">{t('Rig personalizado')}</ToggleButton>
           </ToggleButtonGroup>
           <Box sx={{ flexGrow: 1 }} />
+          <Tooltip title={t('Idioma / Language')}>
+            <ToggleButtonGroup size="small" exclusive value={lang} onChange={(_, v) => v && setLang(v)} sx={{ mr: 1 }}>
+              <ToggleButton value="es"><TranslateIcon fontSize="small" sx={{ mr: 0.5 }} />ES</ToggleButton>
+              <ToggleButton value="en">EN</ToggleButton>
+            </ToggleButtonGroup>
+          </Tooltip>
           <input
             ref={fileInputRef}
             type="file"
@@ -196,13 +207,13 @@ export const App = (): ReactElement => {
               </span>
             </Tooltip>
             <Button startIcon={<UploadIcon />} onClick={() => fileInputRef.current?.click()}>
-              Importar
+              {t('Importar')}
             </Button>
             <Button startIcon={<SaveAltIcon />} onClick={() => exportProjectJson(project)}>
-              Exportar proyecto
+              {t('Exportar proyecto')}
             </Button>
             <Button variant="contained" startIcon={<DownloadIcon />} onClick={() => setExportOpen(true)}>
-              Exportar sprites
+              {t('Exportar sprites')}
             </Button>
           </Stack>
         </Toolbar>
@@ -279,7 +290,7 @@ export const App = (): ReactElement => {
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <Alert onClose={hideNotification} severity={notification.type} variant="filled">
-          {notification.message}
+          {t(notification.message)}
         </Alert>
       </Snackbar>
     </Box>

@@ -13,11 +13,23 @@ import type {
 } from '@core/poses';
 import type { Bone, CustomRig, RigClip, RigPose } from '@core/customRig';
 import { rigPoseAt } from '@core/customRig';
+import type { Lang } from '@/i18n';
 import { buildDefaultProject, poseAt } from '@core/poses';
 import { validateProject } from '@core/validation';
 
 const PROJECT_KEY = 'sprite-forge_project';
 const PRESETS_KEY = 'sprite-forge_presets';
+const LANG_KEY = 'sprite-forge_lang';
+
+const loadLang = (): Lang => {
+  try {
+    const stored = localStorage.getItem(LANG_KEY);
+    if (stored === 'es' || stored === 'en') return stored;
+    return (navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en';
+  } catch {
+    return 'en';
+  }
+};
 
 export type CharacterPreset = {
   readonly id: string;
@@ -198,6 +210,10 @@ export type ProjectState = {
   // Notificaciones
   readonly notify: (message: string, type?: NotificationType) => void;
   readonly hideNotification: () => void;
+
+  // Idioma
+  readonly lang: Lang;
+  readonly setLang: (lang: Lang) => void;
 };
 
 const initialProject = loadProject();
@@ -885,6 +901,16 @@ export const useProjectStore = create<ProjectState>((set, get) => {
 
     notify: (message, type = 'info') => set({ notification: { open: true, type, message } }),
     hideNotification: () => set((s) => ({ notification: { ...s.notification, open: false } })),
+
+    lang: loadLang(),
+    setLang: (lang) => {
+      set({ lang });
+      try {
+        localStorage.setItem(LANG_KEY, lang);
+      } catch {
+        /* ignora */
+      }
+    },
   };
 });
 

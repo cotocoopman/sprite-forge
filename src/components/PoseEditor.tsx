@@ -16,6 +16,7 @@ import ContentPasteIcon from '@mui/icons-material/ContentPaste';
 import { useProjectStore } from '@store/useProjectStore';
 import { useActiveClip } from '@/hooks/useActiveClip';
 import { NumberInput } from '@components/NumberInput';
+import { useT } from '@/i18n';
 import type { Pose } from '@core/rig';
 import type { EasingKind } from '@core/poses';
 
@@ -81,11 +82,12 @@ const JointSlider = ({ joint }: { joint: Joint }): ReactElement => {
     return kf ? kf.pose[joint.key] : 0;
   });
   const setPoseField = useProjectStore((s) => s.setPoseField);
+  const t = useT();
 
   return (
     <Box>
       <Typography variant="caption" color="text.secondary">
-        {joint.label}
+        {t(joint.label)}
       </Typography>
       <Stack direction="row" spacing={1} alignItems="center">
         <Slider
@@ -111,6 +113,7 @@ export const PoseEditor = (): ReactElement => {
   const activeKeyframeIndex = useProjectStore((s) => s.activeKeyframeIndex);
   const clip = useActiveClip();
 
+  const t = useT();
   const hasKeyframe = !!clip && activeKeyframeIndex >= 0 && activeKeyframeIndex < clip.keyframes.length;
   const easing: EasingKind = (hasKeyframe && clip.keyframes[activeKeyframeIndex].easing) || 'linear';
 
@@ -118,24 +121,24 @@ export const PoseEditor = (): ReactElement => {
     <Stack spacing={1}>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Typography variant="subtitle2">
-          Pose {hasKeyframe ? `(kf ${activeKeyframeIndex})` : ''}
+          {t('Pose')} {hasKeyframe ? `(kf ${activeKeyframeIndex})` : ''}
         </Typography>
         <Stack direction="row" spacing={0.5}>
           <Button size="small" startIcon={<FlipIcon />} onClick={mirrorPose}>
-            Espejar
+            {t('Espejar')}
           </Button>
           <Button size="small" startIcon={<ContentCopyIcon />} onClick={copyPose}>
-            Copiar
+            {t('Copiar')}
           </Button>
           <Button size="small" startIcon={<ContentPasteIcon />} onClick={pastePose}>
-            Pegar
+            {t('Pegar')}
           </Button>
         </Stack>
       </Stack>
 
       {!hasKeyframe && (
         <Typography variant="body2" color="text.secondary">
-          Seleccioná un keyframe para editar su pose.
+          {t('Seleccioná un keyframe para editar su pose.')}
         </Typography>
       )}
 
@@ -143,14 +146,14 @@ export const PoseEditor = (): ReactElement => {
         <TextField
           select
           size="small"
-          label="Easing (salida de este keyframe)"
+          label={t('Easing (salida de este keyframe)')}
           value={easing}
           onChange={(e) => setKeyframeEasing(activeKeyframeIndex, e.target.value as EasingKind)}
           fullWidth
         >
           {EASINGS.map((e) => (
             <MenuItem key={e.value} value={e.value}>
-              {e.label}
+              {t(e.label)}
             </MenuItem>
           ))}
         </TextField>
@@ -161,7 +164,7 @@ export const PoseEditor = (): ReactElement => {
           <Accordion key={group.title} disableGutters defaultExpanded={group.title === 'Torso'}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="body2" fontWeight={600}>
-                {group.title}
+                {t(group.title)}
               </Typography>
             </AccordionSummary>
             <AccordionDetails>

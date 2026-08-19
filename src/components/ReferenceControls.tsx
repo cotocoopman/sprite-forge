@@ -12,6 +12,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useProjectStore } from '@store/useProjectStore';
+import { useT } from '@/i18n';
 
 export const ReferenceControls = (): ReactElement => {
   const refImage = useProjectStore((s) => s.refImage);
@@ -23,6 +24,7 @@ export const ReferenceControls = (): ReactElement => {
   const setRefScale = useProjectStore((s) => s.setRefScale);
   const toggleRefVisible = useProjectStore((s) => s.toggleRefVisible);
   const notify = useProjectStore((s) => s.notify);
+  const t = useT();
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -32,7 +34,7 @@ export const ReferenceControls = (): ReactElement => {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => setRefImage(String(reader.result));
-    reader.onerror = () => notify('No se pudo leer la imagen', 'error');
+    reader.onerror = () => notify(t('No se pudo leer la imagen'), 'error');
     reader.readAsDataURL(file);
   };
 
@@ -40,29 +42,29 @@ export const ReferenceControls = (): ReactElement => {
     <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap>
       <input ref={inputRef} type="file" accept="image/*" hidden onChange={onFile} />
       <Button size="small" variant="outlined" startIcon={<ImageIcon />} onClick={() => inputRef.current?.click()}>
-        Referencia
+        {t('Referencia')}
       </Button>
 
       {refImage && (
         <>
-          <Tooltip title={refVisible ? 'Ocultar' : 'Mostrar'}>
+          <Tooltip title={refVisible ? t('Ocultar') : t('Mostrar')}>
             <IconButton size="small" onClick={toggleRefVisible}>
               {refVisible ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />}
             </IconButton>
           </Tooltip>
           <Box sx={{ width: 90 }}>
             <Typography variant="caption" color="text.secondary">
-              Opacidad
+              {t('Opacidad')}
             </Typography>
             <Slider size="small" value={refOpacity} min={0} max={1} step={0.05} onChange={(_, v) => setRefOpacity(v as number)} />
           </Box>
           <Box sx={{ width: 90 }}>
             <Typography variant="caption" color="text.secondary">
-              Escala
+              {t('Escala')}
             </Typography>
             <Slider size="small" value={refScale} min={0.2} max={3} step={0.05} onChange={(_, v) => setRefScale(v as number)} />
           </Box>
-          <Tooltip title="Quitar referencia">
+          <Tooltip title={t('Quitar referencia')}>
             <IconButton size="small" onClick={() => setRefImage(null)}>
               <DeleteIcon fontSize="small" />
             </IconButton>

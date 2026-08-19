@@ -18,6 +18,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useProjectStore } from '@store/useProjectStore';
 import { NumberInput } from '@components/NumberInput';
+import { useT } from '@/i18n';
 import { useActiveClip } from '@/hooks/useActiveClip';
 
 export const AnimationList = (): ReactElement => {
@@ -33,6 +34,7 @@ export const AnimationList = (): ReactElement => {
   const setClipLoop = useProjectStore((s) => s.setClipLoop);
   const clip = useActiveClip();
 
+  const t = useT();
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
 
@@ -48,8 +50,8 @@ export const AnimationList = (): ReactElement => {
   return (
     <Stack spacing={1.5}>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography variant="h6">Animaciones</Typography>
-        <Tooltip title="Agregar clip">
+        <Typography variant="h6">{t('Animaciones')}</Typography>
+        <Tooltip title={t('Agregar clip')}>
           <IconButton size="small" color="primary" onClick={addAnimation}>
             <AddIcon />
           </IconButton>
@@ -82,7 +84,7 @@ export const AnimationList = (): ReactElement => {
               <ListItemText primary={c.name} secondary={`${c.frames}f · ${c.fps}fps${c.loop ? ' · loop' : ''}`} />
             )}
             <Stack direction="row">
-              <Tooltip title="Renombrar">
+              <Tooltip title={t('Renombrar')}>
                 <IconButton
                   size="small"
                   onClick={(e) => {
@@ -93,7 +95,7 @@ export const AnimationList = (): ReactElement => {
                   <EditIcon fontSize="inherit" />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Duplicar">
+              <Tooltip title={t('Duplicar')}>
                 <IconButton
                   size="small"
                   onClick={(e) => {
@@ -104,7 +106,7 @@ export const AnimationList = (): ReactElement => {
                   <ContentCopyIcon fontSize="inherit" />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Eliminar">
+              <Tooltip title={t('Eliminar')}>
                 <IconButton
                   size="small"
                   onClick={(e) => {
@@ -125,18 +127,18 @@ export const AnimationList = (): ReactElement => {
       {clip && (
         <Box>
           <Typography variant="subtitle2" gutterBottom>
-            Ajustes: {clip.name}
+            {t('Ajustes')}: {clip.name}
           </Typography>
           <Stack direction="row" spacing={1} alignItems="center">
             <Box sx={{ width: 90 }}>
-              <NumberInput label="Frames" value={clip.frames} step={1} min={1} onChange={setClipFrames} fullWidth />
+              <NumberInput label={t('Frames')} value={clip.frames} step={1} min={1} onChange={setClipFrames} fullWidth />
             </Box>
             <Box sx={{ width: 90 }}>
-              <NumberInput label="FPS" value={clip.fps} step={1} min={1} onChange={setClipFps} fullWidth />
+              <NumberInput label={t('FPS')} value={clip.fps} step={1} min={1} onChange={setClipFps} fullWidth />
             </Box>
             <FormControlLabel
               control={<Switch checked={clip.loop} onChange={(e) => setClipLoop(e.target.checked)} />}
-              label="Loop"
+              label={t('Loop')}
             />
           </Stack>
         </Box>

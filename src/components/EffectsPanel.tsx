@@ -12,6 +12,7 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useProjectStore } from '@store/useProjectStore';
+import { useT } from '@/i18n';
 
 const LabeledSlider = ({
   label,
@@ -68,10 +69,11 @@ export const EffectsPanel = (): ReactElement => {
   const setShadow = useProjectStore((s) => s.setShadow);
   const setGlow = useProjectStore((s) => s.setGlow);
   const setOutline = useProjectStore((s) => s.setOutline);
+  const t = useT();
 
   return (
     <Stack spacing={1}>
-      <Typography variant="h6">Efectos</Typography>
+      <Typography variant="h6">{t('Efectos')}</Typography>
 
       <Accordion disableGutters defaultExpanded>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -84,7 +86,7 @@ export const EffectsPanel = (): ReactElement => {
                 onChange={(e) => setShadow({ enabled: e.target.checked })}
               />
             }
-            label={<Typography variant="body2" fontWeight={600}>Sombra</Typography>}
+            label={<Typography variant="body2" fontWeight={600}>{t('Sombra')}</Typography>}
           />
         </AccordionSummary>
         <AccordionDetails>
@@ -96,24 +98,24 @@ export const EffectsPanel = (): ReactElement => {
               value={shadow.mode}
               onChange={(_, v) => v && setShadow({ mode: v as 'drop' | 'ground' })}
             >
-              <ToggleButton value="ground">Piso</ToggleButton>
-              <ToggleButton value="drop">Desplazada</ToggleButton>
+              <ToggleButton value="ground">{t('Piso')}</ToggleButton>
+              <ToggleButton value="drop">{t('Desplazada')}</ToggleButton>
             </ToggleButtonGroup>
-            <ColorRow label="Color" value={shadow.color} onChange={(v) => setShadow({ color: v })} />
-            <LabeledSlider label="Opacidad" value={shadow.opacity} min={0} max={1} step={0.05} onChange={(v) => setShadow({ opacity: v })} />
+            <ColorRow label={t('Color')} value={shadow.color} onChange={(v) => setShadow({ color: v })} />
+            <LabeledSlider label={t('Opacidad')} value={shadow.opacity} min={0} max={1} step={0.05} onChange={(v) => setShadow({ opacity: v })} />
             <LabeledSlider
-              label={shadow.mode === 'ground' ? 'Inclinación (°)' : 'Dirección (°)'}
+              label={shadow.mode === 'ground' ? t('Inclinación (°)') : t('Dirección (°)')}
               value={shadow.direction}
               min={shadow.mode === 'ground' ? -80 : 0}
               max={shadow.mode === 'ground' ? 80 : 360}
               step={shadow.mode === 'ground' ? 1 : 5}
               onChange={(v) => setShadow({ direction: v })}
             />
-            <LabeledSlider label="Largo / offset" value={shadow.length} min={0} max={40} step={0.5} onChange={(v) => setShadow({ length: v })} />
+            <LabeledSlider label={t('Largo / offset')} value={shadow.length} min={0} max={40} step={0.5} onChange={(v) => setShadow({ length: v })} />
             {shadow.mode === 'ground' && (
-              <LabeledSlider label="Aplastado (piso)" value={shadow.flatten} min={0.02} max={1} step={0.02} onChange={(v) => setShadow({ flatten: v })} />
+              <LabeledSlider label={t('Aplastado (piso)')} value={shadow.flatten} min={0.02} max={1} step={0.02} onChange={(v) => setShadow({ flatten: v })} />
             )}
-            <LabeledSlider label="Desenfoque" value={shadow.blur} min={0} max={20} step={0.5} onChange={(v) => setShadow({ blur: v })} />
+            <LabeledSlider label={t('Desenfoque')} value={shadow.blur} min={0} max={20} step={0.5} onChange={(v) => setShadow({ blur: v })} />
           </Stack>
         </AccordionDetails>
       </Accordion>
@@ -129,15 +131,15 @@ export const EffectsPanel = (): ReactElement => {
                 onChange={(e) => setGlow({ enabled: e.target.checked })}
               />
             }
-            label={<Typography variant="body2" fontWeight={600}>Brillo (contorno)</Typography>}
+            label={<Typography variant="body2" fontWeight={600}>{t('Brillo (contorno)')}</Typography>}
           />
         </AccordionSummary>
         <AccordionDetails>
           <Stack spacing={1}>
-            <ColorRow label="Color" value={glow.color} onChange={(v) => setGlow({ color: v })} />
-            <LabeledSlider label="Opacidad" value={glow.opacity} min={0} max={1} step={0.05} onChange={(v) => setGlow({ opacity: v })} />
-            <LabeledSlider label="Expansión" value={glow.expansion} min={0} max={12} step={0.5} onChange={(v) => setGlow({ expansion: v })} />
-            <LabeledSlider label="Intensidad (difuminado)" value={glow.intensity} min={0} max={16} step={0.5} onChange={(v) => setGlow({ intensity: v })} />
+            <ColorRow label={t('Color')} value={glow.color} onChange={(v) => setGlow({ color: v })} />
+            <LabeledSlider label={t('Opacidad')} value={glow.opacity} min={0} max={1} step={0.05} onChange={(v) => setGlow({ opacity: v })} />
+            <LabeledSlider label={t('Expansión')} value={glow.expansion} min={0} max={12} step={0.5} onChange={(v) => setGlow({ expansion: v })} />
+            <LabeledSlider label={t('Intensidad (difuminado)')} value={glow.intensity} min={0} max={16} step={0.5} onChange={(v) => setGlow({ intensity: v })} />
           </Stack>
         </AccordionDetails>
       </Accordion>
@@ -153,13 +155,13 @@ export const EffectsPanel = (): ReactElement => {
                 onChange={(e) => setOutline({ enabled: e.target.checked })}
               />
             }
-            label={<Typography variant="body2" fontWeight={600}>Contorno (borde)</Typography>}
+            label={<Typography variant="body2" fontWeight={600}>{t('Contorno (borde)')}</Typography>}
           />
         </AccordionSummary>
         <AccordionDetails>
           <Stack spacing={1}>
-            <ColorRow label="Color" value={outline.color} onChange={(v) => setOutline({ color: v })} />
-            <LabeledSlider label="Grosor" value={outline.width} min={0} max={12} step={0.5} onChange={(v) => setOutline({ width: v })} />
+            <ColorRow label={t('Color')} value={outline.color} onChange={(v) => setOutline({ color: v })} />
+            <LabeledSlider label={t('Grosor')} value={outline.width} min={0} max={12} step={0.5} onChange={(v) => setOutline({ width: v })} />
           </Stack>
         </AccordionDetails>
       </Accordion>
