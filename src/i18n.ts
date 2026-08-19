@@ -41,6 +41,24 @@ const EN: Record<string, string> = {
   'Plantilla aplicada': 'Template applied',
   'Elegí una plantilla como punto de partida. Después ajustá todo a gusto.':
     'Pick a template as a starting point. Then tweak everything to taste.',
+  Aleatorio: 'Random',
+  'Copiar animaciones': 'Copy animations',
+  'Exportá tus animaciones a un archivo y importalas en otro personaje o rig.':
+    'Export your animations to a file and import them into another character or rig.',
+  'Descargar las animaciones actuales como archivo': 'Download the current animations as a file',
+  Exportar: 'Export',
+  'Animaciones importadas': 'Animations imported',
+  'Archivo de animaciones inválido': 'Invalid animations file',
+  'Ese archivo es de un personaje humanoide, no de un rig':
+    'That file is for a humanoid character, not a rig',
+  'Ese archivo es de un rig, no de un personaje humanoide':
+    'That file is for a rig, not a humanoid character',
+  'Atlas: un solo PNG con todos los frames + atlas.json':
+    'Atlas: a single PNG with every frame + atlas.json',
+  'Variantes de color (skins)': 'Color variants (skins)',
+  'Cada color genera una carpeta skins/ con sus sheets y frames.':
+    'Each color generates a skins/ folder with its own sheets and frames.',
+  'Agregar color': 'Add color',
   Importar: 'Import',
   'Exportar proyecto': 'Export project',
   'Exportar sprites': 'Export sprites',

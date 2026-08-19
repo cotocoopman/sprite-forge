@@ -1,7 +1,84 @@
 // Plantillas built-in (humanoides). Puntos de partida listos, distintos de los
 // presets guardados por el usuario. Cada una es una variación de DEFAULT_CHARACTER.
 import { DEFAULT_CHARACTER } from './rig';
-import type { CharacterDefinition } from './rig';
+import type { CharacterDefinition, CurveTarget } from './rig';
+
+// --- Personaje aleatorio -------------------------------------------------
+// Rangos sanos por campo. La altura total se mantiene ~100 normalizando
+// cabeza + torso + piernas.
+type Range = readonly [number, number];
+
+const RANGES: Partial<Record<keyof CharacterDefinition, Range>> = {
+  headDiameter: [26, 50],
+  torsoHeight: [18, 28],
+  legHeight: [30, 46],
+  torsoWidth: [13, 30],
+  neckLength: [0, 6],
+  shoulderDistance: [14, 26],
+  armSpacing: [0, 5],
+  armWidth: [3, 6.5],
+  armUpperLength: [7, 12],
+  armLowerLength: [6, 11],
+  hipOffset: [3, 7],
+  legWidth: [4, 7.5],
+  legUpperRatio: [0.42, 0.56],
+  footLength: [7, 11],
+  footWidth: [2.6, 4.5],
+};
+
+const PALETTE: readonly string[] = [
+  '#000000', '#2c3e6b', '#c0392b', '#5d4037', '#4527a0', '#212121',
+  '#00838f', '#4b6b3a', '#546e7a', '#8e24aa', '#00695c', '#bf360c',
+];
+
+const lerp = (r: Range, k: number): number => r[0] + (r[1] - r[0]) * k;
+const round2 = (n: number): number => Math.round(n * 100) / 100;
+
+// Genera un personaje aleatorio. `rand` inyectable para tests deterministas.
+export const randomCharacter = (rand: () => number = Math.random): CharacterDefinition => {
+  const pick = <T,>(arr: readonly T[]): T => arr[Math.min(arr.length - 1, Math.floor(rand() * arr.length))];
+  const num = (key: keyof CharacterDefinition): number => {
+    const r = RANGES[key];
+    return r ? round2(lerp(r, rand())) : (DEFAULT_CHARACTER[key] as number);
+  };
+  // Normaliza cabeza+torso+piernas a 100 para conservar proporción de altura.
+  let head = num('headDiameter');
+  let torso = num('torsoHeight');
+  let legs = num('legHeight');
+  const sum = head + torso + legs;
+  const f = 100 / sum;
+  head = round2(head * f);
+  torso = round2(torso * f);
+  legs = round2(legs * f);
+  const curve = (): CurveTarget => pick(['both', 'near', 'far'] as const);
+  return {
+    ...DEFAULT_CHARACTER,
+    id: DEFAULT_CHARACTER.id,
+    name: 'Random',
+    headDiameter: head,
+    torsoHeight: torso,
+    legHeight: legs,
+    torsoWidth: num('torsoWidth'),
+    neckLength: num('neckLength'),
+    shoulderDistance: num('shoulderDistance'),
+    armSpacing: num('armSpacing'),
+    armWidth: num('armWidth'),
+    armUpperLength: num('armUpperLength'),
+    armLowerLength: num('armLowerLength'),
+    armCurveUpper: round2(rand() * 0.3),
+    armCurveLower: round2(rand() * 0.3),
+    armCurveTarget: curve(),
+    hipOffset: num('hipOffset'),
+    legWidth: num('legWidth'),
+    legUpperRatio: num('legUpperRatio'),
+    legCurveUpper: round2(rand() * 0.2),
+    legCurveLower: round2(rand() * 0.2),
+    legCurveTarget: curve(),
+    footLength: num('footLength'),
+    footWidth: num('footWidth'),
+    color: pick(PALETTE),
+  };
+};
 
 export type CharacterTemplate = {
   readonly id: string;

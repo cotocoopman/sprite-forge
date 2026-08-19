@@ -13,6 +13,7 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import CasinoIcon from '@mui/icons-material/Casino';
 import { useProjectStore } from '@store/useProjectStore';
 import { NumberInput } from '@components/NumberInput';
 import { useT } from '@/i18n';
@@ -145,6 +146,7 @@ export const CharacterPanel = (): ReactElement => {
   const setName = useProjectStore((s) => s.setName);
   const setColor = useProjectStore((s) => s.setColor);
   const resetCharacter = useProjectStore((s) => s.resetCharacter);
+  const randomizeCharacter = useProjectStore((s) => s.randomizeCharacter);
 
   const t = useT();
   const sum = headDiameter + torsoHeight + legHeight;
@@ -202,9 +204,14 @@ export const CharacterPanel = (): ReactElement => {
         </Accordion>
       ))}
 
-      <Button variant="outlined" startIcon={<RestartAltIcon />} onClick={resetCharacter}>
-        {t('Restaurar defaults')}
-      </Button>
+      <Stack direction="row" spacing={1}>
+        <Button fullWidth variant="contained" color="secondary" startIcon={<CasinoIcon />} onClick={randomizeCharacter}>
+          {t('Aleatorio')}
+        </Button>
+        <Button fullWidth variant="outlined" startIcon={<RestartAltIcon />} onClick={resetCharacter}>
+          {t('Restaurar defaults')}
+        </Button>
+      </Stack>
     </Stack>
   );
 };

@@ -16,10 +16,32 @@ import { rigPoseAt } from '@core/customRig';
 import type { Lang } from '@/i18n';
 import { buildDefaultProject, poseAt } from '@core/poses';
 import { validateProject } from '@core/validation';
+import { randomCharacter } from '@core/templates';
 
 const PROJECT_KEY = 'sprite-forge_project';
 const PRESETS_KEY = 'sprite-forge_presets';
 const LANG_KEY = 'sprite-forge_lang';
+const REF_KEY = 'sprite-forge_ref';
+
+type RefState = { image: string | null; opacity: number; scale: number; visible: boolean };
+
+const loadRef = (): RefState => {
+  try {
+    const raw = localStorage.getItem(REF_KEY);
+    if (raw) {
+      const p = JSON.parse(raw) as Partial<RefState>;
+      return {
+        image: typeof p.image === 'string' ? p.image : null,
+        opacity: typeof p.opacity === 'number' ? p.opacity : 0.5,
+        scale: typeof p.scale === 'number' ? p.scale : 1,
+        visible: typeof p.visible === 'boolean' ? p.visible : true,
+      };
+    }
+  } catch {
+    /* ignora */
+  }
+  return { image: null, opacity: 0.5, scale: 1, visible: true };
+};
 
 const loadLang = (): Lang => {
   try {
@@ -91,6 +113,7 @@ export type ProjectState = {
   readonly setColor: (color: string) => void;
   readonly setName: (name: string) => void;
   readonly resetCharacter: () => void;
+  readonly randomizeCharacter: () => void;
   readonly applyCharacter: (character: CharacterDefinition) => void;
   readonly setArmCurveTarget: (target: CurveTarget) => void;
   readonly setLegCurveTarget: (target: CurveTarget) => void;
@@ -165,6 +188,8 @@ export type ProjectState = {
   // Animaciones
   readonly selectAnimation: (id: string) => void;
   readonly addAnimation: () => void;
+  readonly importAnimations: (clips: readonly AnimationClip[]) => void;
+  readonly importRigClips: (clips: readonly RigClip[]) => void;
   readonly duplicateAnimation: (id: string) => void;
   readonly renameAnimation: (id: string, name: string) => void;
   readonly deleteAnimation: (id: string) => void;
@@ -344,6 +369,14 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         project: {
           ...s.project,
           character: { ...DEFAULT_CHARACTER, id: s.project.character.id, name: s.project.character.name },
+        },
+      })),
+
+    randomizeCharacter: () =>
+      set((s) => ({
+        project: {
+          ...s.project,
+          character: { ...randomCharacter(), id: s.project.character.id },
         },
       })),
 
@@ -680,10 +713,10 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         },
       })),
 
-    refImage: null,
-    refOpacity: 0.5,
-    refScale: 1,
-    refVisible: true,
+    ...(() => {
+      const r = loadRef();
+      return { refImage: r.image, refOpacity: r.opacity, refScale: r.scale, refVisible: r.visible };
+    })(),
     setRefImage: (dataUrl) => set({ refImage: dataUrl, refVisible: true }),
     setRefOpacity: (v) => set({ refOpacity: v }),
     setRefScale: (v) => set({ refScale: v }),
@@ -711,6 +744,35 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         currentFrame: 0,
         isPlaying: false,
       }));
+    },
+
+    importAnimations: (clips) => {
+      if (clips.length === 0) return;
+      const fresh = clips.map((c) => ({ ...c, id: genId() }));
+      set((s) => ({
+        project: { ...s.project, animations: [...s.project.animations, ...fresh] },
+        activeAnimationId: fresh[0].id,
+        activeKeyframeIndex: 0,
+        currentFrame: 0,
+        isPlaying: false,
+      }));
+      get().notify('Animaciones importadas', 'success');
+    },
+
+    importRigClips: (clips) => {
+      if (clips.length === 0) return;
+      const fresh = clips.map((c) => ({ ...c, id: genId() }));
+      set((s) => ({
+        project: {
+          ...s.project,
+          customRig: { ...s.project.customRig, animations: [...s.project.customRig.animations, ...fresh] },
+        },
+        activeRigClipId: fresh[0].id,
+        activeRigKeyframeIndex: 0,
+        currentFrame: 0,
+        isPlaying: false,
+      }));
+      get().notify('Animaciones importadas', 'success');
     },
 
     duplicateAnimation: (id) => {
@@ -976,5 +1038,30 @@ useProjectStore.subscribe((state, prev) => {
     } catch {
       /* ignorar */
     }
+  }
+});
+
+// --- Persistencia de la imagen de referencia (fuera del proyecto) ---
+useProjectStore.subscribe((state, prev) => {
+  if (
+    state.refImage === prev.refImage &&
+    state.refOpacity === prev.refOpacity &&
+    state.refScale === prev.refScale &&
+    state.refVisible === prev.refVisible
+  ) {
+    return;
+  }
+  try {
+    localStorage.setItem(
+      REF_KEY,
+      JSON.stringify({
+        image: state.refImage,
+        opacity: state.refOpacity,
+        scale: state.refScale,
+        visible: state.refVisible,
+      }),
+    );
+  } catch {
+    /* cuota excedida (imagen grande) — ignorar */
   }
 });

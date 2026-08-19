@@ -14,6 +14,7 @@ import LinearProgress from '@mui/material/LinearProgress';
 import Divider from '@mui/material/Divider';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
+import Chip from '@mui/material/Chip';
 import { useProjectStore } from '@store/useProjectStore';
 import { NumberInput } from '@components/NumberInput';
 import { useT } from '@/i18n';
@@ -49,14 +50,31 @@ export const ExportDialog = ({ open, onClose }: Props): ReactElement => {
     projectJson: true,
     directions8: false,
     godot: false,
+    atlas: false,
+    skins: [],
   });
+  const [skinDraft, setSkinDraft] = useState('#e74c3c');
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
 
   const toggle = (key: keyof ExportOptions) => (): void =>
     setOptions((o) => ({ ...o, [key]: !o[key] }));
 
-  const nothingSelected = !Object.values(options).some(Boolean);
+  const nothingSelected =
+    !options.sheets &&
+    !options.frames &&
+    !options.svg &&
+    !options.manifest &&
+    !options.projectJson &&
+    !options.godot &&
+    !options.atlas;
+
+  const addSkin = (): void => {
+    const c = skinDraft.toLowerCase();
+    if (!options.skins.includes(c)) setOptions((o) => ({ ...o, skins: [...o.skins, c] }));
+  };
+  const removeSkin = (c: string): void =>
+    setOptions((o) => ({ ...o, skins: o.skins.filter((x) => x !== c) }));
 
   const handleExport = async (): Promise<void> => {
     setBusy(true);
@@ -150,6 +168,10 @@ export const ExportDialog = ({ open, onClose }: Props): ReactElement => {
               control={<Checkbox checked={options.godot} onChange={toggle('godot')} />}
               label={t('Recurso Godot 4 (SpriteFrames .tres, usa los sheets)')}
             />
+            <FormControlLabel
+              control={<Checkbox checked={options.atlas} onChange={toggle('atlas')} />}
+              label={t('Atlas: un solo PNG con todos los frames + atlas.json')}
+            />
           </Stack>
 
           {options.godot && (
@@ -164,6 +186,32 @@ export const ExportDialog = ({ open, onClose }: Props): ReactElement => {
               </Link>
             </Typography>
           )}
+
+          <Divider />
+
+          <Typography variant="subtitle2">{t('Variantes de color (skins)')}</Typography>
+          <Typography variant="caption" color="text.secondary">
+            {t('Cada color genera una carpeta skins/ con sus sheets y frames.')}
+          </Typography>
+          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+            <input
+              type="color"
+              value={skinDraft}
+              onChange={(e) => setSkinDraft(e.target.value)}
+              style={{ width: 40, height: 32, border: 'none', background: 'none', cursor: 'pointer' }}
+            />
+            <Button size="small" variant="outlined" onClick={addSkin}>
+              {t('Agregar color')}
+            </Button>
+            {options.skins.map((c) => (
+              <Chip
+                key={c}
+                label={c}
+                onDelete={() => removeSkin(c)}
+                sx={{ bgcolor: c, color: '#fff', '& .MuiChip-deleteIcon': { color: 'rgba(255,255,255,0.8)' } }}
+              />
+            ))}
+          </Stack>
 
           <Typography variant="caption" color="text.secondary">
             {render.cellSize}×{render.cellSize}px · {project.animations.length} {t('animaciones')}

@@ -39,6 +39,7 @@ import { PlaybackControls } from '@components/PlaybackControls';
 import { KeyboardShortcuts } from '@components/KeyboardShortcuts';
 import { RigEditor } from '@components/RigEditor';
 import { TemplateGallery } from '@components/TemplateGallery';
+import { AnimationIO } from '@components/AnimationIO';
 import { CustomPreview } from '@components/CustomPreview';
 import { RigAnimationPanel } from '@components/RigAnimationPanel';
 import { RigFrameStrip } from '@components/RigFrameStrip';
@@ -277,7 +278,11 @@ export const App = (): ReactElement => {
           </Box>
           {/* Derecha — Animación del rig */}
           <Paper square sx={{ ...columnSx, width: { xs: '100%', md: 360 }, flexShrink: { md: 0 } }}>
-            <RigAnimationPanel />
+            <Stack spacing={2}>
+              <RigAnimationPanel />
+              <Divider />
+              <AnimationIO />
+            </Stack>
           </Paper>
         </Box>
       ) : (
@@ -320,6 +325,8 @@ export const App = (): ReactElement => {
               <KeyframeTimeline />
               <Divider />
               <PoseEditor />
+              <Divider />
+              <AnimationIO />
             </Stack>
           </Paper>
         </Box>

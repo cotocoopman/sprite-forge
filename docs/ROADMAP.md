@@ -46,15 +46,20 @@ Project status — what's done and what's pending. Updated by hand.
 
 ## ⏳ Pending
 
-- **Rig phase 3** — more presets / creature library (biped, snake, fish, ship…)
-  and saving your own rigs as presets.
 - **Weapons/props as mini-rigs** — humanoid accessories stayed basic (a single
   shape doesn't make a real sword/pistol). Solve it by composing bones: a weapon
   = a small rig anchorable to a hand.
 - **8-direction export for the custom rig** — the 3D turn (facing) is humanoid-only
   today; the generic rig exports a single direction.
 - **Effects on the custom rig** — shadow / glow / outline apply only to the humanoid.
-- **Persist the reference image** — currently in memory (lost on reload).
+
+### ✅ Recently shipped
+- **20 built-in templates** (10 humanoid + 10 rig) with a clear TEMPLATE badge.
+- **Randomize character** (one click → random proportions/colors, height-normalized).
+- **Persist the reference image** across reloads.
+- **Copy animations** between characters/rigs via export/import JSON.
+- **Atlas export** — single PNG with every frame + `atlas.json` regions.
+- **Color variants (skins)** — export multiple palettes at once.
 
 ## ⚠️ Known limitations
 
@@ -67,12 +72,8 @@ Project status — what's done and what's pending. Updated by hand.
 
 ## Ideas / backlog
 
-- Copy animations between characters/rigs.
 - IK (inverse kinematics) for foot planting.
-- Atlas packing (all animations in one sheet + JSON).
 - GIF/APNG preview export.
-- Color variants (skins) exported at once.
-- Randomize character (one click → random proportions/colors).
 
 ## Community / infra (deferred — revisit when there's traffic)
 

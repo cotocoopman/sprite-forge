@@ -16,6 +16,8 @@ export type ExportOptions = {
   readonly projectJson: boolean;
   readonly directions8: boolean; // generar las 8 direcciones (giro cada 45°)
   readonly godot: boolean;       // recurso SpriteFrames .tres para Godot 4
+  readonly atlas: boolean;       // un único PNG con TODOS los frames + atlas.json
+  readonly skins: readonly string[]; // variantes de color (una carpeta por color)
 };
 
 const DIRECTIONS_8 = [0, 45, 90, 135, 180, 225, 270, 315] as const;
@@ -70,6 +72,62 @@ export const svgToPngBlob = (svg: string, width: number, height: number): Promis
     };
     img.src = url;
   });
+
+// Carga un string SVG como HTMLImageElement (para componer el atlas).
+const svgToImage = (svg: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(img);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('No se pudo cargar el SVG como imagen'));
+    };
+    img.src = url;
+  });
+
+const canvasToBlob = (canvas: HTMLCanvasElement): Promise<Blob> =>
+  new Promise((resolve, reject) => {
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob devolvió null'))), 'image/png');
+  });
+
+export type AtlasFrame = {
+  readonly animation: string;
+  readonly frame: number;
+  readonly x: number;
+  readonly y: number;
+  readonly w: number;
+  readonly h: number;
+};
+
+// Compone un único PNG (grilla: una fila por animación) + su descripción JSON.
+// `rows` = [{ name, svgs[] }] donde cada svg ya es un frame individual.
+const buildAtlasFrom = async (
+  rows: readonly { readonly name: string; readonly svgs: readonly string[] }[],
+  cs: number,
+): Promise<{ readonly blob: Blob; readonly json: object }> => {
+  const cols = rows.reduce((m, r) => Math.max(m, r.svgs.length), 1);
+  const canvas = document.createElement('canvas');
+  canvas.width = cols * cs;
+  canvas.height = rows.length * cs;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('No se pudo obtener el contexto 2D');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const frames: AtlasFrame[] = [];
+  for (let r = 0; r < rows.length; r += 1) {
+    for (let c = 0; c < rows[r].svgs.length; c += 1) {
+      const img = await svgToImage(rows[r].svgs[c]);
+      ctx.drawImage(img, c * cs, r * cs, cs, cs);
+      frames.push({ animation: rows[r].name, frame: c, x: c * cs, y: r * cs, w: cs, h: cs });
+    }
+  }
+  const blob = await canvasToBlob(canvas);
+  return { blob, json: { cellSize: cs, columns: cols, rows: rows.length, image: 'atlas.png', frames } };
+};
 
 export const buildManifest = (project: Project, dirCount: number): Manifest => ({
   cellSize: project.render.cellSize,
@@ -169,7 +227,18 @@ export const buildZip = async (
   // Direcciones a rasterizar: las 8 (giro 3D cada 45°) o solo el facing actual.
   const directions = options.directions8 ? DIRECTIONS_8 : [project.render.facing];
 
-  const total = countRasterOps(project, options, directions.length);
+  const skinOpsPerColor = (() => {
+    let s = 0;
+    for (const clip of project.animations) {
+      if (options.sheets) s += 1;
+      if (options.frames) s += clip.frames;
+    }
+    return s;
+  })();
+  const total =
+    countRasterOps(project, options, directions.length) +
+    options.skins.length * skinOpsPerColor +
+    (options.atlas ? 1 : 0);
   let done = 0;
   const tick = (): void => {
     done += 1;
@@ -203,6 +272,44 @@ export const buildZip = async (
       if (options.svg) {
         const oneSvg = renderSheet(project.character, poses, render, effects, project.parts, project.accessories);
         root.file(`svg/${base}${suffix}.svg`, oneSvg);
+      }
+    }
+  }
+
+  // Atlas: un único PNG con todos los frames (una fila por animación) + JSON.
+  if (options.atlas) {
+    const render = { ...project.render };
+    const rows = project.animations.map((clip) => ({
+      name: clip.name,
+      svgs: sampleClip(clip).map((p) =>
+        renderSvg(project.character, p, render, effects, project.parts, project.accessories),
+      ),
+    }));
+    const { blob, json } = await buildAtlasFrom(rows, cellSize);
+    root.file('atlas.png', blob);
+    root.file('atlas.json', JSON.stringify(json, null, 2));
+    tick();
+  }
+
+  // Variantes de color (skins): sheets/frames por color, en su propia carpeta.
+  for (const color of options.skins) {
+    const skinChar = { ...project.character, color };
+    const skinRoot = root.folder(`skins/${safeName(color.replace('#', ''))}`) ?? root;
+    const render = { ...project.render };
+    for (const clip of project.animations) {
+      const poses = sampleClip(clip);
+      const base = safeName(clip.name);
+      if (options.sheets) {
+        const svg = renderSheet(skinChar, poses, render, effects, project.parts, project.accessories);
+        skinRoot.file(`sheets/${base}.png`, await svgToPngBlob(svg, cellSize * poses.length, cellSize));
+        tick();
+      }
+      if (options.frames) {
+        for (let i = 0; i < poses.length; i += 1) {
+          const svg = renderSvg(skinChar, poses[i], render, effects, project.parts, project.accessories);
+          skinRoot.file(`frames/${base}_${pad2(i)}.png`, await svgToPngBlob(svg, cellSize, cellSize));
+          tick();
+        }
       }
     }
   }
@@ -270,7 +377,11 @@ export const buildRigZip = async (
     if (options.sheets || options.godot) total += 1;
     if (options.frames) total += clip.frames;
   }
-  total = total || 1;
+  const skinOpsPerColor = rig.animations.reduce(
+    (s, clip) => s + (options.sheets ? 1 : 0) + (options.frames ? clip.frames : 0),
+    0,
+  );
+  total = (total + options.skins.length * skinOpsPerColor + (options.atlas ? 1 : 0)) || 1;
   let done = 0;
   const tick = (): void => {
     done += 1;
@@ -294,6 +405,36 @@ export const buildRigZip = async (
     }
     if (options.svg) {
       root.file(`svg/${base}.svg`, renderCustomSheet(rig, poses, render));
+    }
+  }
+
+  if (options.atlas) {
+    const rows = rig.animations.map((clip) => ({
+      name: clip.name,
+      svgs: sampleRigClip(clip).map((p) => renderCustomSvg(rig, render, p)),
+    }));
+    const { blob, json } = await buildAtlasFrom(rows, cs);
+    root.file('atlas.png', blob);
+    root.file('atlas.json', JSON.stringify(json, null, 2));
+    tick();
+  }
+
+  for (const color of options.skins) {
+    const skinRig = { ...rig, color };
+    const skinRoot = root.folder(`skins/${safeName(color.replace('#', ''))}`) ?? root;
+    for (const clip of rig.animations) {
+      const poses = sampleRigClip(clip);
+      const base = safeName(clip.name);
+      if (options.sheets) {
+        skinRoot.file(`sheets/${base}.png`, await svgToPngBlob(renderCustomSheet(skinRig, poses, render), cs * poses.length, cs));
+        tick();
+      }
+      if (options.frames) {
+        for (let i = 0; i < poses.length; i += 1) {
+          skinRoot.file(`frames/${base}_${pad2(i)}.png`, await svgToPngBlob(renderCustomSvg(skinRig, render, poses[i]), cs, cs));
+          tick();
+        }
+      }
     }
   }
 

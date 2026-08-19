@@ -1,7 +1,16 @@
 import { describe, it, expect } from 'vitest';
-import { CHARACTER_TEMPLATES } from './templates';
+import { CHARACTER_TEMPLATES, randomCharacter } from './templates';
 import { buildSkeleton, NEUTRAL_POSE } from './rig';
 import { RIG_TEMPLATES, buildCustomSkeleton } from './customRig';
+
+// RNG determinista (LCG) para tests reproducibles.
+const makeRng = (seed: number): (() => number) => {
+  let s = seed >>> 0;
+  return () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 0xffffffff;
+  };
+};
 
 describe('character templates', () => {
   it('exposes 10 templates with unique ids', () => {
@@ -19,6 +28,23 @@ describe('character templates', () => {
       expect(Number.isFinite(skel.headRadius)).toBe(true);
       expect(skel.headRadius).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('randomCharacter', () => {
+  it('produces a renderable character with height normalized to ~100', () => {
+    for (let seed = 1; seed <= 20; seed += 1) {
+      const char = randomCharacter(makeRng(seed));
+      const height = char.headDiameter + char.torsoHeight + char.legHeight;
+      expect(Math.abs(height - 100)).toBeLessThan(0.5);
+      const skel = buildSkeleton(char, NEUTRAL_POSE);
+      expect(skel.capsules.length).toBeGreaterThan(0);
+      expect(skel.headRadius).toBeGreaterThan(0);
+    }
+  });
+
+  it('is deterministic for a given rng seed', () => {
+    expect(randomCharacter(makeRng(42))).toEqual(randomCharacter(makeRng(42)));
   });
 });
 
