@@ -165,8 +165,18 @@ export const App = (): ReactElement => {
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <AppBar position="static" color="default" elevation={1}>
         <Toolbar variant="dense" sx={{ flexWrap: 'wrap', gap: 1, py: { xs: 1, md: 0 } }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, mr: 2 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, mr: 0.75 }}>
             Sprite Forge
+          </Typography>
+          <Typography
+            component="a"
+            href="https://github.com/cotocoopman/sprite-forge/releases"
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="caption"
+            sx={{ color: 'text.secondary', textDecoration: 'none', mr: 2, '&:hover': { color: 'primary.main' } }}
+          >
+            v{__APP_VERSION__}
           </Typography>
           <ToggleButtonGroup
             size="small"

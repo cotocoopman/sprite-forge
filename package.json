@@ -1,8 +1,31 @@
 {
   "name": "sprite-forge",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
+  "description": "Free, 100% local web tool to design, animate and export 2D silhouette sprites for games — sprite sheets, frames, SVG and Godot SpriteFrames.",
+  "author": "Cristopher Coopman",
+  "license": "MIT",
+  "homepage": "https://sprite-forge-sigma.vercel.app/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cotocoopman/sprite-forge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cotocoopman/sprite-forge/issues"
+  },
+  "keywords": [
+    "sprite",
+    "spritesheet",
+    "2d",
+    "animation",
+    "godot",
+    "gamedev",
+    "game-assets",
+    "silhouette",
+    "generator",
+    "sprite-sheet"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
