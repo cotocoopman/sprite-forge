@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import type { ReactElement } from 'react';
 import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
+import ButtonBase from '@mui/material/ButtonBase';
 import Typography from '@mui/material/Typography';
 import Slider from '@mui/material/Slider';
 import Switch from '@mui/material/Switch';
@@ -21,7 +23,51 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { useProjectStore } from '@store/useProjectStore';
 import { useT } from '@/i18n';
 import { ANCHOR_NAMES, ANCHOR_LABELS } from '@core/rig';
+import type { AnchorName } from '@core/rig';
 import type { Accessory, AccessoryShape } from '@core/poses';
+import { PROP_TEMPLATES } from '@core/props';
+
+// Galería de props/armas compuestas (mini-rigs) ancladas a una mano.
+const PropGallery = (): ReactElement => {
+  const addProp = useProjectStore((s) => s.addProp);
+  const [hand, setHand] = useState<AnchorName>('handNear');
+  const t = useT();
+
+  return (
+    <Stack spacing={1}>
+      <Typography variant="subtitle2">{t('Armas / props')}</Typography>
+      <ToggleButtonGroup size="small" exclusive fullWidth value={hand} onChange={(_, v) => v && setHand(v as AnchorName)}>
+        <ToggleButton value="handNear">{t('Mano derecha')}</ToggleButton>
+        <ToggleButton value="handFar">{t('Mano izquierda')}</ToggleButton>
+      </ToggleButtonGroup>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: 0.75 }}>
+        {PROP_TEMPLATES.map((p) => (
+          <ButtonBase
+            key={p.id}
+            onClick={() => addProp(p.id, hand)}
+            focusRipple
+            sx={{
+              flexDirection: 'column',
+              gap: 0.25,
+              p: 0.75,
+              borderRadius: 2,
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'action.hover',
+              '&:hover': { borderColor: 'primary.main' },
+            }}
+          >
+            <Box sx={{ fontSize: 22, lineHeight: 1 }}>{p.emoji}</Box>
+            <Typography variant="caption" sx={{ fontWeight: 600 }}>{p.name}</Typography>
+          </ButtonBase>
+        ))}
+      </Box>
+      <Typography variant="caption" color="text.secondary">
+        {t('Cada prop es un mini-rig: se compone de varias piezas y sigue la animación de la mano.')}
+      </Typography>
+    </Stack>
+  );
+};
 
 const Row = ({
   label,
@@ -141,6 +187,8 @@ export const AccessoriesPanel = (): ReactElement => {
           </IconButton>
         </Tooltip>
       </Stack>
+
+      <PropGallery />
 
       {accessories.length === 0 ? (
         <Typography variant="caption" color="text.secondary">

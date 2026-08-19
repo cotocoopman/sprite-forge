@@ -46,12 +46,7 @@ Project status — what's done and what's pending. Updated by hand.
 
 ## ⏳ Pending
 
-- **Weapons/props as mini-rigs** — humanoid accessories stayed basic (a single
-  shape doesn't make a real sword/pistol). Solve it by composing bones: a weapon
-  = a small rig anchorable to a hand.
-- **8-direction export for the custom rig** — the 3D turn (facing) is humanoid-only
-  today; the generic rig exports a single direction.
-- **Effects on the custom rig** — shadow / glow / outline apply only to the humanoid.
+- **Rig phase 3** — bigger creature library and saving your own rigs as presets.
 
 ### ✅ Recently shipped
 - **20 built-in templates** (10 humanoid + 10 rig) with a clear TEMPLATE badge.
@@ -60,6 +55,10 @@ Project status — what's done and what's pending. Updated by hand.
 - **Copy animations** between characters/rigs via export/import JSON.
 - **Atlas export** — single PNG with every frame + `atlas.json` regions.
 - **Color variants (skins)** — export multiple palettes at once.
+- **Weapons/props as mini-rigs** — composed props (sword, axe, staff, pistol,
+  shield, bow) anchored to a hand, following the animation.
+- **8-direction turn for the custom rig** — in-plane rotation + `_d0.._d7` export.
+- **Effects on the custom rig** — shadow / glow / outline now apply to rigs too.
 
 ## ⚠️ Known limitations
 

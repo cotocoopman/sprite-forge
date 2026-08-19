@@ -63,6 +63,10 @@ const EN: Record<string, string> = {
   'Girar 45°': 'Turn 45°',
   'Exportá "las 8 direcciones" para generar _d0.._d7 automáticamente.':
     'Export "all 8 directions" to generate _d0.._d7 automatically.',
+  'Armas / props': 'Weapons / props',
+  'Prop agregado': 'Prop added',
+  'Cada prop es un mini-rig: se compone de varias piezas y sigue la animación de la mano.':
+    'Each prop is a mini-rig: made of several pieces, it follows the hand animation.',
   Importar: 'Import',
   'Exportar proyecto': 'Export project',
   'Exportar sprites': 'Export sprites',

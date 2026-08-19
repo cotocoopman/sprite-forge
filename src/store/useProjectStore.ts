@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import type { CharacterDefinition, CurveTarget, PartName, Pose } from '@core/rig';
+import type { AnchorName, CharacterDefinition, CurveTarget, PartName, Pose } from '@core/rig';
 import { DEFAULT_CHARACTER, NEUTRAL_POSE } from '@core/rig';
+import { PROP_TEMPLATES } from '@core/props';
 import type {
   Accessory,
   AnimationClip,
@@ -126,6 +127,7 @@ export type ProjectState = {
   // Accesorios
   readonly activeAccessoryId: string | null;
   readonly addAccessory: () => void;
+  readonly addProp: (templateId: string, anchor: AnchorName) => void;
   readonly updateAccessory: (id: string, patch: Partial<Accessory>) => void;
   readonly duplicateAccessory: (id: string) => void;
   readonly removeAccessory: (id: string) => void;
@@ -438,6 +440,17 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         project: { ...s.project, accessories: [...s.project.accessories, acc] },
         activeAccessoryId: id,
       }));
+    },
+
+    addProp: (templateId, anchor) => {
+      const tpl = PROP_TEMPLATES.find((p) => p.id === templateId);
+      if (!tpl) return;
+      const accs: Accessory[] = tpl.parts.map((p) => ({ ...p, id: genId(), anchor }));
+      set((s) => ({
+        project: { ...s.project, accessories: [...s.project.accessories, ...accs] },
+        activeAccessoryId: accs[accs.length - 1]?.id ?? s.activeAccessoryId,
+      }));
+      get().notify('Prop agregado', 'success');
     },
 
     updateAccessory: (id, patch) =>
