@@ -55,9 +55,9 @@ describe('randomCharacter', () => {
 
 describe('rig templates', () => {
   it('exposes 10 templates with unique ids and emoji', () => {
-    expect(RIG_TEMPLATES).toHaveLength(10);
+    expect(RIG_TEMPLATES).toHaveLength(13);
     const ids = new Set(RIG_TEMPLATES.map((t) => t.id));
-    expect(ids.size).toBe(10);
+    expect(ids.size).toBe(13);
     for (const t of RIG_TEMPLATES) expect(t.emoji.length).toBeGreaterThan(0);
   });
 
