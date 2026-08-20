@@ -43,7 +43,7 @@ import { QuickGuide } from '@components/QuickGuide';
 import { RigEditor } from '@components/RigEditor';
 import { TemplateGallery } from '@components/TemplateGallery';
 import { AnimationIO } from '@components/AnimationIO';
-import { RigRotationControl } from '@components/RigRotationControl';
+import { RigTurnDial } from '@components/RigTurnDial';
 import { CenterName } from '@components/CenterName';
 import { CanvasSizeSelect } from '@components/CanvasSizeSelect';
 import { CustomPreview } from '@components/CustomPreview';
@@ -329,8 +329,6 @@ export const App = (): ReactElement => {
               <Divider />
               <RigEditor />
               <Divider />
-              <RigRotationControl />
-              <Divider />
               <EffectsPanel />
             </Stack>
           </Paper>
@@ -338,8 +336,11 @@ export const App = (): ReactElement => {
           <Box sx={{ flexGrow: 1, minWidth: 0, p: 2, display: 'flex', flexDirection: 'column', gap: 1.5, minHeight: { xs: '70vh', md: 0 } }}>
             <CenterName />
             <CanvasSizeSelect />
-            <Box sx={{ flexGrow: 1, minHeight: 0 }}>
-              <CustomPreview />
+            <Box sx={{ flexGrow: 1, minHeight: 0, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+              <Box sx={{ flexGrow: 1, minWidth: 220 }}>
+                <CustomPreview />
+              </Box>
+              <RigTurnDial />
             </Box>
             <PlaybackControls />
             <RigFrameStrip />

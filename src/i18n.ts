@@ -87,6 +87,7 @@ const EN: Record<string, string> = {
   Ejemplo: 'Example',
   'Importar / Exportar': 'Import / Export',
   'Color base del rig': 'Rig base color',
+  'Sin giro (0°)': 'No turn (0°)',
   'Tamaño del canvas de exportación (px). No afecta la silueta, solo la resolución.':
     'Export canvas size (px). It doesn\'t affect the silhouette, only the resolution.',
   // Guía: descripciones + ejemplos

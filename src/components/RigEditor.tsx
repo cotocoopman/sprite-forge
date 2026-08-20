@@ -21,6 +21,7 @@ import ImageIcon from '@mui/icons-material/Image';
 import { useProjectStore } from '@store/useProjectStore';
 import { NumberInput } from '@components/NumberInput';
 import { ColorField } from '@components/ColorField';
+import { SectionAccordion } from '@components/SectionAccordion';
 import { renderCustomSvg } from '@core/svg';
 import { downloadBlob, svgToPngBlob } from '@core/export';
 import { RIG_PRESETS } from '@core/customRig';
@@ -133,9 +134,8 @@ export const RigEditor = (): ReactElement => {
   };
 
   return (
+    <SectionAccordion title="Rig personalizado" defaultExpanded>
     <Stack spacing={1.5}>
-      <Typography variant="h6">{t('Rig personalizado')}</Typography>
-
       <TextField
         select
         size="small"
@@ -217,5 +217,6 @@ export const RigEditor = (): ReactElement => {
         {t('Animá el rig en el panel derecho. Exportá con "Exportar sprites".')}
       </Typography>
     </Stack>
+    </SectionAccordion>
   );
 };
