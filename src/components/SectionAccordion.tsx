@@ -18,14 +18,14 @@ type Props = {
 export const SectionAccordion = ({ title, defaultExpanded = false, icon, children }: Props): ReactElement => {
   const t = useT();
   return (
-    <Accordion disableGutters defaultExpanded={defaultExpanded} sx={{ bgcolor: 'transparent', '&:before': { display: 'none' } }}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 0, minHeight: 0, '& .MuiAccordionSummary-content': { my: 1 } }}>
+    <Accordion disableGutters defaultExpanded={defaultExpanded} sx={{ bgcolor: 'action.hover', borderRadius: 2 }}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Stack direction="row" spacing={0.75} alignItems="center">
           {icon}
           <Typography variant="h6">{t(title)}</Typography>
         </Stack>
       </AccordionSummary>
-      <AccordionDetails sx={{ px: 0, pt: 0 }}>{children}</AccordionDetails>
+      <AccordionDetails>{children}</AccordionDetails>
     </Accordion>
   );
 };

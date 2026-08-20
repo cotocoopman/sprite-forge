@@ -48,7 +48,7 @@ export const TemplateGallery = (): ReactElement => {
       </Typography>
 
       {mode !== 'custom' && (
-        <Button variant="contained" color="secondary" startIcon={<CasinoIcon />} onClick={randomizeCharacter}>
+        <Button variant="contained" color="primary" startIcon={<CasinoIcon />} onClick={randomizeCharacter}>
           {t('Personaje aleatorio')}
         </Button>
       )}
@@ -66,37 +66,18 @@ export const TemplateGallery = (): ReactElement => {
             onClick={it.apply}
             focusRipple
             sx={{
-              position: 'relative',
               flexDirection: 'column',
               gap: 0.25,
               p: 1,
               borderRadius: 2,
               border: '1px solid',
               borderColor: 'divider',
-              bgcolor: 'action.hover',
+              bgcolor: 'background.paper',
               transition: 'all .15s',
-              '&:hover': { borderColor: 'secondary.main', transform: 'translateY(-2px)' },
+              '&:hover': { borderColor: 'primary.main', transform: 'translateY(-2px)' },
             }}
           >
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 4,
-                right: 4,
-                fontSize: 9,
-                lineHeight: 1,
-                px: 0.5,
-                py: '2px',
-                borderRadius: 1,
-                bgcolor: 'secondary.main',
-                color: 'secondary.contrastText',
-                fontWeight: 700,
-                letterSpacing: 0.3,
-              }}
-            >
-              {t('PLANTILLA')}
-            </Box>
-            <Box sx={{ fontSize: 30, lineHeight: 1, mt: 0.5 }}>{it.emoji}</Box>
+            <Box sx={{ fontSize: 30, lineHeight: 1 }}>{it.emoji}</Box>
             <Typography variant="caption" sx={{ fontWeight: 600, textAlign: 'center' }}>
               {it.name}
             </Typography>

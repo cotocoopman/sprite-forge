@@ -34,7 +34,7 @@ export const PresetLibrary = (): ReactElement => {
   return (
     <Stack spacing={1.5}>
       <Typography variant="h6">{t('Biblioteca de personajes')}</Typography>
-      <Stack direction="row" spacing={1}>
+      <Stack spacing={1}>
         <TextField
           size="small"
           placeholder={t('Nombre del preset')}
@@ -45,7 +45,7 @@ export const PresetLibrary = (): ReactElement => {
           }}
           fullWidth
         />
-        <Button variant="contained" startIcon={<SaveIcon />} onClick={handleSave} disabled={!name.trim()}>
+        <Button variant="contained" startIcon={<SaveIcon />} onClick={handleSave} disabled={!name.trim()} fullWidth>
           {t('Guardar')}
         </Button>
       </Stack>

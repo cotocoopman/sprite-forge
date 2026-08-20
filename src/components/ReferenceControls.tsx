@@ -41,9 +41,11 @@ export const ReferenceControls = (): ReactElement => {
   return (
     <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap>
       <input ref={inputRef} type="file" accept="image/*" hidden onChange={onFile} />
-      <Button size="small" variant="outlined" startIcon={<ImageIcon />} onClick={() => inputRef.current?.click()}>
-        {t('Referencia')}
-      </Button>
+      <Tooltip title={t('Superponé una imagen (arte, un sprite) detrás de la silueta para calcarla o emparejar proporciones')}>
+        <Button size="small" variant="outlined" startIcon={<ImageIcon />} onClick={() => inputRef.current?.click()}>
+          {t('Referencia')}
+        </Button>
+      </Tooltip>
 
       {refImage && (
         <>
