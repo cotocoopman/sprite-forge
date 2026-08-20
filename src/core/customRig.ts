@@ -196,7 +196,7 @@ const bone = (b: Bone): Bone => b;
 export const buildQuadrupedRig = (): CustomRig => ({
   id: 'quadruped',
   name: 'Quadruped',
-  color: '#000000',
+  color: '#795548',
   origin: { x: -22, y: 55 },
   bones: [
     bone({ id: 'spine', name: 'Spine', parentId: null, attach: 0, angle: 90, length: 44, width: 16, shape: 'capsule', curve: 0, color: null, z: 1 }),
@@ -229,33 +229,82 @@ export const buildQuadrupedRig = (): CustomRig => ({
 export const buildBirdRig = (): CustomRig => ({
   id: 'bird',
   name: 'Bird',
-  color: '#000000',
+  color: '#ef5350',
   origin: { x: 4, y: 52 },
   bones: [
-    bone({ id: 'body', name: 'Body', parentId: null, attach: 0, angle: 70, length: 30, width: 26, shape: 'capsule', curve: 0.15, color: null, z: 1 }),
-    bone({ id: 'tail', name: 'Tail', parentId: 'body', attach: 0.02, angle: -150, length: 20, width: 12, shape: 'capsule', curve: 0, color: null, z: 0 }),
-    bone({ id: 'neck', name: 'Neck', parentId: 'body', attach: 0.95, angle: -35, length: 8, width: 9, shape: 'capsule', curve: 0, color: null, z: 2 }),
-    bone({ id: 'head', name: 'Head', parentId: 'neck', attach: 1, angle: 10, length: 14, width: 14, shape: 'circle', curve: 0, color: null, z: 3 }),
-    bone({ id: 'beak', name: 'Beak', parentId: 'head', attach: 1, angle: 25, length: 8, width: 4, shape: 'capsule', curve: 0, color: null, z: 3 }),
-    bone({ id: 'wing', name: 'Wing', parentId: 'body', attach: 0.5, angle: -120, length: 20, width: 10, shape: 'capsule', curve: 0.3, color: null, z: 2 }),
-    bone({ id: 'legL', name: 'Left leg', parentId: 'body', attach: 0.4, angle: 100, length: 16, width: 3, shape: 'capsule', curve: 0, color: null, z: 0 }),
-    bone({ id: 'legR', name: 'Right leg', parentId: 'body', attach: 0.5, angle: 100, length: 16, width: 3, shape: 'capsule', curve: 0, color: null, z: 2 }),
+    bone({ id: 'body', name: 'Body', parentId: null, attach: 0, angle: 90, length: 24, width: 20, shape: 'capsule', curve: 0.1, color: null, z: 1 }),
+    bone({ id: 'head', name: 'Head', parentId: 'body', attach: 1, angle: 0, length: 12, width: 15, shape: 'circle', curve: 0, color: null, z: 3 }),
+    bone({ id: 'beak', name: 'Beak', parentId: 'head', attach: 1, angle: 0, length: 9, width: 5, shape: 'capsule', curve: 0, color: '#ffb300', z: 3 }),
+    bone({ id: 'tail', name: 'Tail', parentId: 'body', attach: 0, angle: 160, length: 16, width: 13, shape: 'capsule', curve: 0, color: null, z: 0 }),
+    bone({ id: 'wing', name: 'Wing', parentId: 'body', attach: 0.5, angle: -90, length: 18, width: 13, shape: 'capsule', curve: 0.35, color: '#e53935', z: 2 }),
+    bone({ id: 'legL', name: 'Left leg', parentId: 'body', attach: 0.35, angle: 90, length: 12, width: 3, shape: 'capsule', curve: 0, color: '#ffb300', z: 0 }),
+    bone({ id: 'legR', name: 'Right leg', parentId: 'body', attach: 0.5, angle: 90, length: 12, width: 3, shape: 'capsule', curve: 0, color: '#ffb300', z: 2 }),
   ],
-  animations: [idleClip()],
+  animations: [
+    {
+      id: 'idle',
+      name: 'idle',
+      frames: 8,
+      fps: 6,
+      loop: true,
+      keyframes: [
+        { t: 0, pose: { wing: -6, head: 2 } },
+        { t: 0.5, pose: { wing: 6, head: -2 } },
+        { t: 1, pose: { wing: -6, head: 2 } },
+      ],
+    },
+    {
+      id: 'fly',
+      name: 'fly',
+      frames: 6,
+      fps: 12,
+      loop: true,
+      keyframes: [
+        { t: 0, pose: { wing: -35 } },
+        { t: 0.5, pose: { wing: 35 } },
+        { t: 1, pose: { wing: -35 } },
+      ],
+    },
+  ],
 });
 
 // Slime: cuerpo grande y bajo con dos ojos.
 export const buildSlimeRig = (): CustomRig => ({
   id: 'slime',
   name: 'Slime',
-  color: '#000000',
+  color: '#43a047',
   origin: { x: 0, y: 82 },
   bones: [
     bone({ id: 'body', name: 'Body', parentId: null, attach: 0, angle: 0, length: 4, width: 60, shape: 'circle', curve: 0, color: null, z: 0 }),
     bone({ id: 'eyeL', name: 'Left eye', parentId: 'body', attach: 0, angle: -30, length: 22, width: 8, shape: 'circle', curve: 0, color: '#ffffff', z: 1 }),
     bone({ id: 'eyeR', name: 'Right eye', parentId: 'body', attach: 0, angle: 30, length: 22, width: 8, shape: 'circle', curve: 0, color: '#ffffff', z: 1 }),
   ],
-  animations: [idleClip()],
+  animations: [
+    {
+      id: 'idle',
+      name: 'idle',
+      frames: 8,
+      fps: 6,
+      loop: true,
+      keyframes: [
+        { t: 0, pose: { eyeL: -4, eyeR: 4 } },
+        { t: 0.5, pose: { eyeL: 4, eyeR: -4 } },
+        { t: 1, pose: { eyeL: -4, eyeR: 4 } },
+      ],
+    },
+    {
+      id: 'jiggle',
+      name: 'jiggle',
+      frames: 6,
+      fps: 10,
+      loop: true,
+      keyframes: [
+        { t: 0, pose: { body: -5 } },
+        { t: 0.5, pose: { body: 5 } },
+        { t: 1, pose: { body: -5 } },
+      ],
+    },
+  ],
 });
 
 // Vacío: un solo hueso para empezar de cero.
@@ -274,7 +323,7 @@ export const buildBlankRig = (): CustomRig => ({
 export const buildCatRig = (): CustomRig => ({
   id: 'cat',
   name: 'Cat',
-  color: '#000000',
+  color: '#f59e42',
   origin: { x: -20, y: 58 },
   bones: [
     bone({ id: 'spine', name: 'Spine', parentId: null, attach: 0, angle: 90, length: 40, width: 12, shape: 'capsule', curve: 0.1, color: null, z: 1 }),
@@ -309,7 +358,7 @@ export const buildCatRig = (): CustomRig => ({
 export const buildSnakeRig = (): CustomRig => ({
   id: 'snake',
   name: 'Snake',
-  color: '#000000',
+  color: '#66bb6a',
   origin: { x: -34, y: 78 },
   bones: [
     bone({ id: 'head', name: 'Head', parentId: null, attach: 0, angle: 0, length: 10, width: 16, shape: 'circle', curve: 0, color: null, z: 3 }),
@@ -340,7 +389,7 @@ export const buildSnakeRig = (): CustomRig => ({
 export const buildSpiderRig = (): CustomRig => ({
   id: 'spider',
   name: 'Spider',
-  color: '#000000',
+  color: '#4e342e',
   origin: { x: 0, y: 66 },
   bones: [
     bone({ id: 'body', name: 'Body', parentId: null, attach: 0, angle: 0, length: 4, width: 30, shape: 'circle', curve: 0, color: null, z: 2 }),
@@ -354,24 +403,60 @@ export const buildSpiderRig = (): CustomRig => ({
     bone({ id: 'legL3', name: 'Leg L3', parentId: 'body', attach: 0, angle: 200, length: 26, width: 3, shape: 'capsule', curve: 0, color: null, z: 1 }),
     bone({ id: 'legL4', name: 'Leg L4', parentId: 'body', attach: 0, angle: 235, length: 24, width: 3, shape: 'capsule', curve: 0, color: null, z: 1 }),
   ],
-  animations: [idleClip()],
+  animations: [
+    {
+      id: 'idle',
+      name: 'idle',
+      frames: 8,
+      fps: 6,
+      loop: true,
+      keyframes: [
+        { t: 0, pose: { legR1: 3, legL1: -3, legR3: -3, legL3: 3 } },
+        { t: 0.5, pose: { legR1: -3, legL1: 3, legR3: 3, legL3: -3 } },
+        { t: 1, pose: { legR1: 3, legL1: -3, legR3: -3, legL3: 3 } },
+      ],
+    },
+    {
+      id: 'scuttle',
+      name: 'scuttle',
+      frames: 6,
+      fps: 12,
+      loop: true,
+      keyframes: [
+        { t: 0, pose: { legR1: 12, legR3: 12, legL2: 12, legL4: 12, legR2: -12, legR4: -12, legL1: -12, legL3: -12 } },
+        { t: 0.5, pose: { legR1: -12, legR3: -12, legL2: -12, legL4: -12, legR2: 12, legR4: 12, legL1: 12, legL3: 12 } },
+        { t: 1, pose: { legR1: 12, legR3: 12, legL2: 12, legL4: 12, legR2: -12, legR4: -12, legL1: -12, legL3: -12 } },
+      ],
+    },
+  ],
 });
 
 // Pez: cuerpo ovalado, aleta dorsal y cola.
 export const buildFishRig = (): CustomRig => ({
   id: 'fish',
   name: 'Fish',
-  color: '#000000',
+  color: '#ff7043',
   origin: { x: 6, y: 50 },
   bones: [
-    bone({ id: 'body', name: 'Body', parentId: null, attach: 0, angle: 0, length: 34, width: 24, shape: 'capsule', curve: 0, color: null, z: 1 }),
+    bone({ id: 'body', name: 'Body', parentId: null, attach: 0, angle: 90, length: 34, width: 24, shape: 'capsule', curve: 0, color: null, z: 1 }),
     bone({ id: 'tail', name: 'Tail fin', parentId: 'body', attach: 0, angle: 180, length: 16, width: 22, shape: 'capsule', curve: 0, color: null, z: 0 }),
     bone({ id: 'dorsal', name: 'Dorsal fin', parentId: 'body', attach: 0.55, angle: -90, length: 12, width: 16, shape: 'capsule', curve: 0.3, color: null, z: 0 }),
     bone({ id: 'belly', name: 'Belly fin', parentId: 'body', attach: 0.45, angle: 90, length: 8, width: 10, shape: 'capsule', curve: 0.3, color: null, z: 0 }),
     bone({ id: 'eye', name: 'Eye', parentId: 'body', attach: 0.85, angle: -40, length: 6, width: 5, shape: 'circle', color: '#ffffff', curve: 0, z: 2 }),
   ],
   animations: [
-    idleClip(),
+    {
+      id: 'idle',
+      name: 'idle',
+      frames: 8,
+      fps: 6,
+      loop: true,
+      keyframes: [
+        { t: 0, pose: { tail: 5, dorsal: -3 } },
+        { t: 0.5, pose: { tail: -5, dorsal: 3 } },
+        { t: 1, pose: { tail: 5, dorsal: -3 } },
+      ],
+    },
     {
       id: 'swim',
       name: 'swim',
@@ -391,7 +476,7 @@ export const buildFishRig = (): CustomRig => ({
 export const buildBatRig = (): CustomRig => ({
   id: 'bat',
   name: 'Bat',
-  color: '#000000',
+  color: '#5e35b1',
   origin: { x: 0, y: 52 },
   bones: [
     bone({ id: 'body', name: 'Body', parentId: null, attach: 0, angle: 90, length: 20, width: 14, shape: 'capsule', curve: 0, color: null, z: 1 }),
@@ -418,86 +503,128 @@ export const buildBatRig = (): CustomRig => ({
   ],
 });
 
-// Cohete: cuerpo, cono, ventana, aletas y llama.
+// Cohete: cuerpo ovalado, cono puntiagudo, ventana, aletas (hacia el fuego) y llama.
 export const buildRocketRig = (): CustomRig => ({
   id: 'rocket',
   name: 'Rocket',
   color: '#000000',
-  origin: { x: 0, y: 54 },
+  origin: { x: -4, y: 50 },
   bones: [
-    bone({ id: 'body', name: 'Body', parentId: null, attach: 0, angle: 90, length: 32, width: 18, shape: 'capsule', curve: 0, color: '#cfd8dc', z: 1 }),
-    bone({ id: 'nose', name: 'Nose cone', parentId: 'body', attach: 1, angle: 0, length: 14, width: 13, shape: 'capsule', curve: 0, color: '#ef5350', z: 2 }),
-    bone({ id: 'window', name: 'Window', parentId: 'body', attach: 0.62, angle: 0, length: 0, width: 9, shape: 'circle', curve: 0, color: '#4fc3f7', z: 3 }),
-    bone({ id: 'finL', name: 'Fin (left)', parentId: 'body', attach: 0.06, angle: -55, length: 15, width: 6, shape: 'rect', curve: 0, color: '#ef5350', z: 0 }),
-    bone({ id: 'finR', name: 'Fin (right)', parentId: 'body', attach: 0.06, angle: 55, length: 15, width: 6, shape: 'rect', curve: 0, color: '#ef5350', z: 0 }),
-    bone({ id: 'flame', name: 'Flame', parentId: 'body', attach: 0, angle: 180, length: 13, width: 12, shape: 'capsule', curve: 0, color: '#ffa726', z: 0 }),
+    bone({ id: 'body', name: 'Body', parentId: null, attach: 0, angle: 90, length: 34, width: 16, shape: 'capsule', curve: 0, color: '#e0e0e0', z: 1 }),
+    bone({ id: 'nose', name: 'Nose cone', parentId: 'body', attach: 1, angle: 0, length: 18, width: 10, shape: 'capsule', curve: 0, color: '#ef5350', z: 2 }),
+    bone({ id: 'window', name: 'Window', parentId: 'body', attach: 0.58, angle: 0, length: 0, width: 8, shape: 'circle', curve: 0, color: '#4fc3f7', z: 3 }),
+    // Aletas cerca del fuego (atrás), apuntando hacia atrás/afuera.
+    bone({ id: 'finL', name: 'Fin (left)', parentId: 'body', attach: 0.05, angle: -140, length: 13, width: 6, shape: 'rect', curve: 0, color: '#c62828', z: 0 }),
+    bone({ id: 'finR', name: 'Fin (right)', parentId: 'body', attach: 0.05, angle: 140, length: 13, width: 6, shape: 'rect', curve: 0, color: '#c62828', z: 0 }),
+    bone({ id: 'flame', name: 'Flame', parentId: 'body', attach: 0, angle: 180, length: 15, width: 12, shape: 'capsule', curve: 0, color: '#ffa726', z: 0 }),
   ],
   animations: [
-    idleClip(),
     {
-      id: 'hover',
-      name: 'hover',
+      id: 'idle',
+      name: 'idle',
       frames: 6,
-      fps: 10,
+      fps: 8,
       loop: true,
       keyframes: [
-        { t: 0, pose: { flame: -12 } },
-        { t: 0.5, pose: { flame: 12 } },
-        { t: 1, pose: { flame: -12 } },
+        { t: 0, pose: { body: -2, flame: -8 } },
+        { t: 0.5, pose: { body: 2, flame: 8 } },
+        { t: 1, pose: { body: -2, flame: -8 } },
+      ],
+    },
+    {
+      id: 'boost',
+      name: 'boost',
+      frames: 6,
+      fps: 12,
+      loop: true,
+      keyframes: [
+        { t: 0, pose: { flame: -16 } },
+        { t: 0.5, pose: { flame: 16 } },
+        { t: 1, pose: { flame: -16 } },
       ],
     },
   ],
 });
 
-// Estrella: núcleo con cinco puntas.
+// Estrella de 5 puntas (puntas finas y largas).
 export const buildStarRig = (): CustomRig => ({
   id: 'star',
   name: 'Star',
   color: '#000000',
   origin: { x: 0, y: 48 },
   bones: [
-    bone({ id: 'core', name: 'Core', parentId: null, attach: 0, angle: 0, length: 4, width: 16, shape: 'circle', curve: 0, color: '#ffd54f', z: 2 }),
-    bone({ id: 'p0', name: 'Point 1', parentId: 'core', attach: 0, angle: -90, length: 20, width: 10, shape: 'capsule', curve: 0, color: '#ffca28', z: 1 }),
-    bone({ id: 'p1', name: 'Point 2', parentId: 'core', attach: 0, angle: -18, length: 20, width: 10, shape: 'capsule', curve: 0, color: '#ffca28', z: 1 }),
-    bone({ id: 'p2', name: 'Point 3', parentId: 'core', attach: 0, angle: 54, length: 20, width: 10, shape: 'capsule', curve: 0, color: '#ffca28', z: 1 }),
-    bone({ id: 'p3', name: 'Point 4', parentId: 'core', attach: 0, angle: 126, length: 20, width: 10, shape: 'capsule', curve: 0, color: '#ffca28', z: 1 }),
-    bone({ id: 'p4', name: 'Point 5', parentId: 'core', attach: 0, angle: 198, length: 20, width: 10, shape: 'capsule', curve: 0, color: '#ffca28', z: 1 }),
+    bone({ id: 'core', name: 'Core', parentId: null, attach: 0, angle: 0, length: 4, width: 11, shape: 'circle', curve: 0, color: '#ffd54f', z: 2 }),
+    bone({ id: 'p0', name: 'Point 1', parentId: 'core', attach: 0, angle: -90, length: 24, width: 7, shape: 'capsule', curve: 0, color: '#ffca28', z: 1 }),
+    bone({ id: 'p1', name: 'Point 2', parentId: 'core', attach: 0, angle: -18, length: 24, width: 7, shape: 'capsule', curve: 0, color: '#ffca28', z: 1 }),
+    bone({ id: 'p2', name: 'Point 3', parentId: 'core', attach: 0, angle: 54, length: 24, width: 7, shape: 'capsule', curve: 0, color: '#ffca28', z: 1 }),
+    bone({ id: 'p3', name: 'Point 4', parentId: 'core', attach: 0, angle: 126, length: 24, width: 7, shape: 'capsule', curve: 0, color: '#ffca28', z: 1 }),
+    bone({ id: 'p4', name: 'Point 5', parentId: 'core', attach: 0, angle: 198, length: 24, width: 7, shape: 'capsule', curve: 0, color: '#ffca28', z: 1 }),
   ],
-  animations: [idleClip()],
+  animations: [
+    {
+      id: 'idle',
+      name: 'idle',
+      frames: 8,
+      fps: 8,
+      loop: true,
+      keyframes: [
+        { t: 0, pose: {} },
+        { t: 0.5, pose: { p0: 6, p1: 6, p2: 6, p3: 6, p4: 6 } },
+        { t: 1, pose: {} },
+      ],
+    },
+  ],
 });
 
-// Nube: varios círculos superpuestos.
+// Nube: círculos superpuestos, más ancha en X que en Y.
 export const buildCloudRig = (): CustomRig => ({
   id: 'cloud',
   name: 'Cloud',
   color: '#000000',
-  origin: { x: 0, y: 56 },
+  origin: { x: 0, y: 54 },
   bones: [
-    bone({ id: 'base', name: 'Base', parentId: null, attach: 0, angle: 0, length: 4, width: 30, shape: 'circle', curve: 0, color: '#eceff1', z: 1 }),
-    bone({ id: 'l', name: 'Puff L', parentId: 'base', attach: 0, angle: 180, length: 17, width: 24, shape: 'circle', curve: 0, color: '#eceff1', z: 1 }),
-    bone({ id: 'r', name: 'Puff R', parentId: 'base', attach: 0, angle: 0, length: 17, width: 24, shape: 'circle', curve: 0, color: '#eceff1', z: 1 }),
-    bone({ id: 'topL', name: 'Puff top-left', parentId: 'base', attach: 0, angle: -125, length: 15, width: 22, shape: 'circle', curve: 0, color: '#ffffff', z: 2 }),
-    bone({ id: 'topR', name: 'Puff top-right', parentId: 'base', attach: 0, angle: -55, length: 15, width: 22, shape: 'circle', curve: 0, color: '#ffffff', z: 2 }),
+    bone({ id: 'base', name: 'Base', parentId: null, attach: 0, angle: 0, length: 4, width: 28, shape: 'circle', curve: 0, color: '#eceff1', z: 1 }),
+    bone({ id: 'l', name: 'Puff L', parentId: 'base', attach: 0, angle: -90, length: 20, width: 24, shape: 'circle', curve: 0, color: '#eceff1', z: 1 }),
+    bone({ id: 'r', name: 'Puff R', parentId: 'base', attach: 0, angle: 90, length: 20, width: 24, shape: 'circle', curve: 0, color: '#eceff1', z: 1 }),
+    bone({ id: 'll', name: 'Puff far-L', parentId: 'base', attach: 0, angle: -90, length: 40, width: 16, shape: 'circle', curve: 0, color: '#eceff1', z: 1 }),
+    bone({ id: 'rr', name: 'Puff far-R', parentId: 'base', attach: 0, angle: 90, length: 40, width: 16, shape: 'circle', curve: 0, color: '#eceff1', z: 1 }),
+    bone({ id: 'topL', name: 'Puff top-L', parentId: 'base', attach: 0, angle: -35, length: 15, width: 22, shape: 'circle', curve: 0, color: '#ffffff', z: 2 }),
+    bone({ id: 'topR', name: 'Puff top-R', parentId: 'base', attach: 0, angle: 35, length: 15, width: 22, shape: 'circle', curve: 0, color: '#ffffff', z: 2 }),
   ],
-  animations: [idleClip()],
+  animations: [
+    {
+      id: 'idle',
+      name: 'idle',
+      frames: 8,
+      fps: 6,
+      loop: true,
+      keyframes: [
+        { t: 0, pose: { topL: -4, topR: 4 } },
+        { t: 0.5, pose: { topL: 4, topR: -4 } },
+        { t: 1, pose: { topL: -4, topR: 4 } },
+      ],
+    },
+  ],
 });
 
-// Explosión: núcleo con ocho puntas alternadas.
+// Explosión: núcleo con puntas irregulares y afiladas (no un sol regular).
 export const buildExplosionRig = (): CustomRig => {
-  const spikes = [0, 45, 90, 135, 180, 225, 270, 315].map((a, i) =>
-    bone({
-      id: `s${i}`,
-      name: `Spike ${i + 1}`,
-      parentId: 'core',
-      attach: 0,
-      angle: a,
-      length: a % 90 === 0 ? 26 : 17,
-      width: 7,
-      shape: 'capsule',
-      curve: 0,
-      color: a % 90 === 0 ? '#ffca28' : '#ff5722',
-      z: 1,
-    }),
+  const spec: readonly [number, number, string][] = [
+    [-88, 30, '#ffca28'],
+    [-52, 15, '#ff5722'],
+    [-14, 26, '#ffee58'],
+    [24, 14, '#ff7043'],
+    [62, 32, '#ffca28'],
+    [104, 16, '#ff5722'],
+    [150, 24, '#ffee58'],
+    [186, 13, '#ff7043'],
+    [214, 30, '#ffca28'],
+    [256, 15, '#ff5722'],
+    [300, 22, '#ffee58'],
+    [330, 12, '#ff7043'],
+  ];
+  const spikes = spec.map(([a, len, color], i) =>
+    bone({ id: `s${i}`, name: `Spike ${i + 1}`, parentId: 'core', attach: 0, angle: a, length: len, width: 5, shape: 'rect', curve: 0, color, z: 1 }),
   );
   return {
     id: 'explosion',
@@ -505,37 +632,50 @@ export const buildExplosionRig = (): CustomRig => {
     color: '#000000',
     origin: { x: 0, y: 48 },
     bones: [
-      bone({ id: 'core', name: 'Core', parentId: null, attach: 0, angle: 0, length: 4, width: 22, shape: 'circle', curve: 0, color: '#ff7043', z: 2 }),
+      bone({ id: 'core', name: 'Core', parentId: null, attach: 0, angle: 0, length: 4, width: 18, shape: 'circle', curve: 0, color: '#ff7043', z: 2 }),
       ...spikes,
     ],
-    animations: [idleClip()],
+    animations: [
+      {
+        id: 'idle',
+        name: 'idle',
+        frames: 6,
+        fps: 12,
+        loop: true,
+        keyframes: [
+          { t: 0, pose: Object.fromEntries(spec.map((_, i) => [`s${i}`, i % 2 ? -8 : 8])) },
+          { t: 0.5, pose: Object.fromEntries(spec.map((_, i) => [`s${i}`, i % 2 ? 8 : -8])) },
+          { t: 1, pose: Object.fromEntries(spec.map((_, i) => [`s${i}`, i % 2 ? -8 : 8])) },
+        ],
+      },
+    ],
   };
 };
 
-// Ola: cadena curvada con cresta y espuma.
+// Ola rompiente: cuerpo azul que se curva en una cresta con espuma.
 export const buildWaveRig = (): CustomRig => ({
   id: 'wave',
   name: 'Wave',
   color: '#000000',
-  origin: { x: -24, y: 44 },
+  origin: { x: -26, y: 48 },
   bones: [
-    bone({ id: 'w0', name: 'Base', parentId: null, attach: 0, angle: 90, length: 20, width: 22, shape: 'capsule', curve: 0, color: '#0288d1', z: 1 }),
-    bone({ id: 'w1', name: 'Body', parentId: 'w0', attach: 1, angle: -20, length: 18, width: 18, shape: 'capsule', curve: 0, color: '#29b6f6', z: 1 }),
-    bone({ id: 'w2', name: 'Crest', parentId: 'w1', attach: 1, angle: -60, length: 15, width: 13, shape: 'capsule', curve: 0.35, color: '#4fc3f7', z: 2 }),
-    bone({ id: 'foam', name: 'Foam', parentId: 'w2', attach: 1, angle: 0, length: 0, width: 11, shape: 'circle', curve: 0, color: '#ffffff', z: 3 }),
+    bone({ id: 'w0', name: 'Base', parentId: null, attach: 0, angle: 90, length: 18, width: 26, shape: 'capsule', curve: 0, color: '#0277bd', z: 1 }),
+    bone({ id: 'w1', name: 'Body', parentId: 'w0', attach: 1, angle: -22, length: 16, width: 22, shape: 'capsule', curve: 0, color: '#1e88e5', z: 1 }),
+    bone({ id: 'w2', name: 'Crest', parentId: 'w1', attach: 1, angle: -55, length: 15, width: 16, shape: 'capsule', curve: 0.3, color: '#29b6f6', z: 2 }),
+    bone({ id: 'w3', name: 'Curl', parentId: 'w2', attach: 1, angle: -95, length: 12, width: 12, shape: 'capsule', curve: 0.5, color: '#4fc3f7', z: 3 }),
+    bone({ id: 'foam', name: 'Foam', parentId: 'w3', attach: 1, angle: 0, length: 0, width: 13, shape: 'circle', curve: 0, color: '#ffffff', z: 4 }),
   ],
   animations: [
-    idleClip(),
     {
-      id: 'roll',
-      name: 'roll',
+      id: 'idle',
+      name: 'idle',
       frames: 8,
       fps: 8,
       loop: true,
       keyframes: [
-        { t: 0, pose: { w1: -8, w2: 10 } },
-        { t: 0.5, pose: { w1: 8, w2: -10 } },
-        { t: 1, pose: { w1: -8, w2: 10 } },
+        { t: 0, pose: { w1: -6, w2: 8, w3: 10 } },
+        { t: 0.5, pose: { w1: 6, w2: -8, w3: -10 } },
+        { t: 1, pose: { w1: -6, w2: 8, w3: 10 } },
       ],
     },
   ],
