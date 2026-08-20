@@ -3,7 +3,6 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Slider from '@mui/material/Slider';
-import TextField from '@mui/material/TextField';
 import Divider from '@mui/material/Divider';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -137,12 +136,10 @@ const CurveTargetToggle = ({ kind }: { kind: CurveKind }): ReactElement => {
 };
 
 export const CharacterPanel = (): ReactElement => {
-  const name = useProjectStore((s) => s.project.character.name);
   const color = useProjectStore((s) => s.project.character.color);
   const headDiameter = useProjectStore((s) => s.project.character.headDiameter);
   const torsoHeight = useProjectStore((s) => s.project.character.torsoHeight);
   const legHeight = useProjectStore((s) => s.project.character.legHeight);
-  const setName = useProjectStore((s) => s.setName);
   const setColor = useProjectStore((s) => s.setColor);
 
   const t = useT();
@@ -152,14 +149,6 @@ export const CharacterPanel = (): ReactElement => {
   return (
     <Stack spacing={2}>
       <Typography variant="h6">{t('Personaje')}</Typography>
-
-      <TextField
-        label={t('Nombre')}
-        size="small"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        fullWidth
-      />
 
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Box>

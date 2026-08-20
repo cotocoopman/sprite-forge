@@ -20,6 +20,7 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import ImageIcon from '@mui/icons-material/Image';
 import { useProjectStore } from '@store/useProjectStore';
 import { NumberInput } from '@components/NumberInput';
+import { ColorField } from '@components/ColorField';
 import { renderCustomSvg } from '@core/svg';
 import { downloadBlob, svgToPngBlob } from '@core/export';
 import { RIG_PRESETS } from '@core/customRig';
@@ -92,19 +93,12 @@ const BoneEditor = ({ bone, others }: { bone: Bone; others: readonly Bone[] }): 
 
       <Stack direction="row" alignItems="center" spacing={1}>
         <Typography variant="caption" color="text.secondary">{t('Color')}</Typography>
-        <input
-          type="color"
+        <ColorField
           value={bone.color ?? rigColor}
-          onChange={(e) => set({ color: e.target.value })}
-          style={{ width: 36, height: 26, border: 'none', background: 'none', cursor: 'pointer' }}
+          onChange={(v) => set({ color: v })}
+          onReset={() => set({ color: null })}
+          canReset={bone.color !== null}
         />
-        <Tooltip title={t('Volver al color base')}>
-          <span>
-            <IconButton size="small" disabled={bone.color === null} onClick={() => set({ color: null })}>
-              <RestartAltIcon fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
       </Stack>
     </Stack>
   );
@@ -158,19 +152,16 @@ export const RigEditor = (): ReactElement => {
         ))}
       </TextField>
 
-      <Stack direction="row" spacing={1} alignItems="center">
-        <TextField size="small" label={t('Nombre')} value={rig.name} onChange={(e) => setRigField({ name: e.target.value })} fullWidth />
-        <input
-          type="color"
-          value={rig.color}
-          onChange={(e) => setRigField({ color: e.target.value })}
-          style={{ width: 40, height: 30, border: 'none', background: 'none', cursor: 'pointer' }}
-        />
-        <Tooltip title={t('Resetear todos los huesos al color base')}>
-          <IconButton size="small" onClick={resetAllBoneColors}>
-            <RestartAltIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
+      <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+        <Typography variant="body2" color="text.secondary">{t('Color base del rig')}</Typography>
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <ColorField value={rig.color} onChange={(v) => setRigField({ color: v })} />
+          <Tooltip title={t('Resetear todos los huesos al color base')}>
+            <IconButton size="small" onClick={resetAllBoneColors}>
+              <RestartAltIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Stack>
       </Stack>
       <Stack direction="row" spacing={1}>
         <Box sx={{ flex: 1 }}>

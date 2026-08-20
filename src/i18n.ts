@@ -86,6 +86,7 @@ const EN: Record<string, string> = {
   'Guía rápida — qué es cada sección': 'Quick guide — what each section does',
   Ejemplo: 'Example',
   'Importar / Exportar': 'Import / Export',
+  'Color base del rig': 'Rig base color',
   // Guía: descripciones + ejemplos
   'Puntos de partida listos (héroe, mago, slime, cuadrúpedo…). Traen proporciones, colores y a veces armas.':
     'Ready starting points (hero, mage, slime, quadruped…). They set proportions, colors and sometimes weapons.',

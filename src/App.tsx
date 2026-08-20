@@ -44,6 +44,7 @@ import { RigEditor } from '@components/RigEditor';
 import { TemplateGallery } from '@components/TemplateGallery';
 import { AnimationIO } from '@components/AnimationIO';
 import { RigRotationControl } from '@components/RigRotationControl';
+import { CenterName } from '@components/CenterName';
 import { CustomPreview } from '@components/CustomPreview';
 import { RigAnimationPanel } from '@components/RigAnimationPanel';
 import { RigFrameStrip } from '@components/RigFrameStrip';
@@ -172,9 +173,16 @@ export const App = (): ReactElement => {
       }
 
       // Reproducción (sin modificadores) — ignorar si hay un control con foco.
+      // Incluye sliders MUI: si un slider tiene foco, la flecha ya lo mueve; sin
+      // este guard además dispararía prev/nextFrame y saltaría 2 frames.
       const onControl =
         editable ||
-        (!!target && (target.tagName === 'BUTTON' || target.tagName === 'SELECT' || !!target.closest('[role="slider"]')));
+        (!!target &&
+          (target.tagName === 'BUTTON' ||
+            target.tagName === 'SELECT' ||
+            (target.tagName === 'INPUT' && (target as HTMLInputElement).type === 'range') ||
+            !!target.closest('[role="slider"]') ||
+            !!target.closest('.MuiSlider-root')));
       if (onControl) return;
       if (e.key === ' ') {
         e.preventDefault();
@@ -327,6 +335,7 @@ export const App = (): ReactElement => {
           </Paper>
           {/* Centro — Preview animado del rig */}
           <Box sx={{ flexGrow: 1, minWidth: 0, p: 2, display: 'flex', flexDirection: 'column', gap: 1.5, minHeight: { xs: '70vh', md: 0 } }}>
+            <CenterName />
             <Box sx={{ flexGrow: 1, minHeight: 0 }}>
               <CustomPreview />
             </Box>
@@ -363,6 +372,7 @@ export const App = (): ReactElement => {
 
           {/* Centro — Preview */}
           <Box sx={{ flexGrow: 1, minWidth: 0, p: 2, display: 'flex', flexDirection: 'column', gap: 1.5, minHeight: { xs: '70vh', md: 0 } }}>
+            <CenterName />
             <Box sx={{ flexGrow: 1, minHeight: 0, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
               <Box sx={{ flexGrow: 1, minWidth: 220 }}>
                 <PreviewCanvas />
