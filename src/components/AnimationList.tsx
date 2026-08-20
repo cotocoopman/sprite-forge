@@ -50,7 +50,7 @@ export const AnimationList = (): ReactElement => {
   return (
     <Stack spacing={1.5}>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography variant="h6">{t('Animaciones')}</Typography>
+        <Typography variant="subtitle1" fontWeight={700}>{t('Animaciones')}</Typography>
         <Tooltip title={t('Agregar clip')}>
           <IconButton size="small" color="primary" onClick={addAnimation}>
             <AddIcon />

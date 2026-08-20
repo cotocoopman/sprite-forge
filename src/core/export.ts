@@ -386,7 +386,7 @@ export const buildRigZip = async (
   const root = zip.folder(folder) ?? zip;
   const cs = render.cellSize;
 
-  const directions = options.directions8 ? DIRECTIONS_8 : [render.rotation];
+  const directions = options.directions8 ? DIRECTIONS_8 : [render.facing];
   const eightDir = options.directions8;
 
   let perDir = 0;
@@ -407,7 +407,7 @@ export const buildRigZip = async (
   };
 
   for (let d = 0; d < directions.length; d += 1) {
-    const rr = { ...render, rotation: directions[d] };
+    const rr = { ...render, facing: directions[d] };
     const suffix = eightDir ? `_d${d}` : '';
     for (const clip of rig.animations) {
       const poses = sampleRigClip(clip);

@@ -90,7 +90,7 @@ export const EffectsPanel = (): ReactElement => {
 
   return (
     <Stack spacing={1}>
-      <Typography variant="h6">{t('Efectos')}</Typography>
+      <Typography variant="subtitle1" fontWeight={700}>{t('Efectos')}</Typography>
 
       <Accordion disableGutters defaultExpanded>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>

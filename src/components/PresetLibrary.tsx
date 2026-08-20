@@ -33,7 +33,7 @@ export const PresetLibrary = (): ReactElement => {
 
   return (
     <Stack spacing={1.5}>
-      <Typography variant="h6">{t('Biblioteca de personajes')}</Typography>
+      <Typography variant="subtitle1" fontWeight={700}>{t('Biblioteca de personajes')}</Typography>
       <Stack spacing={1}>
         <TextField
           size="small"

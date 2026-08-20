@@ -91,7 +91,7 @@ export const RigAnimationPanel = (): ReactElement => {
   return (
     <Stack spacing={2}>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography variant="h6">{tr('Animación del rig')}</Typography>
+        <Typography variant="subtitle1" fontWeight={700}>{tr('Animación del rig')}</Typography>
         <Tooltip title={tr('Agregar clip')}>
           <IconButton size="small" color="primary" onClick={addRigClip}><AddIcon /></IconButton>
         </Tooltip>
@@ -125,9 +125,9 @@ export const RigAnimationPanel = (): ReactElement => {
 
           <Divider />
 
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Stack spacing={0.5}>
             <Typography variant="subtitle2">{tr('Keyframes')}</Typography>
-            <Stack direction="row" spacing={0.5}>
+            <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
               <Button size="small" startIcon={<AddIcon />} onClick={() => addRigKeyframeAt(scrubT)}>{tr('Agregar')}</Button>
               <Button size="small" startIcon={<ContentCopyIcon />} onClick={() => duplicateRigKeyframe(activeKf)}>{tr('Dup')}</Button>
               <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={() => deleteRigKeyframe(activeKf)}>{tr('Del')}</Button>

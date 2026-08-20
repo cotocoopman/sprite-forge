@@ -148,7 +148,7 @@ export const CharacterPanel = (): ReactElement => {
 
   return (
     <Stack spacing={2}>
-      <Typography variant="h6">{t('Personaje')}</Typography>
+      <Typography variant="subtitle1" fontWeight={700}>{t('Personaje')}</Typography>
 
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Box>

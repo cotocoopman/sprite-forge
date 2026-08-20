@@ -444,14 +444,19 @@ const customCellGroup = (
   offsetX: number,
   cellSize: number,
   effects: EffectsConfig | undefined,
-  rotation: number,
+  facing: number,
 ): string => {
   const pcx = offsetX + cellSize / 2;
   const mono = customShapesMarkup(bones, tf, offsetX, '#000');
   const layers = customEffectLayers(mono, effects, pcx, tf.groundY, tf.scale);
   layers.push(`<g>${customShapesMarkup(bones, tf, offsetX)}</g>`);
-  const rot = rotation ? ` transform="rotate(${fmt(rotation)} ${fmt(pcx)} ${fmt(cellSize / 2)})"` : '';
-  return `<g${rot}>${layers.join('')}</g>`;
+  // Giro 3D en el eje vertical (como el humanoide): escorza el ancho por cos(facing).
+  // A 90°/270° queda de canto; pasado 90° el signo negativo espeja (vista de espaldas).
+  const f = ((facing % 360) + 360) % 360;
+  const sx = Math.cos(rad(facing));
+  const tform =
+    f !== 0 ? ` transform="translate(${fmt(pcx)} 0) scale(${fmt(sx)} 1) translate(${fmt(-pcx)} 0)"` : '';
+  return `<g${tform}>${layers.join('')}</g>`;
 };
 
 export const renderCustomInner = (
@@ -463,7 +468,7 @@ export const renderCustomInner = (
   const tf = makeTransform(render);
   const bones = buildCustomSkeleton(rig, pose);
   const defs = effectDefs(effects, tf.scale);
-  return `${defs}${customCellGroup(bones, tf, 0, render.cellSize, effects, render.rotation)}`;
+  return `${defs}${customCellGroup(bones, tf, 0, render.cellSize, effects, render.facing)}`;
 };
 
 export const renderCustomSvg = (
@@ -486,7 +491,7 @@ export const renderCustomSheet = (
   const width = cs * Math.max(1, poses.length);
   const defs = effectDefs(effects, tf.scale);
   const groups = poses
-    .map((pose, i) => customCellGroup(buildCustomSkeleton(rig, pose), tf, i * cs, cs, effects, render.rotation))
+    .map((pose, i) => customCellGroup(buildCustomSkeleton(rig, pose), tf, i * cs, cs, effects, render.facing))
     .join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${cs}" viewBox="0 0 ${width} ${cs}">${defs}${groups}</svg>`;
 };
