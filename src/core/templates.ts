@@ -102,11 +102,27 @@ const make = (name: string, overrides: Partial<CharacterDefinition>): CharacterD
   name,
 });
 
-// Toma las piezas de un prop (props.ts) y las ancla a una mano.
-const weapon = (propId: string, anchor: AnchorName): TemplateAccessory[] => {
+// Rota una pieza (offset + ángulo) alrededor del ancla, para levantar/inclinar
+// el arma completa sin deformarla.
+const rotatePart = (p: TemplateAccessory, deg: number): TemplateAccessory => {
+  if (deg === 0) return p;
+  const r = (deg * Math.PI) / 180;
+  const c = Math.cos(r);
+  const s = Math.sin(r);
+  return {
+    ...p,
+    offsetAlong: p.offsetAlong * c - p.offsetPerp * s,
+    offsetPerp: p.offsetAlong * s + p.offsetPerp * c,
+    angle: p.angle + deg,
+  };
+};
+
+// Toma las piezas de un prop (props.ts), las ancla a una mano y opcionalmente
+// rota el arma entera `rot` grados (para levantarla / ponerla en diagonal).
+const weapon = (propId: string, anchor: AnchorName, rot = 0): TemplateAccessory[] => {
   const tpl = PROP_TEMPLATES.find((p) => p.id === propId);
   if (!tpl) return [];
-  return tpl.parts.map((part) => ({ ...part, anchor }));
+  return tpl.parts.map((part) => rotatePart({ ...part, anchor }, rot));
 };
 
 const acc = (a: Partial<TemplateAccessory> & Pick<TemplateAccessory, 'name' | 'anchor' | 'shape'>): TemplateAccessory => ({
@@ -121,10 +137,11 @@ const acc = (a: Partial<TemplateAccessory> & Pick<TemplateAccessory, 'name' | 'a
   ...a,
 });
 
-// Gorro de mago (ala + cono), anclado a la cabeza (el anchor apunta hacia arriba).
+// Gorro de mago: ala ancha y plana + cono alto y angosto (triángulo), anclado a
+// la cabeza (el anchor apunta hacia arriba).
 const wizardHat = (color: string): TemplateAccessory[] => [
-  acc({ name: 'Hat brim', anchor: 'head', shape: 'rect', offsetAlong: 10, offsetPerp: -10, angle: 90, length: 20, width: 4, color }),
-  acc({ name: 'Hat cone', anchor: 'head', shape: 'capsule', offsetAlong: 11, offsetPerp: 0, angle: 0, length: 18, width: 11, color }),
+  acc({ name: 'Hat brim', anchor: 'head', shape: 'rect', offsetAlong: 8, offsetPerp: -13, angle: 90, length: 26, width: 4, color }),
+  acc({ name: 'Hat cone', anchor: 'head', shape: 'capsule', offsetAlong: 10, offsetPerp: 0, angle: 0, length: 24, width: 8, color }),
 ];
 
 export const CHARACTER_TEMPLATES: readonly CharacterTemplate[] = [
@@ -140,7 +157,7 @@ export const CHARACTER_TEMPLATES: readonly CharacterTemplate[] = [
     name: 'Hero',
     emoji: '🦸',
     build: () => make('Hero', { color: '#2c3e6b' }),
-    accessories: [...weapon('sword', 'handNear')],
+    accessories: [...weapon('sword', 'handNear', 150)],
   },
   {
     id: 'chibi',
@@ -175,8 +192,8 @@ export const CHARACTER_TEMPLATES: readonly CharacterTemplate[] = [
         legWidth: 7,
         color: '#5d4037',
       }),
-    // Espada en la derecha, escudo en la izquierda → "attack" y "defend" acordes.
-    accessories: [...weapon('sword', 'handNear'), ...weapon('shield', 'handFar')],
+    // Espada en la derecha (levantada), escudo en la izquierda.
+    accessories: [...weapon('sword', 'handNear', 150), ...weapon('shield', 'handFar')],
   },
   {
     id: 'mage',
@@ -191,8 +208,8 @@ export const CHARACTER_TEMPLATES: readonly CharacterTemplate[] = [
         armWidth: 5,
         color: '#4527a0',
       }),
-    // Bastón + gorro puntiagudo.
-    accessories: [...weapon('staff', 'handNear'), ...wizardHat('#311b6b')],
+    // Bastón levantado + gorro puntiagudo.
+    accessories: [...weapon('staff', 'handNear', 150), ...wizardHat('#311b6b')],
   },
   {
     id: 'ninja',
@@ -208,10 +225,14 @@ export const CHARACTER_TEMPLATES: readonly CharacterTemplate[] = [
         armLowerLength: 10,
         color: '#212121',
       }),
-    // Katana oscura.
+    // Katana cruzada en la espalda (detrás) + una daga en cada mano hacia atrás.
     accessories: [
-      acc({ name: 'Katana grip', anchor: 'handNear', shape: 'capsule', offsetAlong: -5, angle: 0, length: 6, width: 3, color: '#1a1a1a' }),
-      acc({ name: 'Katana blade', anchor: 'handNear', shape: 'capsule', offsetAlong: 3, angle: 0, length: 30, width: 2.6, color: '#9aa4b0' }),
+      acc({ name: 'Back sword', anchor: 'torsoTop', shape: 'capsule', offsetAlong: -6, offsetPerp: -3, angle: 42, length: 40, width: 3, color: '#9aa4b0', front: false }),
+      acc({ name: 'Back hilt', anchor: 'torsoTop', shape: 'capsule', offsetAlong: 26, offsetPerp: 12, angle: 42, length: 8, width: 4, color: '#1a1a1a', front: false }),
+      acc({ name: 'Dagger R', anchor: 'handNear', shape: 'capsule', offsetAlong: 3, offsetPerp: 0, angle: 35, length: 13, width: 2.6, color: '#c8ced6' }),
+      acc({ name: 'Dagger R grip', anchor: 'handNear', shape: 'capsule', offsetAlong: -3, offsetPerp: 0, angle: 35, length: 5, width: 3, color: '#111111' }),
+      acc({ name: 'Dagger L', anchor: 'handFar', shape: 'capsule', offsetAlong: 3, offsetPerp: 0, angle: -35, length: 13, width: 2.6, color: '#c8ced6' }),
+      acc({ name: 'Dagger L grip', anchor: 'handFar', shape: 'capsule', offsetAlong: -3, offsetPerp: 0, angle: -35, length: 5, width: 3, color: '#111111' }),
     ],
   },
   {
@@ -228,7 +249,7 @@ export const CHARACTER_TEMPLATES: readonly CharacterTemplate[] = [
         legWidth: 7,
         color: '#6d7b8d', // gris pizarra: el mango de madera del hacha contrasta
       }),
-    accessories: [...weapon('axe', 'handNear')],
+    accessories: [...weapon('axe', 'handNear', 150)],
   },
   {
     id: 'child',
