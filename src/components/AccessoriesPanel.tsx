@@ -21,6 +21,8 @@ import AddIcon from '@mui/icons-material/Add';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useProjectStore } from '@store/useProjectStore';
+import { ColorField } from '@components/ColorField';
+import { SectionAccordion } from '@components/SectionAccordion';
 import { useT } from '@/i18n';
 import { ANCHOR_NAMES, ANCHOR_LABELS } from '@core/rig';
 import type { AnchorName } from '@core/rig';
@@ -150,12 +152,7 @@ const Editor = ({ acc }: { acc: Accessory }): ReactElement => {
           <Typography variant="caption" color="text.secondary">
             {t('Color')}
           </Typography>
-          <input
-            type="color"
-            value={acc.color}
-            onChange={(e) => set({ color: e.target.value })}
-            style={{ width: 36, height: 26, border: 'none', background: 'none', cursor: 'pointer' }}
-          />
+          <ColorField value={acc.color} onChange={(v) => set({ color: v })} />
         </Stack>
         <FormControlLabel
           control={<Switch size="small" checked={acc.front} onChange={(e) => set({ front: e.target.checked })} />}
@@ -178,9 +175,12 @@ export const AccessoriesPanel = (): ReactElement => {
   const active = accessories.find((a) => a.id === activeId);
 
   return (
+    <SectionAccordion title="Accesorios">
     <Stack spacing={1}>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography variant="h6">{t('Accesorios')}</Typography>
+        <Typography variant="caption" color="text.secondary">
+          {t('Armas, sombreros, capas… anclados a un hueso y siguen la animación.')}
+        </Typography>
         <Tooltip title={t('Agregar accesorio')}>
           <IconButton size="small" color="primary" onClick={addAccessory}>
             <AddIcon />
@@ -227,5 +227,6 @@ export const AccessoriesPanel = (): ReactElement => {
         </Button>
       ) : null}
     </Stack>
+    </SectionAccordion>
   );
 };

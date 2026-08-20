@@ -119,11 +119,11 @@ export const PoseEditor = (): ReactElement => {
 
   return (
     <Stack spacing={1}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
+      <Stack spacing={0.5}>
         <Typography variant="subtitle2">
           {t('Pose')} {hasKeyframe ? `(kf ${activeKeyframeIndex})` : ''}
         </Typography>
-        <Stack direction="row" spacing={0.5}>
+        <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
           <Button size="small" startIcon={<FlipIcon />} onClick={mirrorPose}>
             {t('Espejar')}
           </Button>

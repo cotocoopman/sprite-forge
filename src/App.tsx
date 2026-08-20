@@ -21,6 +21,7 @@ import UndoIcon from '@mui/icons-material/Undo';
 import RedoIcon from '@mui/icons-material/Redo';
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 import GitHubIcon from '@mui/icons-material/GitHub';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import TranslateIcon from '@mui/icons-material/Translate';
 import { useProjectStore } from '@store/useProjectStore';
 import { useT } from '@/i18n';
@@ -38,6 +39,7 @@ import { DirectionDial } from '@components/DirectionDial';
 import { ReferenceControls } from '@components/ReferenceControls';
 import { PlaybackControls } from '@components/PlaybackControls';
 import { KeyboardShortcuts } from '@components/KeyboardShortcuts';
+import { QuickGuide } from '@components/QuickGuide';
 import { RigEditor } from '@components/RigEditor';
 import { TemplateGallery } from '@components/TemplateGallery';
 import { AnimationIO } from '@components/AnimationIO';
@@ -118,9 +120,29 @@ export const App = (): ReactElement => {
 
   const [exportOpen, setExportOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dirtyRef = useRef(false);
 
   usePlayback();
+
+  // Avisar antes de cerrar/recargar si hay cambios no exportados como proyecto.
+  useEffect(() => {
+    const unsub = useProjectStore.subscribe((s, p) => {
+      if (s.project !== p.project) dirtyRef.current = true;
+    });
+    const onBeforeUnload = (e: BeforeUnloadEvent): void => {
+      if (dirtyRef.current) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => {
+      unsub();
+      window.removeEventListener('beforeunload', onBeforeUnload);
+    };
+  }, []);
 
   // Atajos: Ctrl+Z/Y = undo/redo · Espacio = play/pausa · ←/→ = frame ant./sig.
   useEffect(() => {
@@ -242,6 +264,11 @@ export const App = (): ReactElement => {
                 </IconButton>
               </span>
             </Tooltip>
+            <Tooltip title={t('Guía rápida (qué es cada sección)')}>
+              <IconButton size="small" onClick={() => setGuideOpen(true)}>
+                <MenuBookIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
             <Tooltip title={t('Atajos de teclado')}>
               <IconButton size="small" onClick={() => setShortcutsOpen(true)}>
                 <KeyboardIcon fontSize="small" />
@@ -259,15 +286,27 @@ export const App = (): ReactElement => {
                 <GitHubIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Button startIcon={<UploadIcon />} onClick={() => fileInputRef.current?.click()}>
-              {t('Importar')}
-            </Button>
-            <Button startIcon={<SaveAltIcon />} onClick={() => exportProjectJson(project)}>
-              {t('Exportar proyecto')}
-            </Button>
-            <Button variant="contained" startIcon={<DownloadIcon />} onClick={() => setExportOpen(true)}>
-              {t('Exportar sprites')}
-            </Button>
+            <Tooltip title={t('Cargar un proyecto .json guardado antes (para seguir editándolo)')}>
+              <Button startIcon={<UploadIcon />} onClick={() => fileInputRef.current?.click()}>
+                {t('Importar')}
+              </Button>
+            </Tooltip>
+            <Tooltip title={t('Guardar TODO el proyecto editable como .json (backup / seguir después)')}>
+              <Button
+                startIcon={<SaveAltIcon />}
+                onClick={() => {
+                  exportProjectJson(project);
+                  dirtyRef.current = false;
+                }}
+              >
+                {t('Exportar proyecto')}
+              </Button>
+            </Tooltip>
+            <Tooltip title={t('Generar los PNG / sprite sheets / archivos de Godot finales')}>
+              <Button variant="contained" startIcon={<DownloadIcon />} onClick={() => setExportOpen(true)}>
+                {t('Exportar sprites')}
+              </Button>
+            </Tooltip>
           </Stack>
         </Toolbar>
       </AppBar>
@@ -352,6 +391,7 @@ export const App = (): ReactElement => {
 
       <ExportDialog open={exportOpen} onClose={() => setExportOpen(false)} />
       <KeyboardShortcuts open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+      <QuickGuide open={guideOpen} onClose={() => setGuideOpen(false)} />
 
       <Snackbar
         open={notification.open}

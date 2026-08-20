@@ -129,6 +129,13 @@ const wizardHat = (color: string): TemplateAccessory[] => [
 
 export const CHARACTER_TEMPLATES: readonly CharacterTemplate[] = [
   {
+    id: 'default',
+    name: 'Simple',
+    emoji: '🧍',
+    // Vuelve al personaje base (sin accesorios, todas las partes visibles).
+    build: () => make('Silhouette', {}),
+  },
+  {
     id: 'hero',
     name: 'Hero',
     emoji: '🦸',

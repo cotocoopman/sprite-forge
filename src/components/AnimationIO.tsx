@@ -82,9 +82,11 @@ export const AnimationIO = (): ReactElement => {
             {t('Exportar')}
           </Button>
         </Tooltip>
-        <Button size="small" variant="outlined" startIcon={<UploadIcon />} onClick={() => inputRef.current?.click()} fullWidth>
-          {t('Importar')}
-        </Button>
+        <Tooltip title={t('Cargar animaciones desde un archivo y agregarlas a este personaje/rig')}>
+          <Button size="small" variant="outlined" startIcon={<UploadIcon />} onClick={() => inputRef.current?.click()} fullWidth>
+            {t('Importar')}
+          </Button>
+        </Tooltip>
       </Stack>
       <input ref={inputRef} type="file" accept="application/json" hidden onChange={handleFile} />
     </Stack>

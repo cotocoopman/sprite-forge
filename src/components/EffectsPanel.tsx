@@ -10,9 +10,16 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Button from '@mui/material/Button';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { useProjectStore } from '@store/useProjectStore';
+import { NumberInput } from '@components/NumberInput';
+import { ColorField } from '@components/ColorField';
+import { DEFAULT_EFFECTS } from '@core/poses';
 import { useT } from '@/i18n';
+
+const clamp = (v: number, min: number, max: number): number => Math.max(min, Math.min(max, v));
 
 const LabeledSlider = ({
   label,
@@ -30,11 +37,16 @@ const LabeledSlider = ({
   onChange: (v: number) => void;
 }): ReactElement => (
   <Box>
-    <Stack direction="row" justifyContent="space-between">
+    <Stack direction="row" justifyContent="space-between" alignItems="center">
       <Typography variant="caption" color="text.secondary">
         {label}
       </Typography>
-      <Typography variant="caption">{value}</Typography>
+      <NumberInput
+        value={value}
+        step={step}
+        onChange={(v) => onChange(clamp(v, min, max))}
+        inputStyle={{ width: 60, padding: '2px 6px' }}
+      />
     </Stack>
     <Slider size="small" value={value} min={min} max={max} step={step} onChange={(_, v) => onChange(v as number)} />
   </Box>
@@ -53,14 +65,19 @@ const ColorRow = ({
     <Typography variant="caption" color="text.secondary">
       {label}
     </Typography>
-    <input
-      type="color"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      style={{ width: 40, height: 28, border: 'none', background: 'none', cursor: 'pointer' }}
-    />
+    <ColorField value={value} onChange={onChange} />
   </Stack>
 );
+
+// Botón "Restablecer" que vuelve los valores del efecto al default (sin apagarlo).
+const ResetEffect = ({ onClick }: { onClick: () => void }): ReactElement => {
+  const t = useT();
+  return (
+    <Button size="small" startIcon={<RestartAltIcon fontSize="small" />} onClick={onClick} sx={{ alignSelf: 'flex-start' }}>
+      {t('Restablecer')}
+    </Button>
+  );
+};
 
 export const EffectsPanel = (): ReactElement => {
   const shadow = useProjectStore((s) => s.project.effects.shadow);
@@ -116,6 +133,7 @@ export const EffectsPanel = (): ReactElement => {
               <LabeledSlider label={t('Aplastado (piso)')} value={shadow.flatten} min={0.02} max={1} step={0.02} onChange={(v) => setShadow({ flatten: v })} />
             )}
             <LabeledSlider label={t('Desenfoque')} value={shadow.blur} min={0} max={20} step={0.5} onChange={(v) => setShadow({ blur: v })} />
+            <ResetEffect onClick={() => setShadow({ ...DEFAULT_EFFECTS.shadow, enabled: shadow.enabled })} />
           </Stack>
         </AccordionDetails>
       </Accordion>
@@ -140,6 +158,7 @@ export const EffectsPanel = (): ReactElement => {
             <LabeledSlider label={t('Opacidad')} value={glow.opacity} min={0} max={1} step={0.05} onChange={(v) => setGlow({ opacity: v })} />
             <LabeledSlider label={t('Expansión')} value={glow.expansion} min={0} max={12} step={0.5} onChange={(v) => setGlow({ expansion: v })} />
             <LabeledSlider label={t('Intensidad (difuminado)')} value={glow.intensity} min={0} max={16} step={0.5} onChange={(v) => setGlow({ intensity: v })} />
+            <ResetEffect onClick={() => setGlow({ ...DEFAULT_EFFECTS.glow, enabled: glow.enabled })} />
           </Stack>
         </AccordionDetails>
       </Accordion>
@@ -162,6 +181,7 @@ export const EffectsPanel = (): ReactElement => {
           <Stack spacing={1}>
             <ColorRow label={t('Color')} value={outline.color} onChange={(v) => setOutline({ color: v })} />
             <LabeledSlider label={t('Grosor')} value={outline.width} min={0} max={12} step={0.5} onChange={(v) => setOutline({ width: v })} />
+            <ResetEffect onClick={() => setOutline({ ...DEFAULT_EFFECTS.outline, enabled: outline.enabled })} />
           </Stack>
         </AccordionDetails>
       </Accordion>

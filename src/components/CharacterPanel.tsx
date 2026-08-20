@@ -4,7 +4,6 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Slider from '@mui/material/Slider';
 import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -12,11 +11,11 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import CasinoIcon from '@mui/icons-material/Casino';
 import { useProjectStore } from '@store/useProjectStore';
 import { NumberInput } from '@components/NumberInput';
+import { ColorField } from '@components/ColorField';
 import { useT } from '@/i18n';
+import { DEFAULT_CHARACTER } from '@core/rig';
 import type { CharacterDefinition, CurveTarget } from '@core/rig';
 
 type FieldConfig = {
@@ -145,8 +144,6 @@ export const CharacterPanel = (): ReactElement => {
   const legHeight = useProjectStore((s) => s.project.character.legHeight);
   const setName = useProjectStore((s) => s.setName);
   const setColor = useProjectStore((s) => s.setColor);
-  const resetCharacter = useProjectStore((s) => s.resetCharacter);
-  const randomizeCharacter = useProjectStore((s) => s.randomizeCharacter);
 
   const t = useT();
   const sum = headDiameter + torsoHeight + legHeight;
@@ -175,11 +172,11 @@ export const CharacterPanel = (): ReactElement => {
         </Box>
         <Stack direction="row" alignItems="center" spacing={1}>
           <Typography variant="body2">{t('Color')}</Typography>
-          <input
-            type="color"
+          <ColorField
             value={color}
-            onChange={(e) => setColor(e.target.value)}
-            style={{ width: 40, height: 30, border: 'none', background: 'none', cursor: 'pointer' }}
+            onChange={setColor}
+            onReset={() => setColor(DEFAULT_CHARACTER.color)}
+            canReset={color.toLowerCase() !== DEFAULT_CHARACTER.color.toLowerCase()}
           />
         </Stack>
       </Stack>
@@ -204,14 +201,6 @@ export const CharacterPanel = (): ReactElement => {
         </Accordion>
       ))}
 
-      <Stack direction="row" spacing={1}>
-        <Button fullWidth variant="contained" color="secondary" startIcon={<CasinoIcon />} onClick={randomizeCharacter}>
-          {t('Aleatorio')}
-        </Button>
-        <Button fullWidth variant="outlined" startIcon={<RestartAltIcon />} onClick={resetCharacter}>
-          {t('Restaurar defaults')}
-        </Button>
-      </Stack>
     </Stack>
   );
 };

@@ -6,8 +6,9 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { useProjectStore } from '@store/useProjectStore';
+import { ColorField } from '@components/ColorField';
+import { SectionAccordion } from '@components/SectionAccordion';
 import { useT } from '@/i18n';
 import { PART_NAMES, PART_LABELS } from '@core/rig';
 import type { PartName } from '@core/rig';
@@ -37,20 +38,12 @@ const PartRow = ({ part }: { part: PartName }): ReactElement => {
         {t(PART_LABELS[part])}
       </Typography>
 
-      <input
-        type="color"
+      <ColorField
         value={style.color ?? baseColor}
-        onChange={(e) => setPartColor(part, e.target.value)}
-        style={{ width: 34, height: 26, border: 'none', background: 'none', cursor: 'pointer' }}
+        onChange={(v) => setPartColor(part, v)}
+        onReset={() => resetPartColor(part)}
+        canReset={custom}
       />
-
-      <Tooltip title={t('Volver al color base')}>
-        <span>
-          <IconButton size="small" disabled={!custom} onClick={() => resetPartColor(part)}>
-            <RestartAltIcon fontSize="small" />
-          </IconButton>
-        </span>
-      </Tooltip>
     </Stack>
   );
 };
@@ -58,16 +51,17 @@ const PartRow = ({ part }: { part: PartName }): ReactElement => {
 export const PartsPanel = (): ReactElement => {
   const t = useT();
   return (
-  <Stack spacing={1}>
-    <Typography variant="h6">{t('Partes')}</Typography>
-    <Typography variant="caption" color="text.secondary">
-      {t('Ocultá partes (grisáceas acá, excluidas del export) o pintalas por separado.')}
-    </Typography>
-    <Box>
-      {PART_NAMES.map((p) => (
-        <PartRow key={p} part={p} />
-      ))}
-    </Box>
-  </Stack>
+    <SectionAccordion title="Partes">
+      <Stack spacing={1}>
+        <Typography variant="caption" color="text.secondary">
+          {t('Ocultá partes (grisáceas acá, excluidas del export) o pintalas por separado.')}
+        </Typography>
+        <Box>
+          {PART_NAMES.map((p) => (
+            <PartRow key={p} part={p} />
+          ))}
+        </Box>
+      </Stack>
+    </SectionAccordion>
   );
 };

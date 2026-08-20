@@ -53,9 +53,9 @@ export const KeyframeTimeline = (): ReactElement => {
 
   return (
     <Stack spacing={1}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
+      <Stack spacing={0.5}>
         <Typography variant="subtitle2">{t('Keyframes')}</Typography>
-        <Stack direction="row" spacing={0.5}>
+        <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
           <Tooltip title={t('Agregar en el scrubber')}>
             <Button size="small" startIcon={<AddIcon />} onClick={() => addKeyframeAt(scrubT)}>
               {t('Agregar')}

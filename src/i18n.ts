@@ -68,6 +68,79 @@ const EN: Record<string, string> = {
   'Prop agregado': 'Prop added',
   'Cada prop es un mini-rig: se compone de varias piezas y sigue la animación de la mano.':
     'Each prop is a mini-rig: made of several pieces, it follows the hand animation.',
+
+  // --- UI batch (secciones colapsables, guía, tooltips) ---
+  'Personaje aleatorio': 'Random character',
+  Restablecer: 'Reset',
+  'Armas, sombreros, capas… anclados a un hueso y siguen la animación.':
+    'Weapons, hats, capes… anchored to a bone and following the animation.',
+  'Cargar un proyecto .json guardado antes (para seguir editándolo)':
+    'Load a .json project you saved earlier (to keep editing it)',
+  'Guardar TODO el proyecto editable como .json (backup / seguir después)':
+    'Save the WHOLE editable project as .json (backup / continue later)',
+  'Generar los PNG / sprite sheets / archivos de Godot finales':
+    'Generate the final PNGs / sprite sheets / Godot files',
+  'Guía rápida (qué es cada sección)': 'Quick guide (what each section does)',
+  'Cargar animaciones desde un archivo y agregarlas a este personaje/rig':
+    'Load animations from a file and add them to this character/rig',
+  'Guía rápida — qué es cada sección': 'Quick guide — what each section does',
+  Ejemplo: 'Example',
+  'Importar / Exportar': 'Import / Export',
+  // Guía: descripciones + ejemplos
+  'Puntos de partida listos (héroe, mago, slime, cuadrúpedo…). Traen proporciones, colores y a veces armas.':
+    'Ready starting points (hero, mage, slime, quadruped…). They set proportions, colors and sometimes weapons.',
+  'Elegí "Warrior" y ya tenés espada + escudo; después ajustás lo que quieras.':
+    'Pick "Warrior" and you already get sword + shield; then tweak whatever you want.',
+  'Proporciones del humanoide (cabeza, torso, brazos, piernas) y color base.':
+    'Humanoid proportions (head, torso, arms, legs) and base color.',
+  'Subí "Diámetro cabeza" para un look más cabezón/chibi.':
+    'Raise "Head diameter" for a bigger-headed / chibi look.',
+  'Prendé/apagá partes del cuerpo o pintalas por separado. Las apagadas no se exportan.':
+    'Turn body parts on/off or color them separately. Hidden parts are not exported.',
+  'Apagá brazos y piernas para un blob tipo slime.': 'Turn off arms and legs for a slime-like blob.',
+  'Armas, sombreros, capas… anclados a un hueso (mano, cabeza) que siguen la animación.':
+    'Weapons, hats, capes… anchored to a bone (hand, head) that follow the animation.',
+  'Sumá una "Espada" a la mano derecha: en el clip "attack" se blande sola.':
+    'Add a "Sword" to the right hand: it swings on its own in the "attack" clip.',
+  'Sombra, brillo y contorno de la silueta.': 'Shadow, glow and outline of the silhouette.',
+  'Activá "Sombra → Piso" para que el personaje proyecte sombra al suelo.':
+    'Enable "Shadow → Floor" so the character casts a shadow on the ground.',
+  'Superpone una imagen (arte, un sprite existente) semitransparente detrás para calcarla.':
+    'Overlays a semi-transparent image (art, an existing sprite) behind so you can trace it.',
+  'Cargá el arte de tu personaje y ajustá la silueta hasta que calce.':
+    'Load your character art and adjust the silhouette until it matches.',
+  'Gira el personaje como una figura 3D para juegos top-down (8 direcciones).':
+    'Turns the character like a 3D figure for top-down games (8 directions).',
+  'Poné 90° para verlo de perfil; exportá "las 8 direcciones" para todas.':
+    'Set 90° to see it in profile; export "all 8 directions" for every facing.',
+  'Los clips (idle, walk, attack…). Definí cuadros, FPS y loop.':
+    'The clips (idle, walk, attack…). Set frames, FPS and loop.',
+  'Seleccioná "walk" y dale play para ver el ciclo de caminata.':
+    'Select "walk" and press play to see the walk cycle.',
+  'Los cuadros clave de la animación en una línea de tiempo arrastrable.':
+    'The animation key frames on a draggable timeline.',
+  'Agregá un keyframe a la mitad y cambiá la pose para crear el movimiento.':
+    'Add a keyframe in the middle and change the pose to create the motion.',
+  'Ángulos de cada articulación en el keyframe seleccionado.':
+    'The angle of each joint in the selected keyframe.',
+  'Copiá una pose, espejala y pegala en otro keyframe para un paso simétrico.':
+    'Copy a pose, mirror it and paste it into another keyframe for a symmetric step.',
+  'Exportá/importá tus clips como archivo para reusarlos en otro personaje o rig.':
+    'Export/import your clips as a file to reuse them in another character or rig.',
+  'Exportá el "walk" de un personaje e importalo en otro humanoide.':
+    'Export a character\'s "walk" and import it into another humanoid.',
+  'Guarda el personaje actual con un nombre (en tu navegador) para reaplicarlo luego.':
+    'Saves the current character under a name (in your browser) to re-apply it later.',
+  'Ajustás un héroe, lo guardás como "MiHéroe" y lo recuperás cuando quieras.':
+    'Tune a hero, save it as "MyHero" and restore it whenever you want.',
+  '"Exportar proyecto" guarda todo editable (.json). "Importar" lo vuelve a cargar. "Exportar sprites" genera los PNG/Godot finales.':
+    '"Export project" saves everything editable (.json). "Import" loads it back. "Export sprites" generates the final PNG/Godot files.',
+  'Antes de cerrar, "Exportar proyecto" para no perder tu trabajo.':
+    'Before closing, "Export project" so you don\'t lose your work.',
+  'Modo para criaturas/objetos: armás un esqueleto de huesos propio y lo animás.':
+    'Mode for creatures/objects: build your own bone skeleton and animate it.',
+  'Cargá "Spider" y animá sus patas cuadro a cuadro.':
+    'Load "Spider" and animate its legs frame by frame.',
   Importar: 'Import',
   'Exportar proyecto': 'Export project',
   'Exportar sprites': 'Export sprites',
