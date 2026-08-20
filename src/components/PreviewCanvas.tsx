@@ -157,9 +157,11 @@ export const PreviewCanvas = (): ReactElement => {
           />
         )}
         <svg
-          viewBox={`0 0 ${cs} ${cs}`}
+          viewBox={`${-cs * 0.12} ${-cs * 0.12} ${cs * 1.24} ${cs * 1.24}`}
           style={{ width: '100%', maxWidth: 480, maxHeight: '100%', display: 'block' }}
         >
+          {/* Borde del canvas (lo que realmente se exporta). Lo de afuera se recorta. */}
+          <rect x={0} y={0} width={cs} height={cs} fill="none" stroke="#7c9cff" strokeWidth={1} strokeDasharray="3 3" opacity={0.6} />
           {guides && (
             <g stroke="#7c9cff" strokeWidth={1} opacity={0.5}>
               <line x1={0} y1={tf.groundY} x2={cs} y2={tf.groundY} strokeDasharray="6 4" />
