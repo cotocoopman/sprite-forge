@@ -45,7 +45,6 @@ import { TemplateGallery } from '@components/TemplateGallery';
 import { AnimationIO } from '@components/AnimationIO';
 import { RigTurnDial } from '@components/RigTurnDial';
 import { CenterName } from '@components/CenterName';
-import { CanvasSizeSelect } from '@components/CanvasSizeSelect';
 import { CustomPreview } from '@components/CustomPreview';
 import { RigAnimationPanel } from '@components/RigAnimationPanel';
 import { RigFrameStrip } from '@components/RigFrameStrip';
@@ -335,7 +334,6 @@ export const App = (): ReactElement => {
           {/* Centro — Preview animado del rig */}
           <Box sx={{ flexGrow: 1, minWidth: 0, p: 2, display: 'flex', flexDirection: 'column', gap: 1.5, minHeight: { xs: '70vh', md: 0 } }}>
             <CenterName />
-            <CanvasSizeSelect />
             <Box sx={{ flexGrow: 1, minHeight: 0, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
               <Box sx={{ flexGrow: 1, minWidth: 220 }}>
                 <CustomPreview />
@@ -376,7 +374,6 @@ export const App = (): ReactElement => {
           {/* Centro — Preview */}
           <Box sx={{ flexGrow: 1, minWidth: 0, p: 2, display: 'flex', flexDirection: 'column', gap: 1.5, minHeight: { xs: '70vh', md: 0 } }}>
             <CenterName />
-            <CanvasSizeSelect />
             <Box sx={{ flexGrow: 1, minHeight: 0, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
               <Box sx={{ flexGrow: 1, minWidth: 220 }}>
                 <PreviewCanvas />
