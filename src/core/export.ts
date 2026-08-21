@@ -223,6 +223,9 @@ export const buildZip = async (
   const root = zip.folder(safeName(project.character.name)) ?? zip;
   const { cellSize } = project.render;
   const { effects } = project;
+  // Accesorios apagados (hidden) no se exportan.
+  const parts = project.parts;
+  const accessories = project.accessories.filter((a) => !a.hidden);
 
   // Direcciones a rasterizar: las 8 (giro 3D cada 45°) o solo el facing actual.
   const directions = options.directions8 ? DIRECTIONS_8 : [project.render.facing];
@@ -254,7 +257,7 @@ export const buildZip = async (
       const base = safeName(clip.name);
 
       if (options.sheets || options.godot) {
-        const sheetSvg = renderSheet(project.character, poses, render, effects, project.parts, project.accessories);
+        const sheetSvg = renderSheet(project.character, poses, render, effects, parts, accessories);
         const blob = await svgToPngBlob(sheetSvg, cellSize * poses.length, cellSize);
         root.file(`sheets/${base}${suffix}.png`, blob);
         tick();
@@ -262,7 +265,7 @@ export const buildZip = async (
 
       if (options.frames) {
         for (let i = 0; i < poses.length; i += 1) {
-          const frameSvg = renderSvg(project.character, poses[i], render, effects, project.parts, project.accessories);
+          const frameSvg = renderSvg(project.character, poses[i], render, effects, parts, accessories);
           const blob = await svgToPngBlob(frameSvg, cellSize, cellSize);
           root.file(`frames/${base}${suffix}_${pad2(i)}.png`, blob);
           tick();
@@ -270,7 +273,7 @@ export const buildZip = async (
       }
 
       if (options.svg) {
-        const oneSvg = renderSheet(project.character, poses, render, effects, project.parts, project.accessories);
+        const oneSvg = renderSheet(project.character, poses, render, effects, parts, accessories);
         root.file(`svg/${base}${suffix}.svg`, oneSvg);
       }
     }
@@ -282,7 +285,7 @@ export const buildZip = async (
     const rows = project.animations.map((clip) => ({
       name: clip.name,
       svgs: sampleClip(clip).map((p) =>
-        renderSvg(project.character, p, render, effects, project.parts, project.accessories),
+        renderSvg(project.character, p, render, effects, parts, accessories),
       ),
     }));
     const { blob, json } = await buildAtlasFrom(rows, cellSize);
@@ -300,13 +303,13 @@ export const buildZip = async (
       const poses = sampleClip(clip);
       const base = safeName(clip.name);
       if (options.sheets) {
-        const svg = renderSheet(skinChar, poses, render, effects, project.parts, project.accessories);
+        const svg = renderSheet(skinChar, poses, render, effects, parts, accessories);
         skinRoot.file(`sheets/${base}.png`, await svgToPngBlob(svg, cellSize * poses.length, cellSize));
         tick();
       }
       if (options.frames) {
         for (let i = 0; i < poses.length; i += 1) {
-          const svg = renderSvg(skinChar, poses[i], render, effects, project.parts, project.accessories);
+          const svg = renderSvg(skinChar, poses[i], render, effects, parts, accessories);
           skinRoot.file(`frames/${base}_${pad2(i)}.png`, await svgToPngBlob(svg, cellSize, cellSize));
           tick();
         }

@@ -86,8 +86,9 @@ export const PROP_TEMPLATES: readonly PropTemplate[] = [
     name: 'Pistol',
     emoji: '🔫',
     parts: rotProp([
-      part('Barrel', { shape: 'capsule', offsetAlong: 0, offsetPerp: 0, angle: 0, length: 13, width: 3.5, color: DARK }),
-      part('Grip', { shape: 'capsule', offsetAlong: 0, offsetPerp: 0, angle: 70, length: 8, width: 3.5, color: '#4a4a4a' }),
+      part('Slide', { shape: 'rect', offsetAlong: -2, offsetPerp: -2, angle: 0, length: 16, width: 5, color: DARK }),
+      part('Grip', { shape: 'capsule', offsetAlong: -3, offsetPerp: 2, angle: 90, length: 10, width: 4.5, color: '#4a4a4a' }),
+      part('Muzzle', { shape: 'capsule', offsetAlong: 12, offsetPerp: -2, angle: 0, length: 4, width: 3, color: '#5a5f66' }),
     ], 120),
   },
   {
@@ -114,10 +115,10 @@ export const PROP_TEMPLATES: readonly PropTemplate[] = [
     emoji: '🔫',
     // Una pistola en cada mano (anchor por pieza, ignora el hueso elegido).
     parts: rotProp([
-      part('Barrel R', { anchor: 'handNear', shape: 'capsule', offsetAlong: 0, offsetPerp: 0, angle: 0, length: 13, width: 3.5, color: DARK }),
-      part('Grip R', { anchor: 'handNear', shape: 'capsule', offsetAlong: 0, offsetPerp: 0, angle: 70, length: 8, width: 3.5, color: '#4a4a4a' }),
-      part('Barrel L', { anchor: 'handFar', shape: 'capsule', offsetAlong: 0, offsetPerp: 0, angle: 0, length: 13, width: 3.5, color: DARK }),
-      part('Grip L', { anchor: 'handFar', shape: 'capsule', offsetAlong: 0, offsetPerp: 0, angle: 70, length: 8, width: 3.5, color: '#4a4a4a' }),
+      part('Slide R', { anchor: 'handNear', shape: 'rect', offsetAlong: -2, offsetPerp: -2, angle: 0, length: 16, width: 5, color: DARK }),
+      part('Grip R', { anchor: 'handNear', shape: 'capsule', offsetAlong: -3, offsetPerp: 2, angle: 90, length: 10, width: 4.5, color: '#4a4a4a' }),
+      part('Slide L', { anchor: 'handFar', shape: 'rect', offsetAlong: -2, offsetPerp: -2, angle: 0, length: 16, width: 5, color: DARK }),
+      part('Grip L', { anchor: 'handFar', shape: 'capsule', offsetAlong: -3, offsetPerp: 2, angle: 90, length: 10, width: 4.5, color: '#4a4a4a' }),
     ], 120),
   },
   {
@@ -149,13 +150,24 @@ export const PROP_TEMPLATES: readonly PropTemplate[] = [
     id: 'bazooka',
     name: 'Bazooka',
     emoji: '🚀',
-    // Lanzacohetes: tubo largo y ancho.
+    // Lanzacohetes: tubo largo y recto, boca al frente y culata atrás.
     parts: rotProp([
-      part('Tube', { shape: 'capsule', offsetAlong: -2, offsetPerp: 0, angle: 0, length: 34, width: 11, color: '#33691e' }),
-      part('Muzzle', { shape: 'circle', offsetAlong: 16, offsetPerp: 0, angle: 0, length: 0, width: 13, color: '#1b3d0e' }),
-      part('Breech', { shape: 'capsule', offsetAlong: -20, offsetPerp: 0, angle: 0, length: 6, width: 13, color: '#1b3d0e' }),
-      part('Sight', { shape: 'capsule', offsetAlong: 2, offsetPerp: -8, angle: 90, length: 6, width: 2, color: DARK }),
-      part('Grip', { shape: 'capsule', offsetAlong: -6, offsetPerp: 0, angle: 80, length: 7, width: 3.5, color: '#263238' }),
+      part('Tube', { shape: 'rect', offsetAlong: -18, offsetPerp: -6, angle: 0, length: 38, width: 12, color: '#33691e' }),
+      part('Muzzle', { shape: 'circle', offsetAlong: 22, offsetPerp: 0, angle: 0, length: 0, width: 15, color: '#1b3d0e' }),
+      part('Breech', { shape: 'circle', offsetAlong: -18, offsetPerp: 0, angle: 0, length: 0, width: 13, color: '#1b3d0e' }),
+      part('Sight', { shape: 'capsule', offsetAlong: 4, offsetPerp: -9, angle: 90, length: 7, width: 2, color: DARK }),
+      part('Grip', { shape: 'capsule', offsetAlong: -8, offsetPerp: 4, angle: 90, length: 8, width: 3.5, color: '#263238' }),
     ], 120),
+  },
+  {
+    id: 'flag',
+    name: 'Flag',
+    emoji: '🚩',
+    // Asta + tela que ondea al costado.
+    parts: rotProp([
+      part('Pole', { shape: 'capsule', offsetAlong: 0, offsetPerp: 0, angle: 0, length: 34, width: 2.5, color: '#6d4c41' }),
+      part('Cloth', { shape: 'rect', offsetAlong: 30, offsetPerp: 0, angle: 90, length: 20, width: 13, color: '#e53935' }),
+      part('Wave', { shape: 'rect', offsetAlong: 24, offsetPerp: 0, angle: 90, length: 20, width: 4, color: '#c62828' }),
+    ], 175),
   },
 ];

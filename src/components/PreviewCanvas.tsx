@@ -108,8 +108,12 @@ export const PreviewCanvas = (): ReactElement => {
   const rot = render.rotation
     ? `rotate(${render.rotation} ${cs / 2} ${cs / 2})`
     : undefined;
+  // Accesorios apagados: translúcidos en el editor (se excluyen del export).
+  const editorAccessories = accessories.map((a) =>
+    a.hidden ? { ...a, opacity: a.opacity * 0.25 } : a,
+  );
   const characterInner = poses[frame]
-    ? renderCharacterInner(character, poses[frame], render, effects, parts, true, accessories)
+    ? renderCharacterInner(character, poses[frame], render, effects, parts, true, editorAccessories)
     : '';
 
   return (

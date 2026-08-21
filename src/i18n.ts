@@ -66,6 +66,13 @@ const EN: Record<string, string> = {
   'Ver en GitHub (open source)': 'View on GitHub (open source)',
   'Armas / props': 'Weapons / props',
   'Prop agregado': 'Prop added',
+  'Prop duplicado': 'Prop duplicated',
+  'Accesorios / Armas': 'Accessories / Weapons',
+  'Agregar accesorio suelto': 'Add a loose accessory',
+  'Un click agrega el arma; otro la apaga (translúcida); otro la vuelve a mostrar. Para tener 2, usá “Duplicar”.':
+    'One click adds the weapon; another hides it (translucent); another shows it again. To have 2, use “Duplicate”.',
+  'Duplicar esta pieza': 'Duplicate this piece',
+  'Duplicar arma/accesorio seleccionado': 'Duplicate selected weapon/accessory',
   'Cada prop es un mini-rig: se compone de varias piezas y sigue la animación de la mano.':
     'Each prop is a mini-rig: made of several pieces, it follows the hand animation.',
 

@@ -130,6 +130,8 @@ export type ProjectState = {
   readonly activeAccessoryId: string | null;
   readonly addAccessory: () => void;
   readonly addProp: (templateId: string, anchor: AnchorName) => void;
+  readonly toggleProp: (templateId: string, anchor: AnchorName) => void;
+  readonly duplicateActiveProp: () => void;
   readonly updateAccessory: (id: string, patch: Partial<Accessory>) => void;
   readonly duplicateAccessory: (id: string) => void;
   readonly removeAccessory: (id: string) => void;
@@ -464,12 +466,61 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     addProp: (templateId, anchor) => {
       const tpl = PROP_TEMPLATES.find((p) => p.id === templateId);
       if (!tpl) return;
-      const accs: Accessory[] = tpl.parts.map((p) => ({ ...p, id: genId(), anchor: p.anchor ?? anchor }));
+      const accs: Accessory[] = tpl.parts.map((p) => ({
+        ...p,
+        id: genId(),
+        anchor: p.anchor ?? anchor,
+        name: `${tpl.name}-${p.name}`,
+        propId: templateId,
+        hidden: false,
+      }));
       set((s) => ({
         project: { ...s.project, accessories: [...s.project.accessories, ...accs] },
         activeAccessoryId: accs[accs.length - 1]?.id ?? s.activeAccessoryId,
       }));
       get().notify('Prop agregado', 'success');
+    },
+
+    // Click en la galería: si el prop no está, lo agrega; si está, alterna su
+    // visibilidad (apagado = translúcido en editor, excluido del export).
+    toggleProp: (templateId, anchor) => {
+      const group = get().project.accessories.filter((a) => a.propId === templateId);
+      if (group.length === 0) {
+        get().addProp(templateId, anchor);
+        return;
+      }
+      const nextHidden = !group[0].hidden;
+      set((s) => ({
+        project: {
+          ...s.project,
+          accessories: s.project.accessories.map((a) =>
+            a.propId === templateId ? { ...a, hidden: nextHidden } : a,
+          ),
+        },
+      }));
+    },
+
+    // Duplica el arma/prop del accesorio activo (todas sus piezas), como copia
+    // independiente que se puede reposicionar.
+    duplicateActiveProp: () => {
+      const s = get().project;
+      const active = s.accessories.find((a) => a.id === get().activeAccessoryId);
+      if (!active) return;
+      const group = active.propId
+        ? s.accessories.filter((a) => a.propId === active.propId)
+        : [active];
+      const newGroup = active.propId ? genId() : undefined;
+      const copies: Accessory[] = group.map((a) => ({
+        ...a,
+        id: genId(),
+        propId: newGroup,
+        offsetPerp: a.offsetPerp + 4,
+      }));
+      set((st) => ({
+        project: { ...st.project, accessories: [...st.project.accessories, ...copies] },
+        activeAccessoryId: copies[copies.length - 1]?.id ?? st.activeAccessoryId,
+      }));
+      get().notify('Prop duplicado', 'success');
     },
 
     updateAccessory: (id, patch) =>

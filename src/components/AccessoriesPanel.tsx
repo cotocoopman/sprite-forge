@@ -31,9 +31,17 @@ import { PROP_TEMPLATES } from '@core/props';
 
 // Galería de props/armas compuestas (mini-rigs) ancladas a una mano.
 const PropGallery = (): ReactElement => {
-  const addProp = useProjectStore((s) => s.addProp);
+  const toggleProp = useProjectStore((s) => s.toggleProp);
+  const accessories = useProjectStore((s) => s.project.accessories);
   const [hand, setHand] = useState<AnchorName>('handNear');
   const t = useT();
+
+  // Estado por prop: 'off' (no está), 'on' (visible), 'hidden' (translúcido).
+  const stateOf = (id: string): 'off' | 'on' | 'hidden' => {
+    const g = accessories.filter((a) => a.propId === id);
+    if (g.length === 0) return 'off';
+    return g[0].hidden ? 'hidden' : 'on';
+  };
 
   return (
     <Stack spacing={1}>
@@ -43,29 +51,33 @@ const PropGallery = (): ReactElement => {
         <ToggleButton value="handFar">{t('Mano izquierda')}</ToggleButton>
       </ToggleButtonGroup>
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: 0.75 }}>
-        {PROP_TEMPLATES.map((p) => (
-          <ButtonBase
-            key={p.id}
-            onClick={() => addProp(p.id, hand)}
-            focusRipple
-            sx={{
-              flexDirection: 'column',
-              gap: 0.25,
-              p: 0.75,
-              borderRadius: 2,
-              border: '1px solid',
-              borderColor: 'divider',
-              bgcolor: 'action.hover',
-              '&:hover': { borderColor: 'primary.main' },
-            }}
-          >
-            <Box sx={{ fontSize: 22, lineHeight: 1 }}>{p.emoji}</Box>
-            <Typography variant="caption" sx={{ fontWeight: 600 }}>{p.name}</Typography>
-          </ButtonBase>
-        ))}
+        {PROP_TEMPLATES.map((p) => {
+          const st = stateOf(p.id);
+          return (
+            <ButtonBase
+              key={p.id}
+              onClick={() => toggleProp(p.id, hand)}
+              focusRipple
+              sx={{
+                flexDirection: 'column',
+                gap: 0.25,
+                p: 0.75,
+                borderRadius: 2,
+                border: '1px solid',
+                borderColor: st === 'on' ? 'primary.main' : 'divider',
+                bgcolor: st === 'on' ? 'action.selected' : 'action.hover',
+                opacity: st === 'hidden' ? 0.45 : 1,
+                '&:hover': { borderColor: 'primary.main' },
+              }}
+            >
+              <Box sx={{ fontSize: 22, lineHeight: 1 }}>{p.emoji}</Box>
+              <Typography variant="caption" sx={{ fontWeight: 600 }}>{p.name}</Typography>
+            </ButtonBase>
+          );
+        })}
       </Box>
       <Typography variant="caption" color="text.secondary">
-        {t('Cada prop es un mini-rig: se compone de varias piezas y sigue la animación de la mano.')}
+        {t('Un click agrega el arma; otro la apaga (translúcida); otro la vuelve a mostrar. Para tener 2, usá “Duplicar”.')}
       </Typography>
     </Stack>
   );
@@ -168,6 +180,7 @@ export const AccessoriesPanel = (): ReactElement => {
   const activeId = useProjectStore((s) => s.activeAccessoryId);
   const addAccessory = useProjectStore((s) => s.addAccessory);
   const duplicateAccessory = useProjectStore((s) => s.duplicateAccessory);
+  const duplicateActiveProp = useProjectStore((s) => s.duplicateActiveProp);
   const removeAccessory = useProjectStore((s) => s.removeAccessory);
   const selectAccessory = useProjectStore((s) => s.selectAccessory);
   const t = useT();
@@ -175,13 +188,13 @@ export const AccessoriesPanel = (): ReactElement => {
   const active = accessories.find((a) => a.id === activeId);
 
   return (
-    <SectionAccordion title="Accesorios">
+    <SectionAccordion title="Accesorios / Armas">
     <Stack spacing={1}>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Typography variant="caption" color="text.secondary">
           {t('Armas, sombreros, capas… anclados a un hueso y siguen la animación.')}
         </Typography>
-        <Tooltip title={t('Agregar accesorio')}>
+        <Tooltip title={t('Agregar accesorio suelto')}>
           <IconButton size="small" color="primary" onClick={addAccessory}>
             <AddIcon />
           </IconButton>
@@ -201,10 +214,10 @@ export const AccessoriesPanel = (): ReactElement => {
               key={a.id}
               selected={a.id === activeId}
               onClick={() => selectAccessory(a.id)}
-              sx={{ borderRadius: 1 }}
+              sx={{ borderRadius: 1, opacity: a.hidden ? 0.45 : 1 }}
             >
               <ListItemText primary={a.name} secondary={t(ANCHOR_LABELS[a.anchor])} />
-              <Tooltip title={t('Duplicar')}>
+              <Tooltip title={t('Duplicar esta pieza')}>
                 <IconButton size="small" onClick={(e) => { e.stopPropagation(); duplicateAccessory(a.id); }}>
                   <ContentCopyIcon fontSize="inherit" />
                 </IconButton>
@@ -217,6 +230,12 @@ export const AccessoriesPanel = (): ReactElement => {
             </ListItemButton>
           ))}
         </List>
+      )}
+
+      {accessories.length > 0 && (
+        <Button size="small" variant="outlined" startIcon={<ContentCopyIcon />} onClick={duplicateActiveProp} disabled={!active}>
+          {t('Duplicar arma/accesorio seleccionado')}
+        </Button>
       )}
 
       {active ? (

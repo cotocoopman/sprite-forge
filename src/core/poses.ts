@@ -88,6 +88,8 @@ export type Accessory = {
   readonly color: string;
   readonly opacity: number;     // 0..1
   readonly front: boolean;      // delante (true) o detrás (false) de la silueta
+  readonly propId?: string;     // grupo de un prop/arma insertado (para toggle/duplicar)
+  readonly hidden?: boolean;    // apagado: translúcido en el editor, excluido del export
 };
 
 export type RigMode = 'humanoid' | 'custom';
