@@ -10,9 +10,9 @@ const finite = (n: number): boolean => Number.isFinite(n);
 describe('prop templates (weapons as mini-rigs)', () => {
   const skel = buildSkeleton(DEFAULT_CHARACTER, NEUTRAL_POSE);
 
-  it('exposes 6 props with unique ids and non-empty parts', () => {
-    expect(PROP_TEMPLATES).toHaveLength(6);
-    expect(new Set(PROP_TEMPLATES.map((p) => p.id)).size).toBe(6);
+  it('exposes 10 props with unique ids and non-empty parts', () => {
+    expect(PROP_TEMPLATES).toHaveLength(10);
+    expect(new Set(PROP_TEMPLATES.map((p) => p.id)).size).toBe(10);
     for (const p of PROP_TEMPLATES) expect(p.parts.length).toBeGreaterThan(0);
   });
 

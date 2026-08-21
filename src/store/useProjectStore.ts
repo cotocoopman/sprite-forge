@@ -464,7 +464,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     addProp: (templateId, anchor) => {
       const tpl = PROP_TEMPLATES.find((p) => p.id === templateId);
       if (!tpl) return;
-      const accs: Accessory[] = tpl.parts.map((p) => ({ ...p, id: genId(), anchor }));
+      const accs: Accessory[] = tpl.parts.map((p) => ({ ...p, id: genId(), anchor: p.anchor ?? anchor }));
       set((s) => ({
         project: { ...s.project, accessories: [...s.project.accessories, ...accs] },
         activeAccessoryId: accs[accs.length - 1]?.id ?? s.activeAccessoryId,
