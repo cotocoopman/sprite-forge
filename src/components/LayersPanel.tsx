@@ -1,0 +1,209 @@
+import type { ReactElement, ReactNode } from 'react';
+import Stack from '@mui/material/Stack';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import DeleteIcon from '@mui/icons-material/Delete';
+import LayersIcon from '@mui/icons-material/Layers';
+import { useProjectStore } from '@store/useProjectStore';
+import { ColorField } from '@components/ColorField';
+import { SectionAccordion } from '@components/SectionAccordion';
+import { useT } from '@/i18n';
+import { PART_NAMES, PART_LABELS } from '@core/rig';
+
+// Fila genérica de capa: ojo · color · nombre (selecciona) · subir/bajar · borrar.
+const LayerRow = ({
+  name,
+  visible,
+  selected,
+  color,
+  onToggle,
+  onColor,
+  onColorReset,
+  canReset,
+  onSelect,
+  onUp,
+  onDown,
+  onDelete,
+  indent,
+}: {
+  name: string;
+  visible: boolean;
+  selected?: boolean;
+  color: string;
+  onToggle: () => void;
+  onColor: (v: string) => void;
+  onColorReset?: () => void;
+  canReset?: boolean;
+  onSelect?: () => void;
+  onUp?: () => void;
+  onDown?: () => void;
+  onDelete?: () => void;
+  indent?: boolean;
+}): ReactElement => (
+  <Stack
+    direction="row"
+    alignItems="center"
+    spacing={0.25}
+    sx={{
+      pl: indent ? 1 : 0.25,
+      pr: 0.25,
+      py: 0.25,
+      borderRadius: 1,
+      bgcolor: selected ? 'action.selected' : 'transparent',
+      '&:hover': { bgcolor: selected ? 'action.selected' : 'action.hover' },
+    }}
+  >
+    <Tooltip title={visible ? 'Ocultar' : 'Mostrar'}>
+      <IconButton size="small" onClick={onToggle} sx={{ opacity: visible ? 1 : 0.4 }}>
+        {visible ? <VisibilityIcon fontSize="inherit" /> : <VisibilityOffIcon fontSize="inherit" />}
+      </IconButton>
+    </Tooltip>
+    <ColorField value={color} onChange={onColor} onReset={onColorReset} canReset={canReset} size={22} />
+    <Box
+      onClick={onSelect}
+      sx={{
+        flex: 1,
+        minWidth: 0,
+        cursor: onSelect ? 'pointer' : 'default',
+        opacity: visible ? 1 : 0.5,
+      }}
+    >
+      <Typography variant="caption" noWrap sx={{ fontWeight: selected ? 700 : 400 }}>
+        {name}
+      </Typography>
+    </Box>
+    {onUp && (
+      <IconButton size="small" onClick={onUp}>
+        <KeyboardArrowUpIcon fontSize="inherit" />
+      </IconButton>
+    )}
+    {onDown && (
+      <IconButton size="small" onClick={onDown}>
+        <KeyboardArrowDownIcon fontSize="inherit" />
+      </IconButton>
+    )}
+    {onDelete && (
+      <IconButton size="small" onClick={onDelete}>
+        <DeleteIcon fontSize="inherit" />
+      </IconButton>
+    )}
+  </Stack>
+);
+
+const GroupLabel = ({ children }: { children: ReactNode }): ReactElement => (
+  <Typography variant="overline" color="text.secondary" sx={{ lineHeight: 2 }}>
+    {children}
+  </Typography>
+);
+
+// Modo humanoide: partes del cuerpo + accesorios.
+const HumanoidLayers = (): ReactElement => {
+  const character = useProjectStore((s) => s.project.character);
+  const parts = useProjectStore((s) => s.project.parts);
+  const accessories = useProjectStore((s) => s.project.accessories);
+  const activeId = useProjectStore((s) => s.activeAccessoryId);
+  const togglePartVisible = useProjectStore((s) => s.togglePartVisible);
+  const setPartColor = useProjectStore((s) => s.setPartColor);
+  const resetPartColor = useProjectStore((s) => s.resetPartColor);
+  const updateAccessory = useProjectStore((s) => s.updateAccessory);
+  const removeAccessory = useProjectStore((s) => s.removeAccessory);
+  const reorderAccessory = useProjectStore((s) => s.reorderAccessory);
+  const selectAccessory = useProjectStore((s) => s.selectAccessory);
+  const t = useT();
+
+  // Frente arriba: accesorios en orden inverso al array (último = más al frente).
+  const accFrontFirst = [...accessories].reverse();
+
+  return (
+    <Stack spacing={0.25}>
+      <GroupLabel>{t('Cuerpo')}</GroupLabel>
+      {PART_NAMES.map((p) => (
+        <LayerRow
+          key={p}
+          indent
+          name={t(PART_LABELS[p])}
+          visible={parts[p].visible}
+          color={parts[p].color ?? character.color}
+          onToggle={() => togglePartVisible(p)}
+          onColor={(v) => setPartColor(p, v)}
+          onColorReset={() => resetPartColor(p)}
+          canReset={parts[p].color !== null}
+        />
+      ))}
+
+      <GroupLabel>{t('Accesorios')}</GroupLabel>
+      {accessories.length === 0 ? (
+        <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>
+          {t('Sin accesorios.')}
+        </Typography>
+      ) : (
+        accFrontFirst.map((a) => (
+          <LayerRow
+            key={a.id}
+            indent
+            name={a.name}
+            visible={!a.hidden}
+            selected={a.id === activeId}
+            color={a.color}
+            onToggle={() => updateAccessory(a.id, { hidden: !a.hidden })}
+            onColor={(v) => updateAccessory(a.id, { color: v })}
+            onSelect={() => selectAccessory(a.id)}
+            onUp={() => reorderAccessory(a.id, 1)}
+            onDown={() => reorderAccessory(a.id, -1)}
+            onDelete={() => removeAccessory(a.id)}
+          />
+        ))
+      )}
+    </Stack>
+  );
+};
+
+// Modo rig personalizado: huesos, del frente (z alto) hacia atrás.
+const BoneLayers = (): ReactElement => {
+  const rig = useProjectStore((s) => s.project.customRig);
+  const activeBoneId = useProjectStore((s) => s.activeBoneId);
+  const selectBone = useProjectStore((s) => s.selectBone);
+  const updateBone = useProjectStore((s) => s.updateBone);
+  const removeBone = useProjectStore((s) => s.removeBone);
+  const toggleBoneVisible = useProjectStore((s) => s.toggleBoneVisible);
+  const reorderBone = useProjectStore((s) => s.reorderBone);
+
+  const frontFirst = [...rig.bones].sort((a, b) => b.z - a.z);
+
+  return (
+    <Stack spacing={0.25}>
+      {frontFirst.map((b) => (
+        <LayerRow
+          key={b.id}
+          name={b.name}
+          visible={!b.hidden}
+          selected={b.id === activeBoneId}
+          color={b.color ?? rig.color}
+          onToggle={() => toggleBoneVisible(b.id)}
+          onColor={(v) => updateBone(b.id, { color: v })}
+          onColorReset={() => updateBone(b.id, { color: null })}
+          canReset={b.color !== null}
+          onSelect={() => selectBone(b.id)}
+          onUp={() => reorderBone(b.id, 1)}
+          onDown={() => reorderBone(b.id, -1)}
+          onDelete={() => removeBone(b.id)}
+        />
+      ))}
+    </Stack>
+  );
+};
+
+export const LayersPanel = (): ReactElement => {
+  const mode = useProjectStore((s) => s.project.mode);
+  return (
+    <SectionAccordion title="Capas" defaultExpanded icon={<LayersIcon fontSize="small" color="secondary" />}>
+      {mode === 'custom' ? <BoneLayers /> : <HumanoidLayers />}
+    </SectionAccordion>
+  );
+};

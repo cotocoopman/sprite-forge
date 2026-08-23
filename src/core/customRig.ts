@@ -35,6 +35,7 @@ export type Bone = {
   readonly z: number;               // orden de dibujo (menor = atrás)
   readonly offset?: Vec2;           // corrimiento extra de la base en espacio del rig
                                     // (para posicionar piezas libres, ej. armas)
+  readonly hidden?: boolean;        // oculto: no se dibuja (sí posiciona a sus hijos)
 };
 
 export type CustomRig = {
@@ -95,6 +96,7 @@ export const buildCustomSkeleton = (rig: CustomRig, pose?: RigPose): RBone[] => 
 
   const out: RBone[] = [];
   for (const b of rig.bones) {
+    if (b.hidden) continue; // no se dibuja, pero sus hijos siguen posicionándose
     const wa = worldAngle(b, new Set([b.id]));
     const base = baseOf(b, new Set([b.id]));
     const dir = dirOf(wa);

@@ -120,4 +120,36 @@ describe('validateProject', () => {
       expect(result.project.character.legCurveUpper).toBe(0.1);
     }
   });
+
+  it('conserva shape triangle, offset/hidden de huesos y propId/hidden de accesorios', () => {
+    const project = buildDefaultProject();
+    const raw = {
+      ...project,
+      accessories: [
+        {
+          id: 'a1', name: 'Bolt', anchor: 'handNear', shape: 'triangle',
+          offsetAlong: 1, offsetPerp: 2, angle: 10, length: 12, width: 4,
+          color: '#fff', opacity: 1, front: true, propId: 'projectile', hidden: true,
+        },
+      ],
+      customRig: {
+        ...project.customRig,
+        bones: [
+          { id: 'b1', name: 'Tri', parentId: null, attach: 0, angle: 0, length: 10, width: 5, shape: 'triangle', curve: 0, color: null, z: 0, offset: { x: 3, y: -4 }, hidden: true },
+        ],
+      },
+    };
+    const result = validateProject(raw);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const acc = result.project.accessories[0];
+      expect(acc.shape).toBe('triangle');
+      expect(acc.propId).toBe('projectile');
+      expect(acc.hidden).toBe(true);
+      const bone = result.project.customRig.bones[0];
+      expect(bone.shape).toBe('triangle');
+      expect(bone.offset).toEqual({ x: 3, y: -4 });
+      expect(bone.hidden).toBe(true);
+    }
+  });
 });

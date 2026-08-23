@@ -4,6 +4,20 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] — 2026-08-23
+
+### Added
+- **Layers panel** (Photoshop/Krita style): a single list of every object with
+  show/hide (eye), color swatch, select, reorder (z / draw order) and delete.
+  Humanoid mode groups Body parts + Accessories; custom-rig mode lists bones.
+- Custom-rig bones can be hidden (eye toggle); hidden bones still position their
+  children but aren't drawn.
+
+### Fixed
+- Save/load now preserves `triangle` shapes (previously downgraded to `capsule`),
+  bone `offset`, and accessory `propId`/`hidden` — round-tripping a project no
+  longer loses the projectile shape, standalone-weapon geometry or prop grouping.
+
 ## [1.1.1] — 2026-08-23
 
 ### Changed

@@ -197,7 +197,9 @@ const validateAccessories = (v: unknown): Accessory[] => {
       ? (item.anchor as AnchorName)
       : 'handNear';
     const shape: AccessoryShape =
-      item.shape === 'circle' || item.shape === 'rect' ? item.shape : 'capsule';
+      item.shape === 'circle' || item.shape === 'rect' || item.shape === 'triangle'
+        ? item.shape
+        : 'capsule';
     out.push({
       id: item.id,
       name: item.name,
@@ -211,6 +213,8 @@ const validateAccessories = (v: unknown): Accessory[] => {
       color: isStr(item.color) ? item.color : '#000000',
       opacity: num(item.opacity, 1),
       front: isBool(item.front) ? item.front : true,
+      ...(isStr(item.propId) ? { propId: item.propId } : {}),
+      ...(isBool(item.hidden) ? { hidden: item.hidden } : {}),
     });
   }
   return out;
@@ -256,11 +260,15 @@ const validateCustomRig = (v: unknown): CustomRig => {
   if (!isRecord(v)) return buildDefaultCustomRig();
   const num = (x: unknown, d: number): number => (isNum(x) ? x : d);
   const shapeOf = (x: unknown): BoneShape =>
-    x === 'circle' || x === 'rect' ? x : 'capsule';
+    x === 'circle' || x === 'rect' || x === 'triangle' ? x : 'capsule';
   const bonesRaw = Array.isArray(v.bones) ? v.bones : [];
   const bones: Bone[] = [];
   for (const item of bonesRaw) {
     if (!isRecord(item) || !isStr(item.id) || !isStr(item.name)) continue;
+    const offset =
+      isRecord(item.offset) && isNum(item.offset.x) && isNum(item.offset.y)
+        ? { x: item.offset.x, y: item.offset.y }
+        : undefined;
     bones.push({
       id: item.id,
       name: item.name,
@@ -273,6 +281,8 @@ const validateCustomRig = (v: unknown): CustomRig => {
       curve: num(item.curve, 0),
       color: isStr(item.color) ? item.color : null,
       z: num(item.z, 0),
+      ...(offset ? { offset } : {}),
+      ...(isBool(item.hidden) ? { hidden: item.hidden } : {}),
     });
   }
   if (bones.length === 0) return buildDefaultCustomRig();

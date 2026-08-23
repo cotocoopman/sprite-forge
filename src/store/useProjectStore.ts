@@ -135,6 +135,7 @@ export type ProjectState = {
   readonly updateAccessory: (id: string, patch: Partial<Accessory>) => void;
   readonly duplicateAccessory: (id: string) => void;
   readonly removeAccessory: (id: string) => void;
+  readonly reorderAccessory: (id: string, delta: number) => void;
   readonly selectAccessory: (id: string | null) => void;
 
   // Modo / rig personalizado
@@ -144,6 +145,8 @@ export type ProjectState = {
   readonly addBone: () => void;
   readonly updateBone: (id: string, patch: Partial<Bone>) => void;
   readonly removeBone: (id: string) => void;
+  readonly toggleBoneVisible: (id: string) => void;
+  readonly reorderBone: (id: string, delta: number) => void;
   readonly setRigField: (patch: { name?: string; color?: string; originX?: number; originY?: number }) => void;
   readonly resetAllBoneColors: () => void;
   readonly loadRigPreset: (rig: CustomRig) => void;
@@ -552,6 +555,17 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         activeAccessoryId: s.activeAccessoryId === id ? null : s.activeAccessoryId,
       })),
 
+    // Reordena un accesorio en el array (= orden de dibujo dentro de su capa).
+    reorderAccessory: (id, delta) =>
+      set((s) => {
+        const arr = [...s.project.accessories];
+        const pos = arr.findIndex((a) => a.id === id);
+        const swap = pos + delta;
+        if (pos < 0 || swap < 0 || swap >= arr.length) return {};
+        [arr[pos], arr[swap]] = [arr[swap], arr[pos]];
+        return { project: { ...s.project, accessories: arr } };
+      }),
+
     selectAccessory: (id) => set({ activeAccessoryId: id }),
 
     setMode: (mode) =>
@@ -619,6 +633,34 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         activeBoneId: toRemove.has(get().activeBoneId ?? '') ? (remaining[0]?.id ?? null) : get().activeBoneId,
       }));
     },
+
+    toggleBoneVisible: (id) =>
+      set((s) => ({
+        project: {
+          ...s.project,
+          customRig: {
+            ...s.project.customRig,
+            bones: s.project.customRig.bones.map((b) => (b.id === id ? { ...b, hidden: !b.hidden } : b)),
+          },
+        },
+      })),
+
+    // Reordena el hueso en el orden de dibujo, normalizando z a 0..n-1.
+    reorderBone: (id, delta) =>
+      set((s) => {
+        const bones = s.project.customRig.bones;
+        const order = bones
+          .map((b, i) => ({ b, i }))
+          .sort((a, c) => a.b.z - c.b.z || a.i - c.i)
+          .map((o) => o.b);
+        const pos = order.findIndex((b) => b.id === id);
+        const swap = pos + delta;
+        if (pos < 0 || swap < 0 || swap >= order.length) return {};
+        [order[pos], order[swap]] = [order[swap], order[pos]];
+        const rank = new Map(order.map((b, idx) => [b.id, idx]));
+        const newBones = bones.map((b) => ({ ...b, z: rank.get(b.id) ?? b.z }));
+        return { project: { ...s.project, customRig: { ...s.project.customRig, bones: newBones } } };
+      }),
 
     setRigField: (patch) =>
       set((s) => {

@@ -41,6 +41,7 @@ import { PlaybackControls } from '@components/PlaybackControls';
 import { KeyboardShortcuts } from '@components/KeyboardShortcuts';
 import { QuickGuide } from '@components/QuickGuide';
 import { RigEditor } from '@components/RigEditor';
+import { LayersPanel } from '@components/LayersPanel';
 import { TemplateGallery } from '@components/TemplateGallery';
 import { AnimationIO } from '@components/AnimationIO';
 import { RigTurnDial } from '@components/RigTurnDial';
@@ -328,6 +329,8 @@ export const App = (): ReactElement => {
               <Divider />
               <RigEditor />
               <Divider />
+              <LayersPanel />
+              <Divider />
               <EffectsPanel />
             </Stack>
           </Paper>
@@ -364,6 +367,8 @@ export const App = (): ReactElement => {
               <PartsPanel />
               <Divider />
               <AccessoriesPanel />
+              <Divider />
+              <LayersPanel />
               <Divider />
               <EffectsPanel />
               <Divider />
