@@ -30,6 +30,9 @@ const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFin
 const isStr = (v: unknown): v is string => typeof v === 'string';
 const isBool = (v: unknown): v is boolean => typeof v === 'boolean';
 
+// Formas válidas (accesorios y huesos comparten el set; 'capsule' es el fallback).
+const ACC_SHAPES = new Set(['capsule', 'circle', 'rect', 'triangle', 'path', 'star', 'trapezoid', 'bolt']);
+
 // Puntos de un trazo (shape 'path'); devuelve undefined si no hay ninguno válido.
 const parsePoints = (v: unknown): { x: number; y: number }[] | undefined => {
   if (!Array.isArray(v)) return undefined;
@@ -205,10 +208,9 @@ const validateAccessories = (v: unknown): Accessory[] => {
     const anchor = (ANCHOR_NAMES as readonly string[]).includes(item.anchor as string)
       ? (item.anchor as AnchorName)
       : 'handNear';
-    const shape: AccessoryShape =
-      item.shape === 'circle' || item.shape === 'rect' || item.shape === 'triangle' || item.shape === 'path'
-        ? item.shape
-        : 'capsule';
+    const shape: AccessoryShape = ACC_SHAPES.has(item.shape as string)
+      ? (item.shape as AccessoryShape)
+      : 'capsule';
     const points = parsePoints(item.points);
     out.push({
       id: item.id,
@@ -226,6 +228,10 @@ const validateAccessories = (v: unknown): Accessory[] => {
       ...(isStr(item.propId) ? { propId: item.propId } : {}),
       ...(isBool(item.hidden) ? { hidden: item.hidden } : {}),
       ...(points ? { points } : {}),
+      ...(isRecord(item.anchorTo) && isStr(item.anchorTo.id) &&
+        (item.anchorTo.part === 'base' || item.anchorTo.part === 'tip' || item.anchorTo.part === 'center')
+        ? { anchorTo: { id: item.anchorTo.id, part: item.anchorTo.part } }
+        : {}),
     });
   }
   return out;
@@ -270,8 +276,7 @@ const validateRigClips = (v: unknown): RigClip[] => {
 const validateCustomRig = (v: unknown): CustomRig => {
   if (!isRecord(v)) return buildDefaultCustomRig();
   const num = (x: unknown, d: number): number => (isNum(x) ? x : d);
-  const shapeOf = (x: unknown): BoneShape =>
-    x === 'circle' || x === 'rect' || x === 'triangle' || x === 'path' ? x : 'capsule';
+  const shapeOf = (x: unknown): BoneShape => (ACC_SHAPES.has(x as string) ? (x as BoneShape) : 'capsule');
   const bonesRaw = Array.isArray(v.bones) ? v.bones : [];
   const bones: Bone[] = [];
   for (const item of bonesRaw) {

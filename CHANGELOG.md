@@ -4,6 +4,20 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.8.0] — 2026-08-23
+
+### Added
+- **Parametric shapes:** the shape tool can now draw a **star**, **trapezoid** and
+  **bolt (lightning)**, sized and oriented by the drag, as filled polygons.
+- **Object→object anchoring (humanoid):** an accessory can be anchored to another
+  accessory's base / center / tip (picked in the accessory editor) instead of a body
+  bone, so drawn objects can hang off other drawn objects and still follow the
+  animation. Anchoring resolves through short chains and is cycle-safe. (In the custom
+  rig, bones already re-parent to any bone with an attach point.)
+
+### Fixed
+- Save/load preserves the new shapes and the `anchorTo` reference.
+
 ## [1.7.0] — 2026-08-23
 
 ### Added

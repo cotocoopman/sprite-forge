@@ -112,8 +112,13 @@ const Row = ({
 
 const Editor = ({ acc }: { acc: Accessory }): ReactElement => {
   const update = useProjectStore((s) => s.updateAccessory);
+  const accessories = useProjectStore((s) => s.project.accessories);
   const set = (patch: Partial<Accessory>): void => update(acc.id, patch);
   const t = useT();
+
+  // Otros objetos a los que se puede anclar (evita a sí mismo).
+  const others = accessories.filter((a) => a.id !== acc.id);
+  const anchorValue = acc.anchorTo ? `obj:${acc.anchorTo.id}` : acc.anchor;
 
   return (
     <Stack spacing={1}>
@@ -128,8 +133,12 @@ const Editor = ({ acc }: { acc: Accessory }): ReactElement => {
         select
         size="small"
         label={t('Anclado a')}
-        value={acc.anchor}
-        onChange={(e) => set({ anchor: e.target.value as Accessory['anchor'] })}
+        value={anchorValue}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (v.startsWith('obj:')) set({ anchorTo: { id: v.slice(4), part: acc.anchorTo?.part ?? 'center' } });
+          else set({ anchor: v as Accessory['anchor'], anchorTo: undefined });
+        }}
         fullWidth
       >
         {ANCHOR_NAMES.map((a) => (
@@ -137,7 +146,27 @@ const Editor = ({ acc }: { acc: Accessory }): ReactElement => {
             {t(ANCHOR_LABELS[a])}
           </MenuItem>
         ))}
+        {others.length > 0 && <MenuItem disabled value="__sep">— {t('Otro objeto')} —</MenuItem>}
+        {others.map((o) => (
+          <MenuItem key={o.id} value={`obj:${o.id}`}>
+            {t('Objeto')}: {o.name}
+          </MenuItem>
+        ))}
       </TextField>
+      {acc.anchorTo && (
+        <TextField
+          select
+          size="small"
+          label={t('En qué parte del objeto')}
+          value={acc.anchorTo.part}
+          onChange={(e) => set({ anchorTo: { id: acc.anchorTo!.id, part: e.target.value as 'base' | 'tip' | 'center' } })}
+          fullWidth
+        >
+          <MenuItem value="base">{t('Base')}</MenuItem>
+          <MenuItem value="center">{t('Centro')}</MenuItem>
+          <MenuItem value="tip">{t('Punta')}</MenuItem>
+        </TextField>
+      )}
 
       <ToggleButtonGroup
         size="small"

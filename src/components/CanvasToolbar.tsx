@@ -14,6 +14,9 @@ import CropSquareIcon from '@mui/icons-material/CropSquare';
 import CircleIcon from '@mui/icons-material/Circle';
 import ChangeHistoryIcon from '@mui/icons-material/ChangeHistory';
 import RemoveIcon from '@mui/icons-material/Remove';
+import StarIcon from '@mui/icons-material/Star';
+import BoltIcon from '@mui/icons-material/Bolt';
+import Crop75Icon from '@mui/icons-material/Crop75';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ContentPasteIcon from '@mui/icons-material/ContentPaste';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
@@ -70,6 +73,9 @@ export const CanvasToolbar = (): ReactElement => {
           <ToggleButton value="rect" aria-label="rect"><Tooltip title={t('Rectángulo')}><CropSquareIcon fontSize="small" /></Tooltip></ToggleButton>
           <ToggleButton value="circle" aria-label="circle"><Tooltip title={t('Círculo')}><CircleIcon fontSize="small" /></Tooltip></ToggleButton>
           <ToggleButton value="triangle" aria-label="triangle"><Tooltip title={t('Triángulo')}><ChangeHistoryIcon fontSize="small" /></Tooltip></ToggleButton>
+          <ToggleButton value="trapezoid" aria-label="trapezoid"><Tooltip title={t('Trapecio')}><Crop75Icon fontSize="small" /></Tooltip></ToggleButton>
+          <ToggleButton value="star" aria-label="star"><Tooltip title={t('Estrella')}><StarIcon fontSize="small" /></Tooltip></ToggleButton>
+          <ToggleButton value="bolt" aria-label="bolt"><Tooltip title={t('Rayo')}><BoltIcon fontSize="small" /></Tooltip></ToggleButton>
           <ToggleButton value="capsule" aria-label="capsule"><Tooltip title={t('Barra')}><RemoveIcon fontSize="small" /></Tooltip></ToggleButton>
         </ToggleButtonGroup>
       )}

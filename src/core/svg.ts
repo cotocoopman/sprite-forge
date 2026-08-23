@@ -1,11 +1,12 @@
 // Render SVG. Núcleo puro: produce primitivas y strings de markup.
 // El preview de React reutiliza skeletonToPrimitives; el export reutiliza el markup.
 
-import type { Anchor, AnchorName, CharacterDefinition, PartName, Pose, Skeleton } from './rig';
+import type { Anchor, AnchorName, CharacterDefinition, PartName, Pose, Skeleton, Vec2 } from './rig';
 import { buildSkeleton, PART_NAMES } from './rig';
 import type { Accessory, EffectsConfig, PartsConfig, RenderConfig } from './poses';
 import type { CustomRig, RBone, RigPose } from './customRig';
 import { buildCustomSkeleton } from './customRig';
+import { shapePolygon, isPolyShape } from './shapes';
 
 const rad = (deg: number): number => (deg * Math.PI) / 180;
 
@@ -91,9 +92,51 @@ export const accessoriesToPrimitives = (
 ): AccPrim[] => {
   const tf = makeTransform(render);
   const out: AccPrim[] = [];
+
+  // Resolución de anclas: un accesorio puede anclarse a un hueso del esqueleto o a
+  // otro accesorio (a su base/punta/centro). Memoizado y con guarda de ciclos.
+  const byId = new Map(accessories.map((a) => [a.id, a]));
+  const geomCache = new Map<string, { pos: Vec2; angle: number; base: Vec2; tip: Vec2; center: Vec2; dirAngle: number }>();
+  const resolve = (acc: Accessory, seen: ReadonlySet<string>): { pos: Vec2; angle: number; base: Vec2; tip: Vec2; center: Vec2; dirAngle: number } => {
+    const cached = geomCache.get(acc.id);
+    if (cached) return cached;
+    let pos: Vec2;
+    let angle: number;
+    const to = acc.anchorTo;
+    const target = to ? byId.get(to.id) : undefined;
+    if (to && target && !seen.has(target.id)) {
+      const tg = resolve(target, new Set([...seen, acc.id]));
+      pos = to.part === 'tip' ? tg.tip : to.part === 'base' ? tg.base : tg.center;
+      angle = tg.dirAngle;
+    } else {
+      const an = anchors[acc.anchor];
+      pos = an ? an.pos : { x: 0, y: 0 };
+      angle = an ? an.angle : 0;
+    }
+    const ar0 = rad(angle);
+    const along0 = { x: Math.sin(ar0), y: Math.cos(ar0) };
+    const perp0 = { x: Math.cos(ar0), y: -Math.sin(ar0) };
+    const base = {
+      x: pos.x + acc.offsetAlong * along0.x + acc.offsetPerp * perp0.x,
+      y: pos.y + acc.offsetAlong * along0.y + acc.offsetPerp * perp0.y,
+    };
+    const dirAngle = angle + acc.angle;
+    const sr0 = rad(dirAngle);
+    const d0 = { x: Math.sin(sr0), y: Math.cos(sr0) };
+    const len = acc.shape === 'circle' || acc.shape === 'path' ? 0 : acc.length;
+    const g = {
+      pos, angle, base, dirAngle,
+      center: { x: base.x + d0.x * (len / 2), y: base.y + d0.y * (len / 2) },
+      tip: { x: base.x + d0.x * len, y: base.y + d0.y * len },
+    };
+    geomCache.set(acc.id, g);
+    return g;
+  };
+
   for (const acc of accessories) {
-    const anchor = anchors[acc.anchor];
-    if (!anchor) continue;
+    if (!acc.anchorTo && !anchors[acc.anchor]) continue;
+    const g = resolve(acc, new Set());
+    const anchor = { pos: g.pos, angle: g.angle };
     const ar = rad(anchor.angle);
     const along = { x: Math.sin(ar), y: Math.cos(ar) };
     const perp = { x: Math.cos(ar), y: -Math.sin(ar) };
@@ -122,6 +165,12 @@ export const accessoriesToPrimitives = (
       const a = toPx(base.x, base.y, tf);
       const b = toPx(end.x, end.y, tf);
       out.push({ kind: 'line', x1: a.px, y1: a.py, x2: b.px, y2: b.py, width: acc.width * tf.scale, ...common });
+    } else if (isPolyShape(acc.shape)) {
+      const pts = shapePolygon(acc.shape, base, dir, perpS, acc.length, acc.width).map((p) => {
+        const q = toPx(p.x, p.y, tf);
+        return { x: q.px, y: q.py };
+      });
+      out.push({ kind: 'poly', pts, ...common });
     } else {
       const hw = acc.width / 2;
       const tip = { x: base.x + dir.x * acc.length, y: base.y + dir.y * acc.length };

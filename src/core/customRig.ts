@@ -4,8 +4,10 @@
 import type { Vec2 } from './rig';
 import type { EasingKind } from './easing';
 import { applyEasing } from './easing';
+import { shapePolygon, isPolyShape } from './shapes';
 
-export type BoneShape = 'capsule' | 'circle' | 'rect' | 'triangle' | 'path';
+export type BoneShape =
+  | 'capsule' | 'circle' | 'rect' | 'triangle' | 'path' | 'star' | 'trapezoid' | 'bolt';
 
 // Pose de un rig: offset de ángulo por hueso (se suma al ángulo de reposo).
 export type RigPose = Record<string, number>;
@@ -109,6 +111,9 @@ export const buildCustomSkeleton = (rig: CustomRig, pose?: RigPose): RBone[] => 
       // Trazo libre: puntos relativos a la base (mueve con offset, no rota).
       const pts = (b.points ?? []).map((p) => ({ x: base.x + p.x, y: base.y + p.y }));
       if (pts.length > 0) out.push({ kind: 'path', id: b.id, pts, width: b.width, color, z: b.z });
+    } else if (isPolyShape(b.shape)) {
+      const perp = { x: Math.cos(rad(wa)), y: Math.sin(rad(wa)) };
+      out.push({ kind: 'rect', id: b.id, pts: shapePolygon(b.shape, base, dir, perp, b.length, b.width), color, z: b.z });
     } else if (b.shape === 'circle') {
       const cx = base.x + dir.x * (b.length / 2);
       const cy = base.y + dir.y * (b.length / 2);
