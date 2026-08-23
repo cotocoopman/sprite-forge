@@ -338,6 +338,28 @@ export const buildSkeleton = (char: CharacterDefinition, pose: Pose, facing = 0)
       part: c.part,
       ...(c.ctrl ? { ctrl: apply(c.ctrl) } : {}),
     }));
+
+    // Al girar sobre los pies, el cuerpo tumbado se desplaza hacia un lado y la
+    // cabeza se saldría de la celda (que está centrada en x=0). Recentramos el
+    // bounding box horizontal en x=0 para que la figura acostada quepa completa.
+    let minX = finalHead.x - headRadius;
+    let maxX = finalHead.x + headRadius;
+    for (const c of finalCaps) {
+      const hw = c.width / 2;
+      minX = Math.min(minX, c.from.x - hw, c.to.x - hw);
+      maxX = Math.max(maxX, c.from.x + hw, c.to.x + hw);
+    }
+    const shiftX = -(minX + maxX) / 2;
+    if (shiftX !== 0) {
+      finalHead = { x: finalHead.x + shiftX, y: finalHead.y };
+      finalCaps = finalCaps.map((c) => ({
+        from: { x: c.from.x + shiftX, y: c.from.y },
+        to: { x: c.to.x + shiftX, y: c.to.y },
+        width: c.width,
+        part: c.part,
+        ...(c.ctrl ? { ctrl: { x: c.ctrl.x + shiftX, y: c.ctrl.y } } : {}),
+      }));
+    }
   }
 
   // Ángulo de un hueso en la convención de `advance` (0 = hacia abajo).
