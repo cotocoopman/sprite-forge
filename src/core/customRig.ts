@@ -48,9 +48,9 @@ export type CustomRig = {
 };
 
 export type RBone =
-  | { readonly kind: 'capsule'; readonly from: Vec2; readonly to: Vec2; readonly ctrl?: Vec2; readonly width: number; readonly color: string; readonly z: number }
-  | { readonly kind: 'circle'; readonly cx: number; readonly cy: number; readonly r: number; readonly color: string; readonly z: number }
-  | { readonly kind: 'rect'; readonly pts: readonly Vec2[]; readonly color: string; readonly z: number };
+  | { readonly kind: 'capsule'; readonly id: string; readonly from: Vec2; readonly to: Vec2; readonly ctrl?: Vec2; readonly width: number; readonly color: string; readonly z: number }
+  | { readonly kind: 'circle'; readonly id: string; readonly cx: number; readonly cy: number; readonly r: number; readonly color: string; readonly z: number }
+  | { readonly kind: 'rect'; readonly id: string; readonly pts: readonly Vec2[]; readonly color: string; readonly z: number };
 
 const rad = (deg: number): number => (deg * Math.PI) / 180;
 const dirOf = (angleDeg: number): Vec2 => ({ x: Math.sin(rad(angleDeg)), y: -Math.cos(rad(angleDeg)) });
@@ -106,7 +106,7 @@ export const buildCustomSkeleton = (rig: CustomRig, pose?: RigPose): RBone[] => 
     if (b.shape === 'circle') {
       const cx = base.x + dir.x * (b.length / 2);
       const cy = base.y + dir.y * (b.length / 2);
-      out.push({ kind: 'circle', cx, cy, r: b.width / 2, color, z: b.z });
+      out.push({ kind: 'circle', id: b.id, cx, cy, r: b.width / 2, color, z: b.z });
     } else if (b.shape === 'rect' || b.shape === 'triangle') {
       const perp = { x: Math.cos(rad(wa)), y: Math.sin(rad(wa)) };
       const hw = b.width / 2;
@@ -124,7 +124,7 @@ export const buildCustomSkeleton = (rig: CustomRig, pose?: RigPose): RBone[] => 
               { x: tip.x - perp.x * hw, y: tip.y - perp.y * hw },
               { x: tip.x + perp.x * hw, y: tip.y + perp.y * hw },
             ];
-      out.push({ kind: 'rect', pts, color, z: b.z });
+      out.push({ kind: 'rect', id: b.id, pts, color, z: b.z });
     } else {
       let ctrl: Vec2 | undefined;
       if (b.curve) {
@@ -138,7 +138,7 @@ export const buildCustomSkeleton = (rig: CustomRig, pose?: RigPose): RBone[] => 
           ctrl = { x: (base.x + tip.x) / 2 + px * off, y: (base.y + tip.y) / 2 + py * off };
         }
       }
-      out.push({ kind: 'capsule', from: base, to: tip, width: b.width, color, z: b.z, ...(ctrl ? { ctrl } : {}) });
+      out.push({ kind: 'capsule', id: b.id, from: base, to: tip, width: b.width, color, z: b.z, ...(ctrl ? { ctrl } : {}) });
     }
   }
 

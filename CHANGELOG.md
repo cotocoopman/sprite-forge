@@ -4,6 +4,14 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] — 2026-08-23
+
+### Added
+- **On-canvas manipulation:** click an object in the preview to select it and drag
+  to move it. Works in both modes — accessories (humanoid) move along their anchor
+  axes; bones (custom rig) move by their world offset, carrying their children. A
+  dashed outline marks the selection.
+
 ## [1.2.0] — 2026-08-23
 
 ### Added

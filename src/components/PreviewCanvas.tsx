@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import type { ReactElement } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import type { PointerEvent as ReactPointerEvent, ReactElement } from 'react';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -13,6 +13,30 @@ import type { Pose } from '@core/rig';
 import { sampleClip } from '@core/poses';
 import { makeTransform, renderCharacterInner, skeletonToPrimitives } from '@core/svg';
 import type { SvgPrimitive } from '@core/svg';
+import { clientToModel, modelToPx } from '@components/canvasInteract';
+import type { Pt } from '@components/canvasInteract';
+import type { Accessory } from '@core/poses';
+
+// Centro (modelo) y base ortonormal del ancla de un accesorio, para hit-test y drag.
+const accGeom = (
+  acc: Accessory,
+  anchorPos: Pt,
+  anchorAngle: number,
+): { center: Pt; along: Pt; perp: Pt; radius: number } => {
+  const ar = (anchorAngle * Math.PI) / 180;
+  const along = { x: Math.sin(ar), y: Math.cos(ar) };
+  const perp = { x: Math.cos(ar), y: -Math.sin(ar) };
+  const base = {
+    x: anchorPos.x + acc.offsetAlong * along.x + acc.offsetPerp * perp.x,
+    y: anchorPos.y + acc.offsetAlong * along.y + acc.offsetPerp * perp.y,
+  };
+  const sr = ((anchorAngle + acc.angle) * Math.PI) / 180;
+  const dir = { x: Math.sin(sr), y: Math.cos(sr) };
+  const half = acc.shape === 'circle' ? 0 : acc.length / 2;
+  const center = { x: base.x + dir.x * half, y: base.y + dir.y * half };
+  const radius = Math.max(acc.width / 2, acc.length / 2) + 6;
+  return { center, along, perp, radius };
+};
 
 const CHECKER =
   'repeating-conic-gradient(#3a3f4b 0% 25%, #2a2e38 0% 50%) 50% / 20px 20px';
@@ -75,6 +99,9 @@ export const PreviewCanvas = (): ReactElement => {
   const effects = useProjectStore((s) => s.project.effects);
   const parts = useProjectStore((s) => s.project.parts);
   const accessories = useProjectStore((s) => s.project.accessories);
+  const activeAccessoryId = useProjectStore((s) => s.activeAccessoryId);
+  const selectAccessory = useProjectStore((s) => s.selectAccessory);
+  const updateAccessory = useProjectStore((s) => s.updateAccessory);
   const currentFrame = useProjectStore((s) => s.currentFrame);
   const refImage = useProjectStore((s) => s.refImage);
   const refOpacity = useProjectStore((s) => s.refOpacity);
@@ -115,6 +142,62 @@ export const PreviewCanvas = (): ReactElement => {
   const characterInner = poses[frame]
     ? renderCharacterInner(character, poses[frame], render, effects, parts, true, editorAccessories)
     : '';
+
+  // --- Manipulación en canvas: seleccionar y mover accesorios ---
+  const skel = poses[frame] ? buildSkeleton(character, poses[frame], render.facing) : null;
+  const drag = useRef<{ id: string; start: Pt; along: Pt; perp: Pt; a0: number; p0: number } | null>(null);
+
+  const pickAccessory = (m: Pt): string | null => {
+    if (!skel) return null;
+    let hit: string | null = null; // último dentro del radio (orden de dibujo) = al frente
+    for (const acc of accessories) {
+      const anchor = skel.anchors[acc.anchor];
+      if (!anchor) continue;
+      const g = accGeom(acc, anchor.pos, anchor.angle);
+      if (Math.hypot(m.x - g.center.x, m.y - g.center.y) <= g.radius) hit = acc.id;
+    }
+    return hit;
+  };
+
+  const onPointerDown = (e: ReactPointerEvent<SVGSVGElement>): void => {
+    const svg = e.currentTarget;
+    const m = clientToModel(svg, e.clientX, e.clientY, tf);
+    const id = pickAccessory(m);
+    selectAccessory(id);
+    if (id && skel) {
+      const acc = accessories.find((a) => a.id === id)!;
+      const anchor = skel.anchors[acc.anchor];
+      const g = accGeom(acc, anchor.pos, anchor.angle);
+      drag.current = { id, start: m, along: g.along, perp: g.perp, a0: acc.offsetAlong, p0: acc.offsetPerp };
+      svg.setPointerCapture(e.pointerId);
+    }
+  };
+
+  const onPointerMove = (e: ReactPointerEvent<SVGSVGElement>): void => {
+    if (!drag.current) return;
+    const m = clientToModel(e.currentTarget, e.clientX, e.clientY, tf);
+    const { id, start, along, perp, a0, p0 } = drag.current;
+    const dx = m.x - start.x;
+    const dy = m.y - start.y;
+    // Descompone el desplazamiento en los ejes del hueso (base ortonormal).
+    updateAccessory(id, {
+      offsetAlong: a0 + dx * along.x + dy * along.y,
+      offsetPerp: p0 + dx * perp.x + dy * perp.y,
+    });
+  };
+
+  const endDrag = (e: ReactPointerEvent<SVGSVGElement>): void => {
+    if (drag.current) {
+      try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* noop */ }
+      drag.current = null;
+    }
+  };
+
+  const selAcc = skel && activeAccessoryId ? accessories.find((a) => a.id === activeAccessoryId) : null;
+  const selAnchor = selAcc && skel ? skel.anchors[selAcc.anchor] : null;
+  const selCenter = selAcc && selAnchor ? accGeom(selAcc, selAnchor.pos, selAnchor.angle) : null;
+  const selPx = selCenter ? modelToPx(selCenter.center.x, selCenter.center.y, tf) : null;
+  const selR = selCenter ? selCenter.radius * tf.scale : 0;
 
   return (
     <Stack spacing={1} sx={{ height: '100%' }}>
@@ -162,7 +245,11 @@ export const PreviewCanvas = (): ReactElement => {
         )}
         <svg
           viewBox={`${-cs * 0.12} ${-cs * 0.12} ${cs * 1.24} ${cs * 1.24}`}
-          style={{ width: '100%', maxWidth: 480, maxHeight: '100%', display: 'block' }}
+          style={{ width: '100%', maxWidth: 480, maxHeight: '100%', display: 'block', touchAction: 'none' }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
         >
           {/* Borde del canvas (lo que realmente se exporta). Lo de afuera se recorta. */}
           <rect x={0} y={0} width={cs} height={cs} fill="none" stroke="#7c9cff" strokeWidth={1} strokeDasharray="3 3" opacity={0.6} />
@@ -191,6 +278,9 @@ export const PreviewCanvas = (): ReactElement => {
           </g>
           {/* Personaje principal: markup con efectos (sombra/brillo) + giro. */}
           <g dangerouslySetInnerHTML={{ __html: characterInner }} />
+          {selPx && (
+            <circle cx={selPx.x} cy={selPx.y} r={selR} fill="none" stroke="#22d3ee" strokeWidth={2} strokeDasharray="5 4" />
+          )}
         </svg>
       </Box>
 
