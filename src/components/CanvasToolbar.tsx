@@ -1,5 +1,7 @@
 import type { ReactElement } from 'react';
 import Stack from '@mui/material/Stack';
+import Divider from '@mui/material/Divider';
+import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
@@ -12,6 +14,11 @@ import CropSquareIcon from '@mui/icons-material/CropSquare';
 import CircleIcon from '@mui/icons-material/Circle';
 import ChangeHistoryIcon from '@mui/icons-material/ChangeHistory';
 import RemoveIcon from '@mui/icons-material/Remove';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import ContentPasteIcon from '@mui/icons-material/ContentPaste';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import SwapVertIcon from '@mui/icons-material/SwapVert';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useProjectStore } from '@store/useProjectStore';
 import { NumberInput } from '@components/NumberInput';
 import { useT } from '@/i18n';
@@ -25,6 +32,10 @@ export const CanvasToolbar = (): ReactElement => {
   const setTool = useProjectStore((s) => s.setTool);
   const setShapeKind = useProjectStore((s) => s.setShapeKind);
   const setBrushWidth = useProjectStore((s) => s.setBrushWidth);
+  const duplicateSelected = useProjectStore((s) => s.duplicateSelected);
+  const pasteClipboard = useProjectStore((s) => s.pasteClipboard);
+  const flipSelected = useProjectStore((s) => s.flipSelected);
+  const deleteSelected = useProjectStore((s) => s.deleteSelected);
   const t = useT();
 
   return (
@@ -75,6 +86,25 @@ export const CanvasToolbar = (): ReactElement => {
             : t('Clic y arrastrá para dibujar.')}
         </Typography>
       )}
+
+      <Divider orientation="vertical" flexItem />
+      <Stack direction="row" spacing={0}>
+        <Tooltip title={t('Duplicar (Ctrl+D)')}>
+          <IconButton size="small" onClick={duplicateSelected}><ContentCopyIcon fontSize="small" /></IconButton>
+        </Tooltip>
+        <Tooltip title={t('Pegar (Ctrl+V)')}>
+          <IconButton size="small" onClick={pasteClipboard}><ContentPasteIcon fontSize="small" /></IconButton>
+        </Tooltip>
+        <Tooltip title={t('Voltear horizontal (H)')}>
+          <IconButton size="small" onClick={() => flipSelected('h')}><SwapHorizIcon fontSize="small" /></IconButton>
+        </Tooltip>
+        <Tooltip title={t('Voltear vertical (V)')}>
+          <IconButton size="small" onClick={() => flipSelected('v')}><SwapVertIcon fontSize="small" /></IconButton>
+        </Tooltip>
+        <Tooltip title={t('Borrar (Supr)')}>
+          <IconButton size="small" onClick={deleteSelected}><DeleteIcon fontSize="small" /></IconButton>
+        </Tooltip>
+      </Stack>
     </Stack>
   );
 };

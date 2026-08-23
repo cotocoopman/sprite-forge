@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import type { ReactElement, ReactNode } from 'react';
 import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import InputBase from '@mui/material/InputBase';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -30,6 +32,7 @@ const LayerRow = ({
   onUp,
   onDown,
   onDelete,
+  onRename,
   indent,
 }: {
   name: string;
@@ -44,8 +47,17 @@ const LayerRow = ({
   onUp?: () => void;
   onDown?: () => void;
   onDelete?: () => void;
+  onRename?: (v: string) => void;
   indent?: boolean;
-}): ReactElement => (
+}): ReactElement => {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(name);
+  const commit = (): void => {
+    setEditing(false);
+    const v = draft.trim();
+    if (v && v !== name) onRename?.(v);
+  };
+  return (
   <Stack
     direction="row"
     alignItems="center"
@@ -67,6 +79,7 @@ const LayerRow = ({
     <ColorField value={color} onChange={onColor} onReset={onColorReset} canReset={canReset} size={22} />
     <Box
       onClick={onSelect}
+      onDoubleClick={() => { if (onRename) { setDraft(name); setEditing(true); } }}
       sx={{
         flex: 1,
         minWidth: 0,
@@ -74,9 +87,22 @@ const LayerRow = ({
         opacity: visible ? 1 : 0.5,
       }}
     >
-      <Typography variant="caption" noWrap sx={{ fontWeight: selected ? 700 : 400 }}>
-        {name}
-      </Typography>
+      {editing ? (
+        <InputBase
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false); }}
+          sx={{ fontSize: 12, px: 0.5, py: 0, border: '1px solid', borderColor: 'primary.main', borderRadius: 0.5, width: '100%' }}
+        />
+      ) : (
+        <Tooltip title={onRename ? 'Doble clic para renombrar' : ''}>
+          <Typography variant="caption" noWrap sx={{ fontWeight: selected ? 700 : 400 }}>
+            {name}
+          </Typography>
+        </Tooltip>
+      )}
     </Box>
     {onUp && (
       <IconButton size="small" onClick={onUp}>
@@ -94,7 +120,8 @@ const LayerRow = ({
       </IconButton>
     )}
   </Stack>
-);
+  );
+};
 
 const GroupLabel = ({ children }: { children: ReactNode }): ReactElement => (
   <Typography variant="overline" color="text.secondary" sx={{ lineHeight: 2 }}>
@@ -154,6 +181,7 @@ const HumanoidLayers = (): ReactElement => {
             onToggle={() => updateAccessory(a.id, { hidden: !a.hidden })}
             onColor={(v) => updateAccessory(a.id, { color: v })}
             onSelect={() => selectAccessory(a.id)}
+            onRename={(v) => updateAccessory(a.id, { name: v })}
             onUp={() => reorderAccessory(a.id, 1)}
             onDown={() => reorderAccessory(a.id, -1)}
             onDelete={() => removeAccessory(a.id)}
@@ -190,6 +218,7 @@ const BoneLayers = (): ReactElement => {
           onColorReset={() => updateBone(b.id, { color: null })}
           canReset={b.color !== null}
           onSelect={() => selectBone(b.id)}
+          onRename={(v) => updateBone(b.id, { name: v })}
           onUp={() => reorderBone(b.id, 1)}
           onDown={() => reorderBone(b.id, -1)}
           onDelete={() => removeBone(b.id)}

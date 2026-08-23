@@ -16,6 +16,13 @@ const ROWS: readonly { keys: string[]; label: string }[] = [
   { keys: ['←', '→'], label: 'Frame anterior / siguiente' },
   { keys: ['Ctrl', 'Z'], label: 'Deshacer' },
   { keys: ['Ctrl', 'Y'], label: 'Rehacer' },
+  { keys: ['Ctrl', 'C'], label: 'Copiar objeto' },
+  { keys: ['Ctrl', 'X'], label: 'Cortar objeto' },
+  { keys: ['Ctrl', 'V'], label: 'Pegar objeto' },
+  { keys: ['Ctrl', 'D'], label: 'Duplicar objeto' },
+  { keys: ['Supr'], label: 'Borrar objeto' },
+  { keys: ['H'], label: 'Voltear horizontal' },
+  { keys: ['V'], label: 'Voltear vertical' },
 ];
 
 const Key = ({ children }: { children: string }): ReactElement => (

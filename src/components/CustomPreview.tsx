@@ -145,13 +145,17 @@ export const CustomPreview = (): ReactElement => {
   };
 
   const onPointerMove = (e: ReactPointerEvent<SVGSVGElement>): void => {
+    const shift = e.shiftKey;
     if (pencil.current) {
       const m = clientToModel(e.currentTarget, e.clientX, e.clientY, tf);
       const p = { x: m.x - rig.origin.x, y: m.y - rig.origin.y };
-      const last = pencil.current.pts[pencil.current.pts.length - 1];
-      if (dist(p, last) >= 1.5) {
-        pencil.current.pts.push(p);
-        updateBone(pencil.current.id, { points: [...pencil.current.pts] });
+      const pc = pencil.current;
+      if (shift) {
+        // Línea recta desde el inicio del trazo.
+        updateBone(pc.id, { points: [pc.pts[0], p] });
+      } else if (dist(p, pc.pts[pc.pts.length - 1]) >= 1.5) {
+        pc.pts.push(p);
+        updateBone(pc.id, { points: [...pc.pts] });
       }
       return;
     }
@@ -161,8 +165,9 @@ export const CustomPreview = (): ReactElement => {
       if (shapeKind === 'circle') {
         updateBone(create.current.id, { width: Math.max(2, Math.round(len * 2 * 10) / 10) });
       } else {
+        const a = boneAngleTo(create.current.base, m);
         updateBone(create.current.id, {
-          angle: Math.round(boneAngleTo(create.current.base, m)),
+          angle: Math.round(shift ? Math.round(a / 45) * 45 : a),
           length: Math.max(2, Math.round(len * 10) / 10),
         });
       }
@@ -175,8 +180,9 @@ export const CustomPreview = (): ReactElement => {
       updateBone(d.id, { offset: { x: d.offset.x + (m.x - d.start.x), y: d.offset.y + (m.y - d.start.y) } });
     } else if (d.mode === 'tip') {
       // Apunta el hueso hacia el cursor (rotar) y ajusta su largo (estirar).
+      const a = d.startAngle + (angleDeg(d.base, m) - d.grabA);
       updateBone(d.id, {
-        angle: Math.round(d.startAngle + (angleDeg(d.base, m) - d.grabA)),
+        angle: Math.round(shift ? Math.round(a / 15) * 15 : a),
         length: Math.round(Math.max(2, dist(d.base, m)) * 10) / 10,
       });
     } else {

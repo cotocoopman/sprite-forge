@@ -178,7 +178,7 @@ export const PreviewCanvas = (): ReactElement => {
   const widthPx = selG ? modelToPx(selG.center.x + selG.perp.x * wOff, selG.center.y + selG.perp.y * wOff, tf) : null;
 
   const drag = useRef<
-    | { mode: 'move'; id: string; start: Pt; along: Pt; perp: Pt; a0: number; p0: number }
+    | { mode: 'move'; start: Pt; members: { id: string; a0: number; p0: number; along: Pt; perp: Pt }[] }
     | { mode: 'tip'; id: string; base: Pt; startAngle: number; grabA: number }
     | { mode: 'width'; id: string; base: Pt; perp: Pt; circle: boolean }
     | null
@@ -269,14 +269,26 @@ export const PreviewCanvas = (): ReactElement => {
     selectAccessory(id);
     if (id && skel) {
       const acc = accessories.find((a) => a.id === id)!;
-      const anchor = skel.anchors[acc.anchor];
-      const g = accGeom(acc, anchor.pos, anchor.angle);
-      drag.current = { mode: 'move', id, start: m, along: g.along, perp: g.perp, a0: acc.offsetAlong, p0: acc.offsetPerp };
+      // Si la pieza pertenece a un arma/prop, mover todo el grupo junto.
+      const group = acc.propId ? accessories.filter((a) => a.propId === acc.propId) : [acc];
+      const members = group.map((a) => {
+        const an = skel.anchors[a.anchor];
+        const ar = (an.angle * Math.PI) / 180;
+        return {
+          id: a.id,
+          a0: a.offsetAlong,
+          p0: a.offsetPerp,
+          along: { x: Math.sin(ar), y: Math.cos(ar) },
+          perp: { x: Math.cos(ar), y: -Math.sin(ar) },
+        };
+      });
+      drag.current = { mode: 'move', start: m, members };
       svg.setPointerCapture(e.pointerId);
     }
   };
 
   const onPointerMove = (e: ReactPointerEvent<SVGSVGElement>): void => {
+    const shift = e.shiftKey;
     if (pencil.current) {
       const m = clientToModel(e.currentTarget, e.clientX, e.clientY, tf);
       const pc = pencil.current;
@@ -284,8 +296,9 @@ export const PreviewCanvas = (): ReactElement => {
         x: (m.x - pc.anchorPos.x) * pc.along.x + (m.y - pc.anchorPos.y) * pc.along.y,
         y: (m.x - pc.anchorPos.x) * pc.perp.x + (m.y - pc.anchorPos.y) * pc.perp.y,
       };
-      const last = pc.pts[pc.pts.length - 1];
-      if (dist(p, last) >= 1.5) {
+      if (shift) {
+        updateAccessory(pc.id, { points: [pc.pts[0], p] });
+      } else if (dist(p, pc.pts[pc.pts.length - 1]) >= 1.5) {
         pc.pts.push(p);
         updateAccessory(pc.id, { points: [...pc.pts] });
       }
@@ -297,8 +310,9 @@ export const PreviewCanvas = (): ReactElement => {
       if (shapeKind === 'circle') {
         updateAccessory(create.current.id, { width: Math.max(2, Math.round(len * 2 * 10) / 10) });
       } else {
+        const a = accWorldAngleTo(create.current.base, m) - create.current.anchorAngle;
         updateAccessory(create.current.id, {
-          angle: Math.round(accWorldAngleTo(create.current.base, m) - create.current.anchorAngle),
+          angle: Math.round(shift ? Math.round(a / 45) * 45 : a),
           length: Math.max(2, Math.round(len * 10) / 10),
         });
       }
@@ -310,13 +324,16 @@ export const PreviewCanvas = (): ReactElement => {
     if (d.mode === 'move') {
       const dx = m.x - d.start.x;
       const dy = m.y - d.start.y;
-      updateAccessory(d.id, {
-        offsetAlong: d.a0 + dx * d.along.x + dy * d.along.y,
-        offsetPerp: d.p0 + dx * d.perp.x + dy * d.perp.y,
-      });
+      for (const mem of d.members) {
+        updateAccessory(mem.id, {
+          offsetAlong: mem.a0 + dx * mem.along.x + dy * mem.along.y,
+          offsetPerp: mem.p0 + dx * mem.perp.x + dy * mem.perp.y,
+        });
+      }
     } else if (d.mode === 'tip') {
+      const a = d.startAngle + (angleDeg(d.base, m) - d.grabA);
       updateAccessory(d.id, {
-        angle: Math.round(d.startAngle + (angleDeg(d.base, m) - d.grabA)),
+        angle: Math.round(shift ? Math.round(a / 15) * 15 : a),
         length: Math.round(Math.max(1, dist(d.base, m)) * 10) / 10,
       });
     } else {

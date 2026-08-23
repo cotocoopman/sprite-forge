@@ -169,6 +169,18 @@ export const App = (): ReactElement => {
           if (editable) return;
           e.preventDefault();
           useProjectStore.getState().redo();
+        } else if (key === 'c' && !editable) {
+          e.preventDefault();
+          useProjectStore.getState().copySelected();
+        } else if (key === 'x' && !editable) {
+          e.preventDefault();
+          useProjectStore.getState().cutSelected();
+        } else if (key === 'v' && !editable) {
+          e.preventDefault();
+          useProjectStore.getState().pasteClipboard();
+        } else if (key === 'd' && !editable) {
+          e.preventDefault();
+          useProjectStore.getState().duplicateSelected();
         }
         return;
       }
@@ -194,6 +206,15 @@ export const App = (): ReactElement => {
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
         useProjectStore.getState().nextFrame();
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        useProjectStore.getState().deleteSelected();
+      } else if (e.key === 'h' || e.key === 'H') {
+        e.preventDefault();
+        useProjectStore.getState().flipSelected('h');
+      } else if (e.key === 'v' || e.key === 'V') {
+        e.preventDefault();
+        useProjectStore.getState().flipSelected('v');
       }
     };
     window.addEventListener('keydown', onKeyDown);

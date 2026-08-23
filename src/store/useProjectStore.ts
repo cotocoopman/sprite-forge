@@ -78,6 +78,16 @@ export const genId = (): string =>
 // Herramienta activa del canvas (barra superior estilo editor de dibujo).
 export type DrawTool = 'select' | 'pencil' | 'shape' | 'eraser';
 
+// Portapapeles de objeto (accesorio o hueso), a nivel de módulo (no reactivo).
+type ClipboardItem = { kind: 'acc'; data: Accessory } | { kind: 'bone'; data: Bone } | null;
+let clipboard: ClipboardItem = null;
+
+const flipPoints = (
+  pts: readonly { x: number; y: number }[] | undefined,
+  axis: 'h' | 'v',
+): { x: number; y: number }[] | undefined =>
+  pts?.map((p) => (axis === 'h' ? { x: p.x, y: -p.y } : { x: -p.x, y: p.y }));
+
 const loadProject = (): Project => {
   try {
     const raw = localStorage.getItem(PROJECT_KEY);
@@ -150,6 +160,14 @@ export type ProjectState = {
   readonly setTool: (tool: DrawTool) => void;
   readonly setShapeKind: (shape: AccessoryShape) => void;
   readonly setBrushWidth: (w: number) => void;
+
+  // Edición de objeto (accesorio en humanoide / hueso en custom, según modo)
+  readonly copySelected: () => void;
+  readonly cutSelected: () => void;
+  readonly pasteClipboard: () => void;
+  readonly duplicateSelected: () => void;
+  readonly deleteSelected: () => void;
+  readonly flipSelected: (axis: 'h' | 'v') => void;
 
   // Modo / rig personalizado
   readonly setMode: (mode: RigMode) => void;
@@ -594,6 +612,69 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     setTool: (tool) => set({ tool }),
     setShapeKind: (shapeKind) => set({ shapeKind }),
     setBrushWidth: (brushWidth) => set({ brushWidth }),
+
+    copySelected: () => {
+      const s = get();
+      if (s.project.mode === 'custom') {
+        const b = s.project.customRig.bones.find((x) => x.id === s.activeBoneId);
+        if (b) clipboard = { kind: 'bone', data: b };
+      } else {
+        const a = s.project.accessories.find((x) => x.id === s.activeAccessoryId);
+        if (a) clipboard = { kind: 'acc', data: a };
+      }
+    },
+
+    cutSelected: () => {
+      get().copySelected();
+      get().deleteSelected();
+    },
+
+    pasteClipboard: () => {
+      const mode = get().project.mode;
+      if (!clipboard) return;
+      if (mode === 'custom' && clipboard.kind === 'bone') {
+        const src = clipboard.data;
+        const off = src.offset ?? { x: 0, y: 0 };
+        get().insertBone({ ...src, id: genId(), name: `${src.name} copia`, parentId: null, offset: { x: off.x + 6, y: off.y + 6 } });
+      } else if (mode !== 'custom' && clipboard.kind === 'acc') {
+        const src = clipboard.data;
+        get().insertAccessory({ ...src, id: genId(), name: `${src.name} copia`, offsetAlong: src.offsetAlong + 4, offsetPerp: src.offsetPerp + 4, propId: undefined });
+      }
+    },
+
+    duplicateSelected: () => {
+      get().copySelected();
+      get().pasteClipboard();
+    },
+
+    deleteSelected: () => {
+      const s = get();
+      if (s.project.mode === 'custom') {
+        if (s.activeBoneId) s.removeBone(s.activeBoneId);
+      } else if (s.activeAccessoryId) {
+        s.removeAccessory(s.activeAccessoryId);
+      }
+    },
+
+    flipSelected: (axis) => {
+      const s = get();
+      if (s.project.mode === 'custom') {
+        const b = s.project.customRig.bones.find((x) => x.id === s.activeBoneId);
+        if (!b) return;
+        s.updateBone(b.id, {
+          angle: axis === 'h' ? -b.angle : 180 - b.angle,
+          ...(b.points ? { points: flipPoints(b.points, axis) } : {}),
+        });
+      } else {
+        const a = s.project.accessories.find((x) => x.id === s.activeAccessoryId);
+        if (!a) return;
+        s.updateAccessory(a.id, {
+          angle: axis === 'h' ? -a.angle : 180 - a.angle,
+          ...(axis === 'h' ? { offsetPerp: -a.offsetPerp } : { offsetAlong: -a.offsetAlong }),
+          ...(a.points ? { points: flipPoints(a.points, axis) } : {}),
+        });
+      }
+    },
 
     setMode: (mode) =>
       set((s) => ({

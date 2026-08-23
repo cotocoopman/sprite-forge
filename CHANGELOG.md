@@ -4,6 +4,17 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.7.0] — 2026-08-23
+
+### Added
+- **Object editing:** copy / cut / paste / duplicate and flip horizontal / vertical for
+  the selected object (accessory or bone), with keyboard shortcuts (Ctrl+C/X/V/D,
+  Delete, H, V) and toolbar buttons.
+- **Shift modifiers:** hold Shift to draw a straight line with the pencil, snap a
+  shape's angle to 45°, and snap rotation to 15° when dragging the rotate handle.
+- **Group move:** dragging one piece of an inserted weapon/prop moves the whole group.
+- **Rename layers inline:** double-click a layer's name in the Layers panel.
+
 ## [1.6.0] — 2026-08-23
 
 ### Added
