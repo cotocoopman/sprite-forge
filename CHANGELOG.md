@@ -4,6 +4,16 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] — 2026-08-23
+
+### Added
+- **Drawing toolbar** above the canvas: Select, Shape and Eraser tools.
+- **Shape tool:** pick rectangle / circle / triangle / bar and a thickness, then click
+  and drag on the canvas to draw it. Each shape becomes a real object — an accessory
+  (humanoid, anchored to the torso) or a bone (custom rig) — so it follows the animation
+  and can be recolored, moved, transformed and layered like anything else.
+- **Eraser:** click an object to delete it.
+
 ## [1.4.0] — 2026-08-23
 
 ### Added

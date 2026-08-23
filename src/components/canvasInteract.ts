@@ -65,6 +65,14 @@ export const boneBaseTip = (b: RBone): { base: Pt; tip: Pt } => {
 
 export const dist = (a: Pt, b: Pt): number => Math.hypot(a.x - b.x, a.y - b.y);
 
+// Ángulo de hueso (raíz) para que apunte de `base` a `target`: dirOf(θ)=(sinθ,-cosθ).
+export const boneAngleTo = (base: Pt, target: Pt): number =>
+  (Math.atan2(target.x - base.x, -(target.y - base.y)) * 180) / Math.PI;
+
+// Ángulo mundo de accesorio para apuntar de `base` a `target`: dir=(sinφ,cosφ).
+export const accWorldAngleTo = (base: Pt, target: Pt): number =>
+  (Math.atan2(target.x - base.x, target.y - base.y) * 180) / Math.PI;
+
 // Ángulo (grados) del vector a→b, en la convención de pantalla (y hacia abajo).
 export const angleDeg = (a: Pt, b: Pt): number => (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
 

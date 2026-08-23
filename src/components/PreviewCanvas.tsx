@@ -13,8 +13,10 @@ import type { Pose } from '@core/rig';
 import { sampleClip } from '@core/poses';
 import { makeTransform, renderCharacterInner, skeletonToPrimitives } from '@core/svg';
 import type { SvgPrimitive } from '@core/svg';
-import { angleDeg, clientToModel, clientToViewBox, dist, modelToPx } from '@components/canvasInteract';
+import { CanvasToolbar } from '@components/CanvasToolbar';
+import { accWorldAngleTo, angleDeg, clientToModel, clientToViewBox, dist, modelToPx } from '@components/canvasInteract';
 import type { Pt } from '@components/canvasInteract';
+import { genId } from '@store/useProjectStore';
 import type { Accessory } from '@core/poses';
 
 // Geometría de un accesorio (base, punta, ejes) para hit-test y transform.
@@ -103,6 +105,11 @@ export const PreviewCanvas = (): ReactElement => {
   const activeAccessoryId = useProjectStore((s) => s.activeAccessoryId);
   const selectAccessory = useProjectStore((s) => s.selectAccessory);
   const updateAccessory = useProjectStore((s) => s.updateAccessory);
+  const removeAccessory = useProjectStore((s) => s.removeAccessory);
+  const insertAccessory = useProjectStore((s) => s.insertAccessory);
+  const tool = useProjectStore((s) => s.tool);
+  const shapeKind = useProjectStore((s) => s.shapeKind);
+  const brushWidth = useProjectStore((s) => s.brushWidth);
   const currentFrame = useProjectStore((s) => s.currentFrame);
   const refImage = useProjectStore((s) => s.refImage);
   const refOpacity = useProjectStore((s) => s.refOpacity);
@@ -176,10 +183,40 @@ export const PreviewCanvas = (): ReactElement => {
     return hit;
   };
 
+  const create = useRef<{ id: string; base: Pt; anchorAngle: number } | null>(null);
+
   const onPointerDown = (e: ReactPointerEvent<SVGSVGElement>): void => {
     const svg = e.currentTarget;
     const vb = clientToViewBox(svg, e.clientX, e.clientY);
     const m = clientToModel(svg, e.clientX, e.clientY, tf);
+
+    if (tool === 'eraser') {
+      const id = pickAccessory(m);
+      if (id) removeAccessory(id);
+      return;
+    }
+    if (tool === 'shape' && skel) {
+      const anchorName = skel.anchors.torsoTop ? 'torsoTop' : 'hip';
+      const anchor = skel.anchors[anchorName];
+      const ar = (anchor.angle * Math.PI) / 180;
+      const along = { x: Math.sin(ar), y: Math.cos(ar) };
+      const perp = { x: Math.cos(ar), y: -Math.sin(ar) };
+      const dx = m.x - anchor.pos.x;
+      const dy = m.y - anchor.pos.y;
+      const id = genId();
+      const acc: Accessory = {
+        id, name: 'Forma', anchor: anchorName, shape: shapeKind,
+        offsetAlong: dx * along.x + dy * along.y,
+        offsetPerp: dx * perp.x + dy * perp.y,
+        angle: 0, length: 2, width: shapeKind === 'circle' ? 2 : brushWidth,
+        color: character.color, opacity: 1, front: true,
+      };
+      insertAccessory(acc);
+      create.current = { id, base: m, anchorAngle: anchor.angle };
+      svg.setPointerCapture(e.pointerId);
+      return;
+    }
+
     if (selAcc && selG) {
       if (tipPx && dist(vb, tipPx) < 13) {
         drag.current = { mode: 'tip', id: selAcc.id, base: selG.base, startAngle: selAcc.angle, grabA: angleDeg(selG.base, selG.tip) };
@@ -204,6 +241,19 @@ export const PreviewCanvas = (): ReactElement => {
   };
 
   const onPointerMove = (e: ReactPointerEvent<SVGSVGElement>): void => {
+    if (create.current) {
+      const m = clientToModel(e.currentTarget, e.clientX, e.clientY, tf);
+      const len = dist(create.current.base, m);
+      if (shapeKind === 'circle') {
+        updateAccessory(create.current.id, { width: Math.max(2, Math.round(len * 2 * 10) / 10) });
+      } else {
+        updateAccessory(create.current.id, {
+          angle: Math.round(accWorldAngleTo(create.current.base, m) - create.current.anchorAngle),
+          length: Math.max(2, Math.round(len * 10) / 10),
+        });
+      }
+      return;
+    }
     const d = drag.current;
     if (!d) return;
     const m = clientToModel(e.currentTarget, e.clientX, e.clientY, tf);
@@ -226,8 +276,9 @@ export const PreviewCanvas = (): ReactElement => {
   };
 
   const endDrag = (e: ReactPointerEvent<SVGSVGElement>): void => {
-    if (drag.current) {
+    if (create.current || drag.current) {
       try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* noop */ }
+      create.current = null;
       drag.current = null;
     }
   };
@@ -248,6 +299,8 @@ export const PreviewCanvas = (): ReactElement => {
           label={t('Guías')}
         />
       </Stack>
+
+      <CanvasToolbar />
 
       <Box
         sx={{
@@ -278,7 +331,7 @@ export const PreviewCanvas = (): ReactElement => {
         )}
         <svg
           viewBox={`${-cs * 0.12} ${-cs * 0.12} ${cs * 1.24} ${cs * 1.24}`}
-          style={{ width: '100%', maxWidth: 480, maxHeight: '100%', display: 'block', touchAction: 'none' }}
+          style={{ width: '100%', maxWidth: 480, maxHeight: '100%', display: 'block', touchAction: 'none', cursor: tool === 'select' ? 'default' : 'crosshair' }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={endDrag}
@@ -314,10 +367,10 @@ export const PreviewCanvas = (): ReactElement => {
           {selPx && (
             <>
               <circle cx={selPx.x} cy={selPx.y} r={selR} fill="none" stroke="#22d3ee" strokeWidth={2} strokeDasharray="5 4" />
-              {tipPx && (
+              {tool === 'select' && tipPx && (
                 <circle cx={tipPx.x} cy={tipPx.y} r={6} fill="#22d3ee" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'grab' }} />
               )}
-              {widthPx && (
+              {tool === 'select' && widthPx && (
                 <rect x={widthPx.x - 6} y={widthPx.y - 6} width={12} height={12} rx={2} fill="#a5f3fc" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'ew-resize' }} />
               )}
             </>

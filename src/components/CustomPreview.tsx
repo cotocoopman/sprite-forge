@@ -8,9 +8,13 @@ import { useProjectStore } from '@store/useProjectStore';
 import { useT } from '@/i18n';
 import { useActiveRigClip } from '@/hooks/useActiveRigClip';
 import { buildCustomSkeleton, sampleRigClip } from '@core/customRig';
+import type { Bone } from '@core/customRig';
 import { makeTransform, renderCustomInner } from '@core/svg';
+import { genId } from '@store/useProjectStore';
+import { CanvasToolbar } from '@components/CanvasToolbar';
 import {
   angleDeg,
+  boneAngleTo,
   boneBaseTip,
   boneCenter,
   boneRadius,
@@ -32,6 +36,11 @@ export const CustomPreview = (): ReactElement => {
   const activeBoneId = useProjectStore((s) => s.activeBoneId);
   const selectBone = useProjectStore((s) => s.selectBone);
   const updateBone = useProjectStore((s) => s.updateBone);
+  const tool = useProjectStore((s) => s.tool);
+  const shapeKind = useProjectStore((s) => s.shapeKind);
+  const brushWidth = useProjectStore((s) => s.brushWidth);
+  const insertBone = useProjectStore((s) => s.insertBone);
+  const removeBone = useProjectStore((s) => s.removeBone);
   const clip = useActiveRigClip();
 
   const [lightBg, setLightBg] = useState(false);
@@ -72,10 +81,32 @@ export const CustomPreview = (): ReactElement => {
     | null
   >(null);
 
+  const create = useRef<{ id: string; base: Pt } | null>(null);
+
   const onPointerDown = (e: ReactPointerEvent<SVGSVGElement>): void => {
     const svg = e.currentTarget;
     const vb = clientToViewBox(svg, e.clientX, e.clientY);
     const m = clientToModel(svg, e.clientX, e.clientY, tf);
+
+    if (tool === 'eraser') {
+      const id = pickBone(skel, m);
+      if (id) removeBone(id);
+      return;
+    }
+    if (tool === 'shape') {
+      const id = genId();
+      const maxZ = rig.bones.reduce((mx, b) => Math.max(mx, b.z), 0);
+      const bone: Bone = {
+        id, name: 'Forma', parentId: null, attach: 0, angle: 90, length: 2,
+        width: shapeKind === 'circle' ? 2 : brushWidth, shape: shapeKind, curve: 0,
+        color: null, z: maxZ + 1, offset: { x: m.x - rig.origin.x, y: m.y - rig.origin.y },
+      };
+      insertBone(bone);
+      create.current = { id, base: m };
+      svg.setPointerCapture(e.pointerId);
+      return;
+    }
+
     if (selBone && bt) {
       if (tipPx && dist(vb, tipPx) < 13) {
         drag.current = { mode: 'tip', id: selBone.id, base: bt.base, startAngle: selBone.angle, grabA: angleDeg(bt.base, bt.tip) };
@@ -98,6 +129,19 @@ export const CustomPreview = (): ReactElement => {
   };
 
   const onPointerMove = (e: ReactPointerEvent<SVGSVGElement>): void => {
+    if (create.current) {
+      const m = clientToModel(e.currentTarget, e.clientX, e.clientY, tf);
+      const len = dist(create.current.base, m);
+      if (shapeKind === 'circle') {
+        updateBone(create.current.id, { width: Math.max(2, Math.round(len * 2 * 10) / 10) });
+      } else {
+        updateBone(create.current.id, {
+          angle: Math.round(boneAngleTo(create.current.base, m)),
+          length: Math.max(2, Math.round(len * 10) / 10),
+        });
+      }
+      return;
+    }
     const d = drag.current;
     if (!d) return;
     const m = clientToModel(e.currentTarget, e.clientX, e.clientY, tf);
@@ -116,8 +160,9 @@ export const CustomPreview = (): ReactElement => {
   };
 
   const endDrag = (e: ReactPointerEvent<SVGSVGElement>): void => {
-    if (drag.current) {
+    if (create.current || drag.current) {
       try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* noop */ }
+      create.current = null;
       drag.current = null;
     }
   };
@@ -134,6 +179,7 @@ export const CustomPreview = (): ReactElement => {
           label={t('Guías')}
         />
       </Stack>
+      <CanvasToolbar />
       <Box
         sx={{
           flexGrow: 1,
@@ -147,7 +193,7 @@ export const CustomPreview = (): ReactElement => {
       >
         <svg
           viewBox={`${-cs * 0.12} ${-cs * 0.12} ${cs * 1.24} ${cs * 1.24}`}
-          style={{ width: '100%', maxWidth: 480, maxHeight: '100%', display: 'block', touchAction: 'none', cursor: 'pointer' }}
+          style={{ width: '100%', maxWidth: 480, maxHeight: '100%', display: 'block', touchAction: 'none', cursor: tool === 'select' ? 'pointer' : 'crosshair' }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={endDrag}
@@ -164,10 +210,10 @@ export const CustomPreview = (): ReactElement => {
           {selPx && (
             <>
               <circle cx={selPx.x} cy={selPx.y} r={selR} fill="none" stroke="#22d3ee" strokeWidth={2} strokeDasharray="5 4" />
-              {tipPx && (
+              {tool === 'select' && tipPx && (
                 <circle cx={tipPx.x} cy={tipPx.y} r={6} fill="#22d3ee" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'grab' }} />
               )}
-              {widthPx && (
+              {tool === 'select' && widthPx && (
                 <rect x={widthPx.x - 6} y={widthPx.y - 6} width={12} height={12} rx={2} fill="#a5f3fc" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'ew-resize' }} />
               )}
             </>

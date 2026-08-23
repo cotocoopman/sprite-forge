@@ -4,6 +4,7 @@ import { DEFAULT_CHARACTER, NEUTRAL_POSE, PART_NAMES } from '@core/rig';
 import { PROP_TEMPLATES, rotatePropParts } from '@core/props';
 import type {
   Accessory,
+  AccessoryShape,
   AnimationClip,
   EasingKind,
   GlowConfig,
@@ -69,10 +70,13 @@ export type Notification = {
   readonly message: string;
 };
 
-const genId = (): string =>
+export const genId = (): string =>
   typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
     ? crypto.randomUUID()
     : `id-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+
+// Herramienta activa del canvas (barra superior estilo editor de dibujo).
+export type DrawTool = 'select' | 'shape' | 'eraser';
 
 const loadProject = (): Project => {
   try {
@@ -136,7 +140,16 @@ export type ProjectState = {
   readonly duplicateAccessory: (id: string) => void;
   readonly removeAccessory: (id: string) => void;
   readonly reorderAccessory: (id: string, delta: number) => void;
+  readonly insertAccessory: (acc: Accessory) => void;
   readonly selectAccessory: (id: string | null) => void;
+
+  // Herramientas de dibujo en el canvas
+  readonly tool: DrawTool;
+  readonly shapeKind: AccessoryShape;
+  readonly brushWidth: number;
+  readonly setTool: (tool: DrawTool) => void;
+  readonly setShapeKind: (shape: AccessoryShape) => void;
+  readonly setBrushWidth: (w: number) => void;
 
   // Modo / rig personalizado
   readonly setMode: (mode: RigMode) => void;
@@ -147,6 +160,7 @@ export type ProjectState = {
   readonly removeBone: (id: string) => void;
   readonly toggleBoneVisible: (id: string) => void;
   readonly reorderBone: (id: string, delta: number) => void;
+  readonly insertBone: (bone: Bone) => void;
   readonly setRigField: (patch: { name?: string; color?: string; originX?: number; originY?: number }) => void;
   readonly resetAllBoneColors: () => void;
   readonly loadRigPreset: (rig: CustomRig) => void;
@@ -566,7 +580,20 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         return { project: { ...s.project, accessories: arr } };
       }),
 
+    insertAccessory: (acc) =>
+      set((s) => ({
+        project: { ...s.project, accessories: [...s.project.accessories, acc] },
+        activeAccessoryId: acc.id,
+      })),
+
     selectAccessory: (id) => set({ activeAccessoryId: id }),
+
+    tool: 'select',
+    shapeKind: 'rect',
+    brushWidth: 6,
+    setTool: (tool) => set({ tool }),
+    setShapeKind: (shapeKind) => set({ shapeKind }),
+    setBrushWidth: (brushWidth) => set({ brushWidth }),
 
     setMode: (mode) =>
       set((s) => ({
@@ -661,6 +688,12 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         const newBones = bones.map((b) => ({ ...b, z: rank.get(b.id) ?? b.z }));
         return { project: { ...s.project, customRig: { ...s.project.customRig, bones: newBones } } };
       }),
+
+    insertBone: (bone) =>
+      set((s) => ({
+        project: { ...s.project, customRig: { ...s.project.customRig, bones: [...s.project.customRig.bones, bone] } },
+        activeBoneId: bone.id,
+      })),
 
     setRigField: (patch) =>
       set((s) => {
