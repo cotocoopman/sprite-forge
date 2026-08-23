@@ -13,6 +13,10 @@ export type PropTemplate = {
   readonly name: string;
   readonly emoji: string;
   readonly parts: readonly PropPart[];
+  // Rotación extra (grados) que se aplica SOLO al empuñar el arma (al insertarla
+  // como accesorio), para reorientarla a la mano sin afectar la versión suelta
+  // (rig custom), que usa las piezas tal cual. Default 0.
+  readonly handSpin?: number;
 };
 
 const part = (
@@ -33,7 +37,11 @@ const part = (
 });
 
 // Rota un prop entero alrededor del ancla (para que las armas de fuego apunten
-// hacia afuera en vez de colgar).
+// hacia afuera en vez de colgar). Exportado como `rotatePropParts` para
+// reorientar un arma al empuñarla (ver `handSpin`).
+export const rotatePropParts = (parts: readonly PropPart[], deg: number): PropPart[] =>
+  rotProp(parts, deg);
+
 const rotProp = (parts: readonly PropPart[], deg: number): PropPart[] => {
   if (deg === 0) return [...parts];
   const r = (deg * Math.PI) / 180;
@@ -85,41 +93,57 @@ export const PROP_TEMPLATES: readonly PropTemplate[] = [
     id: 'pistol',
     name: 'Pistol',
     emoji: '🔫',
-    parts: rotProp([
-      part('Slide', { shape: 'rect', offsetAlong: -2, offsetPerp: -2, angle: 0, length: 16, width: 5, color: DARK }),
-      part('Grip', { shape: 'capsule', offsetAlong: -3, offsetPerp: 2, angle: 90, length: 10, width: 4.5, color: '#4a4a4a' }),
-      part('Muzzle', { shape: 'capsule', offsetAlong: 12, offsetPerp: -2, angle: 0, length: 4, width: 3, color: '#5a5f66' }),
-    ], 120),
+    handSpin: 90,
+    // Vista lateral, cañón a la derecha (marco del render "suelto").
+    parts: [
+      part('Slide', { shape: 'rect', offsetAlong: 3, offsetPerp: 11, angle: -90, length: 30, width: 9, color: '#34393f' }),
+      part('Muzzle', { shape: 'rect', offsetAlong: 3, offsetPerp: -19, angle: -90, length: 6, width: 6.5, color: '#5a5f66' }),
+      part('Grip', { shape: 'rect', offsetAlong: 1, offsetPerp: 8, angle: 160, length: 18, width: 8.5, color: '#3f3f3f' }),
+      part('Guard', { shape: 'rect', offsetAlong: -3, offsetPerp: -1, angle: 180, length: 7, width: 3.5, color: '#34393f' }),
+    ],
   },
   {
     id: 'shield',
     name: 'Shield',
     emoji: '🛡️',
+    // Escudo tipo "heater": cuerpo cuadrado + punta triangular abajo + umbo.
     parts: [
-      part('Plate', { shape: 'rect', offsetAlong: -10, offsetPerp: -9, angle: 0, length: 22, width: 18, color: '#7c5a2a' }),
-      part('Boss', { shape: 'circle', offsetAlong: 1, offsetPerp: 0, angle: 0, length: 0, width: 6, color: GOLD }),
+      part('Body', { shape: 'rect', offsetAlong: -4, offsetPerp: 12, angle: 0, length: 22, width: 24, color: '#8d6e3a' }),
+      part('Point', { shape: 'triangle', offsetAlong: -4, offsetPerp: 0, angle: 180, length: 16, width: 24, color: '#8d6e3a' }),
+      part('Trim', { shape: 'rect', offsetAlong: 16, offsetPerp: 12, angle: 0, length: 3, width: 24, color: '#b5893f' }),
+      part('Boss', { shape: 'circle', offsetAlong: 2, offsetPerp: 0, angle: 0, length: 0, width: 9, color: GOLD }),
     ],
   },
   {
     id: 'bow',
     name: 'Bow',
     emoji: '🏹',
+    // Arco curvo (arco aproximado con 4 tramos) + cuerda + flecha, apunta a la derecha.
     parts: [
-      part('Limb', { shape: 'capsule', offsetAlong: 0, offsetPerp: -15, angle: 90, length: 30, width: 3, color: WOOD }),
-      part('Arrow', { shape: 'capsule', offsetAlong: -2, offsetPerp: 0, angle: 0, length: 22, width: 1.5, color: DARK }),
+      part('Limb T1', { shape: 'capsule', offsetAlong: 20, offsetPerp: 0, angle: 129, length: 14, width: 3.5, color: WOOD }),
+      part('Limb T2', { shape: 'capsule', offsetAlong: 11, offsetPerp: 11, angle: 160, length: 12, width: 3.5, color: WOOD }),
+      part('Limb B2', { shape: 'capsule', offsetAlong: 0, offsetPerp: 15, angle: -160, length: 12, width: 3.5, color: WOOD }),
+      part('Limb B1', { shape: 'capsule', offsetAlong: -11, offsetPerp: 11, angle: -129, length: 14, width: 3.5, color: WOOD }),
+      part('String', { shape: 'capsule', offsetAlong: 20, offsetPerp: 0, angle: 180, length: 40, width: 1, color: '#d9c9a3' }),
+      part('Fletch', { shape: 'triangle', offsetAlong: 0, offsetPerp: 6, angle: 90, length: 5, width: 6, color: '#c0392b' }),
+      part('Arrow', { shape: 'capsule', offsetAlong: 0, offsetPerp: 6, angle: -90, length: 32, width: 2.8, color: '#8d6e57' }),
+      part('Head', { shape: 'triangle', offsetAlong: 0, offsetPerp: -24, angle: -90, length: 9, width: 7, color: STEEL }),
     ],
   },
   {
     id: 'pistols',
     name: 'Dual pistols',
     emoji: '🔫',
+    handSpin: 90,
     // Una pistola en cada mano (anchor por pieza, ignora el hueso elegido).
-    parts: rotProp([
-      part('Slide R', { anchor: 'handNear', shape: 'rect', offsetAlong: -2, offsetPerp: -2, angle: 0, length: 16, width: 5, color: DARK }),
-      part('Grip R', { anchor: 'handNear', shape: 'capsule', offsetAlong: -3, offsetPerp: 2, angle: 90, length: 10, width: 4.5, color: '#4a4a4a' }),
-      part('Slide L', { anchor: 'handFar', shape: 'rect', offsetAlong: -2, offsetPerp: -2, angle: 0, length: 16, width: 5, color: DARK }),
-      part('Grip L', { anchor: 'handFar', shape: 'capsule', offsetAlong: -3, offsetPerp: 2, angle: 90, length: 10, width: 4.5, color: '#4a4a4a' }),
-    ], 120),
+    parts: [
+      part('Slide R', { anchor: 'handNear', shape: 'rect', offsetAlong: 3, offsetPerp: 11, angle: -90, length: 30, width: 9, color: '#34393f' }),
+      part('Muzzle R', { anchor: 'handNear', shape: 'rect', offsetAlong: 3, offsetPerp: -19, angle: -90, length: 6, width: 6.5, color: '#5a5f66' }),
+      part('Grip R', { anchor: 'handNear', shape: 'rect', offsetAlong: 1, offsetPerp: 8, angle: 160, length: 18, width: 8.5, color: '#3f3f3f' }),
+      part('Slide L', { anchor: 'handFar', shape: 'rect', offsetAlong: 3, offsetPerp: 11, angle: -90, length: 30, width: 9, color: '#34393f' }),
+      part('Muzzle L', { anchor: 'handFar', shape: 'rect', offsetAlong: 3, offsetPerp: -19, angle: -90, length: 6, width: 6.5, color: '#5a5f66' }),
+      part('Grip L', { anchor: 'handFar', shape: 'rect', offsetAlong: 1, offsetPerp: 8, angle: 160, length: 18, width: 8.5, color: '#3f3f3f' }),
+    ],
   },
   {
     id: 'rifle',
@@ -150,14 +174,17 @@ export const PROP_TEMPLATES: readonly PropTemplate[] = [
     id: 'bazooka',
     name: 'Bazooka',
     emoji: '🚀',
-    // Lanzacohetes: tubo largo y recto, boca al frente y culata atrás.
-    parts: rotProp([
-      part('Tube', { shape: 'rect', offsetAlong: -18, offsetPerp: -6, angle: 0, length: 38, width: 12, color: '#33691e' }),
-      part('Muzzle', { shape: 'circle', offsetAlong: 22, offsetPerp: 0, angle: 0, length: 0, width: 15, color: '#1b3d0e' }),
-      part('Breech', { shape: 'circle', offsetAlong: -18, offsetPerp: 0, angle: 0, length: 0, width: 13, color: '#1b3d0e' }),
-      part('Sight', { shape: 'capsule', offsetAlong: 4, offsetPerp: -9, angle: 90, length: 7, width: 2, color: DARK }),
-      part('Grip', { shape: 'capsule', offsetAlong: -8, offsetPerp: 4, angle: 90, length: 8, width: 3.5, color: '#263238' }),
-    ], 120),
+    // Lanzacohetes horizontal: tubo largo, boca acampanada al frente, culata,
+    // mira arriba, empuñadura abajo y ojiva roja asomando.
+    parts: [
+      part('Tube', { shape: 'rect', offsetAlong: 0, offsetPerp: 22, angle: -90, length: 44, width: 14, color: '#3d7a1e' }),
+      part('Muzzle', { shape: 'triangle', offsetAlong: 0, offsetPerp: -22, angle: 90, length: 9, width: 20, color: '#1b3d0e' }),
+      part('Warhead', { shape: 'triangle', offsetAlong: 0, offsetPerp: -22, angle: -90, length: 12, width: 9, color: '#c62828' }),
+      part('Breech', { shape: 'triangle', offsetAlong: 0, offsetPerp: 22, angle: 90, length: 8, width: 16, color: '#1b3d0e' }),
+      part('Scope', { shape: 'rect', offsetAlong: 9, offsetPerp: 2, angle: -90, length: 12, width: 3, color: DARK }),
+      part('Sight', { shape: 'rect', offsetAlong: 12, offsetPerp: -2, angle: 0, length: 4, width: 3, color: DARK }),
+      part('Grip', { shape: 'rect', offsetAlong: -7, offsetPerp: 6, angle: 180, length: 9, width: 4, color: '#263238' }),
+    ],
   },
   {
     id: 'laser',

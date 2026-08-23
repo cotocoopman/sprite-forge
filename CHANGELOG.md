@@ -4,6 +4,17 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.1.1] — 2026-08-23
+
+### Changed
+- Reworked several presets so they read like their thumbnails: Pistol/Dual pistols
+  (proper side-view handgun), Shield (heater shape + boss), Bow (curved limbs +
+  string + arrow), Bazooka (tube + flared muzzle + warhead), Dog (jointed legs with
+  paws + ears), Shark (pointed snout, dorsal/tail fins), Bat (angular wings), Wave
+  (curling crest with foam).
+- Weapons can carry a `handSpin` so the held orientation is decoupled from the
+  standalone weapon-rig orientation; both now look right.
+
 ## [1.1.0] — 2026-08-22
 
 ### Added

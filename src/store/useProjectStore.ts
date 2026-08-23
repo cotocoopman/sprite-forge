@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { AnchorName, CharacterDefinition, CurveTarget, PartName, Pose } from '@core/rig';
 import { DEFAULT_CHARACTER, NEUTRAL_POSE, PART_NAMES } from '@core/rig';
-import { PROP_TEMPLATES } from '@core/props';
+import { PROP_TEMPLATES, rotatePropParts } from '@core/props';
 import type {
   Accessory,
   AnimationClip,
@@ -466,7 +466,9 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     addProp: (templateId, anchor) => {
       const tpl = PROP_TEMPLATES.find((p) => p.id === templateId);
       if (!tpl) return;
-      const accs: Accessory[] = tpl.parts.map((p) => ({
+      // Al empuñar, reorientar el arma con handSpin (no afecta la versión suelta).
+      const parts = tpl.handSpin ? rotatePropParts(tpl.parts, tpl.handSpin) : tpl.parts;
+      const accs: Accessory[] = parts.map((p) => ({
         ...p,
         id: genId(),
         anchor: p.anchor ?? anchor,
