@@ -35,8 +35,8 @@ export const clientToModel = (svg: SVGSVGElement, clientX: number, clientY: numb
 
 export const boneCenter = (b: RBone): Pt => {
   if (b.kind === 'circle') return { x: b.cx, y: b.cy };
-  if (b.kind === 'rect') {
-    const n = b.pts.length;
+  if (b.kind === 'rect' || b.kind === 'path') {
+    const n = b.pts.length || 1;
     return { x: b.pts.reduce((s, p) => s + p.x, 0) / n, y: b.pts.reduce((s, p) => s + p.y, 0) / n };
   }
   return { x: (b.from.x + b.to.x) / 2, y: (b.from.y + b.to.y) / 2 };
@@ -44,9 +44,9 @@ export const boneCenter = (b: RBone): Pt => {
 
 export const boneRadius = (b: RBone): number => {
   if (b.kind === 'circle') return b.r;
-  if (b.kind === 'rect') {
+  if (b.kind === 'rect' || b.kind === 'path') {
     const c = boneCenter(b);
-    return Math.max(...b.pts.map((p) => Math.hypot(p.x - c.x, p.y - c.y)));
+    return Math.max(1, ...b.pts.map((p) => Math.hypot(p.x - c.x, p.y - c.y)));
   }
   return Math.max(b.width, Math.hypot(b.to.x - b.from.x, b.to.y - b.from.y) / 2);
 };
@@ -55,6 +55,10 @@ export const boneRadius = (b: RBone): number => {
 export const boneBaseTip = (b: RBone): { base: Pt; tip: Pt } => {
   if (b.kind === 'capsule') return { base: b.from, tip: b.to };
   if (b.kind === 'circle') return { base: { x: b.cx, y: b.cy }, tip: { x: b.cx, y: b.cy } };
+  if (b.kind === 'path') {
+    const c = boneCenter(b);
+    return { base: c, tip: c };
+  }
   const base = { x: (b.pts[0].x + b.pts[1].x) / 2, y: (b.pts[0].y + b.pts[1].y) / 2 };
   const tip =
     b.pts.length === 3

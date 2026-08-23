@@ -64,6 +64,7 @@ export const CustomPreview = (): ReactElement => {
   const selPx = selCenter ? modelToPx(selCenter.x, selCenter.y, tf) : null;
   const selR = selected ? boneRadius(selected) * tf.scale + 5 : 0;
   const isCircle = selBone?.shape === 'circle';
+  const isPath = selBone?.shape === 'path';
   const bt = selected ? boneBaseTip(selected) : null;
   const dvec = bt ? { x: bt.tip.x - bt.base.x, y: bt.tip.y - bt.base.y } : null;
   const dlen = dvec ? Math.hypot(dvec.x, dvec.y) : 0;
@@ -71,7 +72,7 @@ export const CustomPreview = (): ReactElement => {
   const perp = { x: -dir.y, y: dir.x };
   const mid = bt ? { x: (bt.base.x + bt.tip.x) / 2, y: (bt.base.y + bt.tip.y) / 2 } : null;
   const wOff = selBone ? selBone.width / 2 + 3 : 0;
-  const tipPx = bt && !isCircle ? modelToPx(bt.tip.x, bt.tip.y, tf) : null;
+  const tipPx = bt && !isCircle && !isPath ? modelToPx(bt.tip.x, bt.tip.y, tf) : null;
   const widthPx = mid ? modelToPx(mid.x + perp.x * wOff, mid.y + perp.y * wOff, tf) : null;
 
   const drag = useRef<
@@ -82,6 +83,7 @@ export const CustomPreview = (): ReactElement => {
   >(null);
 
   const create = useRef<{ id: string; base: Pt } | null>(null);
+  const pencil = useRef<{ id: string; pts: Pt[] } | null>(null);
 
   const onPointerDown = (e: ReactPointerEvent<SVGSVGElement>): void => {
     const svg = e.currentTarget;
@@ -91,6 +93,20 @@ export const CustomPreview = (): ReactElement => {
     if (tool === 'eraser') {
       const id = pickBone(skel, m);
       if (id) removeBone(id);
+      return;
+    }
+    if (tool === 'pencil') {
+      const id = genId();
+      const maxZ = rig.bones.reduce((mx, b) => Math.max(mx, b.z), 0);
+      const p0 = { x: m.x - rig.origin.x, y: m.y - rig.origin.y };
+      const bone: Bone = {
+        id, name: 'Trazo', parentId: null, attach: 0, angle: 0, length: 0,
+        width: brushWidth, shape: 'path', curve: 0, color: null, z: maxZ + 1,
+        offset: { x: 0, y: 0 }, points: [p0],
+      };
+      insertBone(bone);
+      pencil.current = { id, pts: [p0] };
+      svg.setPointerCapture(e.pointerId);
       return;
     }
     if (tool === 'shape') {
@@ -129,6 +145,16 @@ export const CustomPreview = (): ReactElement => {
   };
 
   const onPointerMove = (e: ReactPointerEvent<SVGSVGElement>): void => {
+    if (pencil.current) {
+      const m = clientToModel(e.currentTarget, e.clientX, e.clientY, tf);
+      const p = { x: m.x - rig.origin.x, y: m.y - rig.origin.y };
+      const last = pencil.current.pts[pencil.current.pts.length - 1];
+      if (dist(p, last) >= 1.5) {
+        pencil.current.pts.push(p);
+        updateBone(pencil.current.id, { points: [...pencil.current.pts] });
+      }
+      return;
+    }
     if (create.current) {
       const m = clientToModel(e.currentTarget, e.clientX, e.clientY, tf);
       const len = dist(create.current.base, m);
@@ -160,10 +186,11 @@ export const CustomPreview = (): ReactElement => {
   };
 
   const endDrag = (e: ReactPointerEvent<SVGSVGElement>): void => {
-    if (create.current || drag.current) {
+    if (create.current || drag.current || pencil.current) {
       try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* noop */ }
       create.current = null;
       drag.current = null;
+      pencil.current = null;
     }
   };
 

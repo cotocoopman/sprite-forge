@@ -30,6 +30,15 @@ const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFin
 const isStr = (v: unknown): v is string => typeof v === 'string';
 const isBool = (v: unknown): v is boolean => typeof v === 'boolean';
 
+// Puntos de un trazo (shape 'path'); devuelve undefined si no hay ninguno válido.
+const parsePoints = (v: unknown): { x: number; y: number }[] | undefined => {
+  if (!Array.isArray(v)) return undefined;
+  const pts = v
+    .filter((p): p is { x: number; y: number } => isRecord(p) && isNum(p.x) && isNum(p.y))
+    .map((p) => ({ x: p.x, y: p.y }));
+  return pts.length > 0 ? pts : undefined;
+};
+
 const CHARACTER_NUM_KEYS: readonly (keyof CharacterDefinition)[] = [
   'headDiameter',
   'torsoHeight',
@@ -197,9 +206,10 @@ const validateAccessories = (v: unknown): Accessory[] => {
       ? (item.anchor as AnchorName)
       : 'handNear';
     const shape: AccessoryShape =
-      item.shape === 'circle' || item.shape === 'rect' || item.shape === 'triangle'
+      item.shape === 'circle' || item.shape === 'rect' || item.shape === 'triangle' || item.shape === 'path'
         ? item.shape
         : 'capsule';
+    const points = parsePoints(item.points);
     out.push({
       id: item.id,
       name: item.name,
@@ -215,6 +225,7 @@ const validateAccessories = (v: unknown): Accessory[] => {
       front: isBool(item.front) ? item.front : true,
       ...(isStr(item.propId) ? { propId: item.propId } : {}),
       ...(isBool(item.hidden) ? { hidden: item.hidden } : {}),
+      ...(points ? { points } : {}),
     });
   }
   return out;
@@ -260,7 +271,7 @@ const validateCustomRig = (v: unknown): CustomRig => {
   if (!isRecord(v)) return buildDefaultCustomRig();
   const num = (x: unknown, d: number): number => (isNum(x) ? x : d);
   const shapeOf = (x: unknown): BoneShape =>
-    x === 'circle' || x === 'rect' || x === 'triangle' ? x : 'capsule';
+    x === 'circle' || x === 'rect' || x === 'triangle' || x === 'path' ? x : 'capsule';
   const bonesRaw = Array.isArray(v.bones) ? v.bones : [];
   const bones: Bone[] = [];
   for (const item of bonesRaw) {
@@ -283,6 +294,7 @@ const validateCustomRig = (v: unknown): CustomRig => {
       z: num(item.z, 0),
       ...(offset ? { offset } : {}),
       ...(isBool(item.hidden) ? { hidden: item.hidden } : {}),
+      ...(parsePoints(item.points) ? { points: parsePoints(item.points)! } : {}),
     });
   }
   if (bones.length === 0) return buildDefaultCustomRig();

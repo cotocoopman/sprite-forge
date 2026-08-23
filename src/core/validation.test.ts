@@ -152,4 +152,33 @@ describe('validateProject', () => {
       expect(bone.hidden).toBe(true);
     }
   });
+
+  it('conserva trazos (shape path + points) en accesorios y huesos', () => {
+    const project = buildDefaultProject();
+    const raw = {
+      ...project,
+      accessories: [
+        {
+          id: 'a1', name: 'Trazo', anchor: 'torsoTop', shape: 'path',
+          offsetAlong: 0, offsetPerp: 0, angle: 0, length: 0, width: 6,
+          color: '#000', opacity: 1, front: true,
+          points: [{ x: 0, y: 0 }, { x: 5, y: -3 }, { x: 9, y: 2 }],
+        },
+      ],
+      customRig: {
+        ...project.customRig,
+        bones: [
+          { id: 'b1', name: 'Trazo', parentId: null, attach: 0, angle: 0, length: 0, width: 5, shape: 'path', curve: 0, color: null, z: 0, points: [{ x: 1, y: 1 }, { x: 4, y: 6 }] },
+        ],
+      },
+    };
+    const result = validateProject(raw);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.project.accessories[0].shape).toBe('path');
+      expect(result.project.accessories[0].points).toHaveLength(3);
+      expect(result.project.customRig.bones[0].shape).toBe('path');
+      expect(result.project.customRig.bones[0].points).toEqual([{ x: 1, y: 1 }, { x: 4, y: 6 }]);
+    }
+  });
 });

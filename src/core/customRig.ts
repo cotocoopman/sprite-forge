@@ -5,7 +5,7 @@ import type { Vec2 } from './rig';
 import type { EasingKind } from './easing';
 import { applyEasing } from './easing';
 
-export type BoneShape = 'capsule' | 'circle' | 'rect' | 'triangle';
+export type BoneShape = 'capsule' | 'circle' | 'rect' | 'triangle' | 'path';
 
 // Pose de un rig: offset de ángulo por hueso (se suma al ángulo de reposo).
 export type RigPose = Record<string, number>;
@@ -36,6 +36,7 @@ export type Bone = {
   readonly offset?: Vec2;           // corrimiento extra de la base en espacio del rig
                                     // (para posicionar piezas libres, ej. armas)
   readonly hidden?: boolean;        // oculto: no se dibuja (sí posiciona a sus hijos)
+  readonly points?: readonly Vec2[]; // shape 'path' (lápiz): puntos relativos a la base
 };
 
 export type CustomRig = {
@@ -50,7 +51,8 @@ export type CustomRig = {
 export type RBone =
   | { readonly kind: 'capsule'; readonly id: string; readonly from: Vec2; readonly to: Vec2; readonly ctrl?: Vec2; readonly width: number; readonly color: string; readonly z: number }
   | { readonly kind: 'circle'; readonly id: string; readonly cx: number; readonly cy: number; readonly r: number; readonly color: string; readonly z: number }
-  | { readonly kind: 'rect'; readonly id: string; readonly pts: readonly Vec2[]; readonly color: string; readonly z: number };
+  | { readonly kind: 'rect'; readonly id: string; readonly pts: readonly Vec2[]; readonly color: string; readonly z: number }
+  | { readonly kind: 'path'; readonly id: string; readonly pts: readonly Vec2[]; readonly width: number; readonly color: string; readonly z: number };
 
 const rad = (deg: number): number => (deg * Math.PI) / 180;
 const dirOf = (angleDeg: number): Vec2 => ({ x: Math.sin(rad(angleDeg)), y: -Math.cos(rad(angleDeg)) });
@@ -103,7 +105,11 @@ export const buildCustomSkeleton = (rig: CustomRig, pose?: RigPose): RBone[] => 
     const tip = { x: base.x + dir.x * b.length, y: base.y + dir.y * b.length };
     const color = b.color ?? rig.color;
 
-    if (b.shape === 'circle') {
+    if (b.shape === 'path') {
+      // Trazo libre: puntos relativos a la base (mueve con offset, no rota).
+      const pts = (b.points ?? []).map((p) => ({ x: base.x + p.x, y: base.y + p.y }));
+      if (pts.length > 0) out.push({ kind: 'path', id: b.id, pts, width: b.width, color, z: b.z });
+    } else if (b.shape === 'circle') {
       const cx = base.x + dir.x * (b.length / 2);
       const cy = base.y + dir.y * (b.length / 2);
       out.push({ kind: 'circle', id: b.id, cx, cy, r: b.width / 2, color, z: b.z });

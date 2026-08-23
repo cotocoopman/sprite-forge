@@ -4,6 +4,18 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] — 2026-08-23
+
+### Added
+- **Pencil tool (freehand drawing):** a new `path` shape backed by a point list, drawn
+  as a smooth round-capped stroke. Draw with click-and-drag; the stroke becomes an
+  accessory (humanoid, anchored to the torso) or a bone (custom rig), so it follows the
+  animation and can be recolored, moved and layered like anything else.
+- Stroke thickness control shared with the shape tool.
+
+### Fixed
+- Save/load preserves the new `path` shape and its points on both accessories and bones.
+
 ## [1.5.0] — 2026-08-23
 
 ### Added

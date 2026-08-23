@@ -34,6 +34,18 @@ const accGeom = (
   };
   const sr = ((anchorAngle + acc.angle) * Math.PI) / 180;
   const dir = { x: Math.sin(sr), y: Math.cos(sr) };
+  // Trazo libre: centro = centroide de sus puntos (en mundo), radio = bounding.
+  if (acc.shape === 'path' && acc.points && acc.points.length > 0) {
+    const w = acc.points.map((p) => ({
+      x: anchorPos.x + p.x * along.x + p.y * perp.x,
+      y: anchorPos.y + p.x * along.y + p.y * perp.y,
+    }));
+    const cx = w.reduce((s, p) => s + p.x, 0) / w.length;
+    const cy = w.reduce((s, p) => s + p.y, 0) / w.length;
+    const center = { x: cx, y: cy };
+    const radius = Math.max(acc.width / 2, ...w.map((p) => Math.hypot(p.x - cx, p.y - cy))) + 6;
+    return { base, center, tip: center, dir, along, perp, radius };
+  }
   const len = acc.shape === 'circle' ? 0 : acc.length;
   const center = { x: base.x + dir.x * (len / 2), y: base.y + dir.y * (len / 2) };
   const tip = { x: base.x + dir.x * len, y: base.y + dir.y * len };
@@ -158,9 +170,10 @@ export const PreviewCanvas = (): ReactElement => {
   const selAnchor = selAcc && skel ? skel.anchors[selAcc.anchor] : null;
   const selG = selAcc && selAnchor ? accGeom(selAcc, selAnchor.pos, selAnchor.angle) : null;
   const isCircle = selAcc?.shape === 'circle';
+  const isPath = selAcc?.shape === 'path';
   const selPx = selG ? modelToPx(selG.center.x, selG.center.y, tf) : null;
   const selR = selG ? selG.radius * tf.scale : 0;
-  const tipPx = selG && !isCircle ? modelToPx(selG.tip.x, selG.tip.y, tf) : null;
+  const tipPx = selG && !isCircle && !isPath ? modelToPx(selG.tip.x, selG.tip.y, tf) : null;
   const wOff = selAcc ? selAcc.width / 2 + 3 : 0;
   const widthPx = selG ? modelToPx(selG.center.x + selG.perp.x * wOff, selG.center.y + selG.perp.y * wOff, tf) : null;
 
@@ -184,6 +197,7 @@ export const PreviewCanvas = (): ReactElement => {
   };
 
   const create = useRef<{ id: string; base: Pt; anchorAngle: number } | null>(null);
+  const pencil = useRef<{ id: string; pts: Pt[]; anchorPos: Pt; along: Pt; perp: Pt } | null>(null);
 
   const onPointerDown = (e: ReactPointerEvent<SVGSVGElement>): void => {
     const svg = e.currentTarget;
@@ -193,6 +207,28 @@ export const PreviewCanvas = (): ReactElement => {
     if (tool === 'eraser') {
       const id = pickAccessory(m);
       if (id) removeAccessory(id);
+      return;
+    }
+    if (tool === 'pencil' && skel) {
+      const anchorName = skel.anchors.torsoTop ? 'torsoTop' : 'hip';
+      const anchor = skel.anchors[anchorName];
+      const ar = (anchor.angle * Math.PI) / 180;
+      const along = { x: Math.sin(ar), y: Math.cos(ar) };
+      const perp = { x: Math.cos(ar), y: -Math.sin(ar) };
+      const local = (pt: Pt): Pt => ({
+        x: (pt.x - anchor.pos.x) * along.x + (pt.y - anchor.pos.y) * along.y,
+        y: (pt.x - anchor.pos.x) * perp.x + (pt.y - anchor.pos.y) * perp.y,
+      });
+      const id = genId();
+      const p0 = local(m);
+      const acc: Accessory = {
+        id, name: 'Trazo', anchor: anchorName, shape: 'path',
+        offsetAlong: 0, offsetPerp: 0, angle: 0, length: 0, width: brushWidth,
+        color: character.color, opacity: 1, front: true, points: [p0],
+      };
+      insertAccessory(acc);
+      pencil.current = { id, pts: [p0], anchorPos: anchor.pos, along, perp };
+      svg.setPointerCapture(e.pointerId);
       return;
     }
     if (tool === 'shape' && skel) {
@@ -241,6 +277,20 @@ export const PreviewCanvas = (): ReactElement => {
   };
 
   const onPointerMove = (e: ReactPointerEvent<SVGSVGElement>): void => {
+    if (pencil.current) {
+      const m = clientToModel(e.currentTarget, e.clientX, e.clientY, tf);
+      const pc = pencil.current;
+      const p = {
+        x: (m.x - pc.anchorPos.x) * pc.along.x + (m.y - pc.anchorPos.y) * pc.along.y,
+        y: (m.x - pc.anchorPos.x) * pc.perp.x + (m.y - pc.anchorPos.y) * pc.perp.y,
+      };
+      const last = pc.pts[pc.pts.length - 1];
+      if (dist(p, last) >= 1.5) {
+        pc.pts.push(p);
+        updateAccessory(pc.id, { points: [...pc.pts] });
+      }
+      return;
+    }
     if (create.current) {
       const m = clientToModel(e.currentTarget, e.clientX, e.clientY, tf);
       const len = dist(create.current.base, m);
@@ -276,10 +326,11 @@ export const PreviewCanvas = (): ReactElement => {
   };
 
   const endDrag = (e: ReactPointerEvent<SVGSVGElement>): void => {
-    if (create.current || drag.current) {
+    if (create.current || drag.current || pencil.current) {
       try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* noop */ }
       create.current = null;
       drag.current = null;
+      pencil.current = null;
     }
   };
 

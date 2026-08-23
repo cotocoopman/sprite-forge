@@ -76,7 +76,7 @@ export const genId = (): string =>
     : `id-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
 
 // Herramienta activa del canvas (barra superior estilo editor de dibujo).
-export type DrawTool = 'select' | 'shape' | 'eraser';
+export type DrawTool = 'select' | 'pencil' | 'shape' | 'eraser';
 
 const loadProject = (): Project => {
   try {

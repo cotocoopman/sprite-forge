@@ -20,7 +20,7 @@ describe('weapon rigs (props → custom rig)', () => {
       expect(bones).toHaveLength(tpl.parts.length);
       for (const b of bones) {
         if (b.kind === 'circle') expect(finite(b.cx) && finite(b.cy) && finite(b.r)).toBe(true);
-        else if (b.kind === 'rect') expect(b.pts.every((q) => finite(q.x) && finite(q.y))).toBe(true);
+        else if (b.kind === 'rect' || b.kind === 'path') expect(b.pts.every((q) => finite(q.x) && finite(q.y))).toBe(true);
         else expect(finite(b.from.x) && finite(b.from.y) && finite(b.to.x) && finite(b.to.y)).toBe(true);
       }
     }
