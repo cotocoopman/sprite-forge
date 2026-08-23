@@ -24,6 +24,15 @@ The `main` branch is protected: you can't push to it directly. To propose change
 
 No write access needed: everything comes in via PRs from forks.
 
+## Versioning
+
+Every change bumps `version` in `package.json` (`x.y.z`) and adds a matching entry at
+the top of `CHANGELOG.md` (dated, Keep-a-Changelog style):
+
+- **x** (major): a whole pool of new functionality (e.g. a complete new module).
+- **y** (minor): new features and functionality.
+- **z** (patch): bug fixes and small tweaks to existing behavior.
+
 ## Code conventions
 
 - **TypeScript strict**, no `any`.
@@ -37,6 +46,13 @@ No write access needed: everything comes in via PRs from forks.
   tolerant default in `core/validation.ts` so saved projects don't break.
 - UI strings are wrapped with `useT` from `src/i18n.ts` — add the English text to the
   dictionary (the Spanish string is the key).
+- **Weapons/accessories live on both rigs.** Add them once to `PROP_TEMPLATES`
+  (`core/props.ts`); the custom-rig side is generated from that list by
+  `core/weaponRigs.ts` (`propToRig`), so a new prop shows up on both sides for free.
+  Don't fork the weapon list.
+- **Import direction:** `poses.ts` → `customRig.ts` and `props.ts` → `poses.ts`, so
+  `customRig.ts` must not import `props.ts` (it would cycle). Code that composes both
+  goes in a separate leaf module (e.g. `weaponRigs.ts`).
 
 ## Where things live
 
