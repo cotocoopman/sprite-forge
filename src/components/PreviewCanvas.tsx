@@ -11,7 +11,7 @@ import { useActiveClip } from '@/hooks/useActiveClip';
 import { buildSkeleton } from '@core/rig';
 import type { Pose } from '@core/rig';
 import { sampleClip } from '@core/poses';
-import { makeTransform, renderCharacterInner, skeletonToPrimitives } from '@core/svg';
+import { makeTransform, renderCharacterInner, resolveAccessoryGeom, skeletonToPrimitives } from '@core/svg';
 import type { SvgPrimitive } from '@core/svg';
 import { CanvasToolbar } from '@components/CanvasToolbar';
 import { accWorldAngleTo, angleDeg, clientToModel, clientToViewBox, dist, modelToPx } from '@components/canvasInteract';
@@ -165,10 +165,12 @@ export const PreviewCanvas = (): ReactElement => {
 
   // --- Manipulación en canvas: seleccionar, mover, rotar y escalar accesorios ---
   const skel = poses[frame] ? buildSkeleton(character, poses[frame], render.facing) : null;
+  // Marcos de ancla resueltos (incluye anclaje objeto→objeto) para hit-test/drag.
+  const frames = skel ? resolveAccessoryGeom(accessories, skel.anchors) : null;
 
   const selAcc = skel && activeAccessoryId ? accessories.find((a) => a.id === activeAccessoryId) : null;
-  const selAnchor = selAcc && skel ? skel.anchors[selAcc.anchor] : null;
-  const selG = selAcc && selAnchor ? accGeom(selAcc, selAnchor.pos, selAnchor.angle) : null;
+  const selFrame = selAcc && frames ? frames.get(selAcc.id) : null;
+  const selG = selAcc && selFrame ? accGeom(selAcc, selFrame.pos, selFrame.angle) : null;
   const isCircle = selAcc?.shape === 'circle';
   const isPath = selAcc?.shape === 'path';
   const selPx = selG ? modelToPx(selG.center.x, selG.center.y, tf) : null;
@@ -185,12 +187,12 @@ export const PreviewCanvas = (): ReactElement => {
   >(null);
 
   const pickAccessory = (m: Pt): string | null => {
-    if (!skel) return null;
+    if (!frames) return null;
     let hit: string | null = null; // último dentro del radio (orden de dibujo) = al frente
     for (const acc of accessories) {
-      const anchor = skel.anchors[acc.anchor];
-      if (!anchor) continue;
-      const g = accGeom(acc, anchor.pos, anchor.angle);
+      const f = frames.get(acc.id);
+      if (!f) continue;
+      const g = accGeom(acc, f.pos, f.angle);
       if (Math.hypot(m.x - g.center.x, m.y - g.center.y) <= g.radius) hit = acc.id;
     }
     return hit;
@@ -267,21 +269,24 @@ export const PreviewCanvas = (): ReactElement => {
     }
     const id = pickAccessory(m);
     selectAccessory(id);
-    if (id && skel) {
+    if (id && frames) {
       const acc = accessories.find((a) => a.id === id)!;
       // Si la pieza pertenece a un arma/prop, mover todo el grupo junto.
       const group = acc.propId ? accessories.filter((a) => a.propId === acc.propId) : [acc];
-      const members = group.map((a) => {
-        const an = skel.anchors[a.anchor];
-        const ar = (an.angle * Math.PI) / 180;
-        return {
-          id: a.id,
-          a0: a.offsetAlong,
-          p0: a.offsetPerp,
-          along: { x: Math.sin(ar), y: Math.cos(ar) },
-          perp: { x: Math.cos(ar), y: -Math.sin(ar) },
-        };
-      });
+      const members = group
+        .map((a) => {
+          const f = frames.get(a.id);
+          if (!f) return null;
+          const ar = (f.angle * Math.PI) / 180;
+          return {
+            id: a.id,
+            a0: a.offsetAlong,
+            p0: a.offsetPerp,
+            along: { x: Math.sin(ar), y: Math.cos(ar) },
+            perp: { x: Math.cos(ar), y: -Math.sin(ar) },
+          };
+        })
+        .filter((x): x is NonNullable<typeof x> => x !== null);
       drag.current = { mode: 'move', start: m, members };
       svg.setPointerCapture(e.pointerId);
     }

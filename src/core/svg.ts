@@ -85,20 +85,19 @@ export type AccPrim =
   | { readonly kind: 'poly'; readonly pts: readonly { x: number; y: number }[]; readonly color: string; readonly opacity: number; readonly front: boolean }
   | { readonly kind: 'path'; readonly pts: readonly { x: number; y: number }[]; readonly width: number; readonly color: string; readonly opacity: number; readonly front: boolean };
 
-export const accessoriesToPrimitives = (
+export type AccFrame = { pos: Vec2; angle: number; base: Vec2; tip: Vec2; center: Vec2; dirAngle: number };
+
+// Resuelve, para cada accesorio, el marco al que se ancla (hueso del esqueleto u
+// otro accesorio a su base/punta/centro) y su geometría en mundo. Memoizado y con
+// guarda de ciclos. Reutilizado por el render y por la interacción en canvas.
+export const resolveAccessoryGeom = (
   accessories: readonly Accessory[],
   anchors: Record<AnchorName, Anchor>,
-  render: RenderConfig,
-): AccPrim[] => {
-  const tf = makeTransform(render);
-  const out: AccPrim[] = [];
-
-  // Resolución de anclas: un accesorio puede anclarse a un hueso del esqueleto o a
-  // otro accesorio (a su base/punta/centro). Memoizado y con guarda de ciclos.
+): Map<string, AccFrame> => {
   const byId = new Map(accessories.map((a) => [a.id, a]));
-  const geomCache = new Map<string, { pos: Vec2; angle: number; base: Vec2; tip: Vec2; center: Vec2; dirAngle: number }>();
-  const resolve = (acc: Accessory, seen: ReadonlySet<string>): { pos: Vec2; angle: number; base: Vec2; tip: Vec2; center: Vec2; dirAngle: number } => {
-    const cached = geomCache.get(acc.id);
+  const cache = new Map<string, AccFrame>();
+  const resolve = (acc: Accessory, seen: ReadonlySet<string>): AccFrame => {
+    const cached = cache.get(acc.id);
     if (cached) return cached;
     let pos: Vec2;
     let angle: number;
@@ -124,18 +123,30 @@ export const accessoriesToPrimitives = (
     const sr0 = rad(dirAngle);
     const d0 = { x: Math.sin(sr0), y: Math.cos(sr0) };
     const len = acc.shape === 'circle' || acc.shape === 'path' ? 0 : acc.length;
-    const g = {
+    const g: AccFrame = {
       pos, angle, base, dirAngle,
       center: { x: base.x + d0.x * (len / 2), y: base.y + d0.y * (len / 2) },
       tip: { x: base.x + d0.x * len, y: base.y + d0.y * len },
     };
-    geomCache.set(acc.id, g);
+    cache.set(acc.id, g);
     return g;
   };
+  for (const acc of accessories) resolve(acc, new Set());
+  return cache;
+};
+
+export const accessoriesToPrimitives = (
+  accessories: readonly Accessory[],
+  anchors: Record<AnchorName, Anchor>,
+  render: RenderConfig,
+): AccPrim[] => {
+  const tf = makeTransform(render);
+  const out: AccPrim[] = [];
+  const geom = resolveAccessoryGeom(accessories, anchors);
 
   for (const acc of accessories) {
     if (!acc.anchorTo && !anchors[acc.anchor]) continue;
-    const g = resolve(acc, new Set());
+    const g = geom.get(acc.id)!;
     const anchor = { pos: g.pos, angle: g.angle };
     const ar = rad(anchor.angle);
     const along = { x: Math.sin(ar), y: Math.cos(ar) };

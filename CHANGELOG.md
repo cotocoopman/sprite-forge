@@ -4,6 +4,14 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.8.1] — 2026-08-23
+
+### Fixed
+- On-canvas selection, hit-testing and dragging now use the resolved anchor frame, so
+  an accessory anchored to another object is selected and moved at its real position
+  (not its fallback body anchor). The anchor resolver is shared between render and
+  interaction.
+
 ## [1.8.0] — 2026-08-23
 
 ### Added
