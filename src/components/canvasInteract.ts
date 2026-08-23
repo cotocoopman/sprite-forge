@@ -51,6 +51,23 @@ export const boneRadius = (b: RBone): number => {
   return Math.max(b.width, Math.hypot(b.to.x - b.from.x, b.to.y - b.from.y) / 2);
 };
 
+// Base (nace) y punta de un hueso renderizado, para ubicar handles de rotar/escalar.
+export const boneBaseTip = (b: RBone): { base: Pt; tip: Pt } => {
+  if (b.kind === 'capsule') return { base: b.from, tip: b.to };
+  if (b.kind === 'circle') return { base: { x: b.cx, y: b.cy }, tip: { x: b.cx, y: b.cy } };
+  const base = { x: (b.pts[0].x + b.pts[1].x) / 2, y: (b.pts[0].y + b.pts[1].y) / 2 };
+  const tip =
+    b.pts.length === 3
+      ? b.pts[2]
+      : { x: (b.pts[2].x + b.pts[3].x) / 2, y: (b.pts[2].y + b.pts[3].y) / 2 };
+  return { base, tip };
+};
+
+export const dist = (a: Pt, b: Pt): number => Math.hypot(a.x - b.x, a.y - b.y);
+
+// Ángulo (grados) del vector a→b, en la convención de pantalla (y hacia abajo).
+export const angleDeg = (a: Pt, b: Pt): number => (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
+
 // Hueso bajo el punto: el más al frente (mayor z) cuyo radio contiene al punto.
 // `bones` viene ordenado ascendente por z, así que el último que califica gana.
 export const pickBone = (bones: readonly RBone[], p: Pt): string | null => {

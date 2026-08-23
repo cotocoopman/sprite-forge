@@ -13,16 +13,16 @@ import type { Pose } from '@core/rig';
 import { sampleClip } from '@core/poses';
 import { makeTransform, renderCharacterInner, skeletonToPrimitives } from '@core/svg';
 import type { SvgPrimitive } from '@core/svg';
-import { clientToModel, modelToPx } from '@components/canvasInteract';
+import { angleDeg, clientToModel, clientToViewBox, dist, modelToPx } from '@components/canvasInteract';
 import type { Pt } from '@components/canvasInteract';
 import type { Accessory } from '@core/poses';
 
-// Centro (modelo) y base ortonormal del ancla de un accesorio, para hit-test y drag.
+// Geometría de un accesorio (base, punta, ejes) para hit-test y transform.
 const accGeom = (
   acc: Accessory,
   anchorPos: Pt,
   anchorAngle: number,
-): { center: Pt; along: Pt; perp: Pt; radius: number } => {
+): { base: Pt; center: Pt; tip: Pt; dir: Pt; along: Pt; perp: Pt; radius: number } => {
   const ar = (anchorAngle * Math.PI) / 180;
   const along = { x: Math.sin(ar), y: Math.cos(ar) };
   const perp = { x: Math.cos(ar), y: -Math.sin(ar) };
@@ -32,10 +32,11 @@ const accGeom = (
   };
   const sr = ((anchorAngle + acc.angle) * Math.PI) / 180;
   const dir = { x: Math.sin(sr), y: Math.cos(sr) };
-  const half = acc.shape === 'circle' ? 0 : acc.length / 2;
-  const center = { x: base.x + dir.x * half, y: base.y + dir.y * half };
+  const len = acc.shape === 'circle' ? 0 : acc.length;
+  const center = { x: base.x + dir.x * (len / 2), y: base.y + dir.y * (len / 2) };
+  const tip = { x: base.x + dir.x * len, y: base.y + dir.y * len };
   const radius = Math.max(acc.width / 2, acc.length / 2) + 6;
-  return { center, along, perp, radius };
+  return { base, center, tip, dir, along, perp, radius };
 };
 
 const CHECKER =
@@ -143,9 +144,25 @@ export const PreviewCanvas = (): ReactElement => {
     ? renderCharacterInner(character, poses[frame], render, effects, parts, true, editorAccessories)
     : '';
 
-  // --- Manipulación en canvas: seleccionar y mover accesorios ---
+  // --- Manipulación en canvas: seleccionar, mover, rotar y escalar accesorios ---
   const skel = poses[frame] ? buildSkeleton(character, poses[frame], render.facing) : null;
-  const drag = useRef<{ id: string; start: Pt; along: Pt; perp: Pt; a0: number; p0: number } | null>(null);
+
+  const selAcc = skel && activeAccessoryId ? accessories.find((a) => a.id === activeAccessoryId) : null;
+  const selAnchor = selAcc && skel ? skel.anchors[selAcc.anchor] : null;
+  const selG = selAcc && selAnchor ? accGeom(selAcc, selAnchor.pos, selAnchor.angle) : null;
+  const isCircle = selAcc?.shape === 'circle';
+  const selPx = selG ? modelToPx(selG.center.x, selG.center.y, tf) : null;
+  const selR = selG ? selG.radius * tf.scale : 0;
+  const tipPx = selG && !isCircle ? modelToPx(selG.tip.x, selG.tip.y, tf) : null;
+  const wOff = selAcc ? selAcc.width / 2 + 3 : 0;
+  const widthPx = selG ? modelToPx(selG.center.x + selG.perp.x * wOff, selG.center.y + selG.perp.y * wOff, tf) : null;
+
+  const drag = useRef<
+    | { mode: 'move'; id: string; start: Pt; along: Pt; perp: Pt; a0: number; p0: number }
+    | { mode: 'tip'; id: string; base: Pt; startAngle: number; grabA: number }
+    | { mode: 'width'; id: string; base: Pt; perp: Pt; circle: boolean }
+    | null
+  >(null);
 
   const pickAccessory = (m: Pt): string | null => {
     if (!skel) return null;
@@ -161,29 +178,51 @@ export const PreviewCanvas = (): ReactElement => {
 
   const onPointerDown = (e: ReactPointerEvent<SVGSVGElement>): void => {
     const svg = e.currentTarget;
+    const vb = clientToViewBox(svg, e.clientX, e.clientY);
     const m = clientToModel(svg, e.clientX, e.clientY, tf);
+    if (selAcc && selG) {
+      if (tipPx && dist(vb, tipPx) < 13) {
+        drag.current = { mode: 'tip', id: selAcc.id, base: selG.base, startAngle: selAcc.angle, grabA: angleDeg(selG.base, selG.tip) };
+        svg.setPointerCapture(e.pointerId);
+        return;
+      }
+      if (widthPx && dist(vb, widthPx) < 13) {
+        drag.current = { mode: 'width', id: selAcc.id, base: isCircle ? selG.center : selG.center, perp: selG.perp, circle: !!isCircle };
+        svg.setPointerCapture(e.pointerId);
+        return;
+      }
+    }
     const id = pickAccessory(m);
     selectAccessory(id);
     if (id && skel) {
       const acc = accessories.find((a) => a.id === id)!;
       const anchor = skel.anchors[acc.anchor];
       const g = accGeom(acc, anchor.pos, anchor.angle);
-      drag.current = { id, start: m, along: g.along, perp: g.perp, a0: acc.offsetAlong, p0: acc.offsetPerp };
+      drag.current = { mode: 'move', id, start: m, along: g.along, perp: g.perp, a0: acc.offsetAlong, p0: acc.offsetPerp };
       svg.setPointerCapture(e.pointerId);
     }
   };
 
   const onPointerMove = (e: ReactPointerEvent<SVGSVGElement>): void => {
-    if (!drag.current) return;
+    const d = drag.current;
+    if (!d) return;
     const m = clientToModel(e.currentTarget, e.clientX, e.clientY, tf);
-    const { id, start, along, perp, a0, p0 } = drag.current;
-    const dx = m.x - start.x;
-    const dy = m.y - start.y;
-    // Descompone el desplazamiento en los ejes del hueso (base ortonormal).
-    updateAccessory(id, {
-      offsetAlong: a0 + dx * along.x + dy * along.y,
-      offsetPerp: p0 + dx * perp.x + dy * perp.y,
-    });
+    if (d.mode === 'move') {
+      const dx = m.x - d.start.x;
+      const dy = m.y - d.start.y;
+      updateAccessory(d.id, {
+        offsetAlong: d.a0 + dx * d.along.x + dy * d.along.y,
+        offsetPerp: d.p0 + dx * d.perp.x + dy * d.perp.y,
+      });
+    } else if (d.mode === 'tip') {
+      updateAccessory(d.id, {
+        angle: Math.round(d.startAngle + (angleDeg(d.base, m) - d.grabA)),
+        length: Math.round(Math.max(1, dist(d.base, m)) * 10) / 10,
+      });
+    } else {
+      const off = Math.abs((m.x - d.base.x) * d.perp.x + (m.y - d.base.y) * d.perp.y);
+      updateAccessory(d.id, { width: Math.max(1, Math.round((d.circle ? dist(d.base, m) * 2 : off * 2) * 10) / 10) });
+    }
   };
 
   const endDrag = (e: ReactPointerEvent<SVGSVGElement>): void => {
@@ -192,12 +231,6 @@ export const PreviewCanvas = (): ReactElement => {
       drag.current = null;
     }
   };
-
-  const selAcc = skel && activeAccessoryId ? accessories.find((a) => a.id === activeAccessoryId) : null;
-  const selAnchor = selAcc && skel ? skel.anchors[selAcc.anchor] : null;
-  const selCenter = selAcc && selAnchor ? accGeom(selAcc, selAnchor.pos, selAnchor.angle) : null;
-  const selPx = selCenter ? modelToPx(selCenter.center.x, selCenter.center.y, tf) : null;
-  const selR = selCenter ? selCenter.radius * tf.scale : 0;
 
   return (
     <Stack spacing={1} sx={{ height: '100%' }}>
@@ -279,7 +312,15 @@ export const PreviewCanvas = (): ReactElement => {
           {/* Personaje principal: markup con efectos (sombra/brillo) + giro. */}
           <g dangerouslySetInnerHTML={{ __html: characterInner }} />
           {selPx && (
-            <circle cx={selPx.x} cy={selPx.y} r={selR} fill="none" stroke="#22d3ee" strokeWidth={2} strokeDasharray="5 4" />
+            <>
+              <circle cx={selPx.x} cy={selPx.y} r={selR} fill="none" stroke="#22d3ee" strokeWidth={2} strokeDasharray="5 4" />
+              {tipPx && (
+                <circle cx={tipPx.x} cy={tipPx.y} r={6} fill="#22d3ee" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'grab' }} />
+              )}
+              {widthPx && (
+                <rect x={widthPx.x - 6} y={widthPx.y - 6} width={12} height={12} rx={2} fill="#a5f3fc" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'ew-resize' }} />
+              )}
+            </>
           )}
         </svg>
       </Box>

@@ -4,6 +4,14 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] — 2026-08-23
+
+### Added
+- **Transform handles on the canvas:** a selected object now shows a tip handle
+  (drag to rotate + change length, pivoting at its base) and a side handle (drag to
+  change width/thickness). Circles resize their diameter. Works for accessories
+  (humanoid) and bones (custom rig), on top of the existing drag-to-move.
+
 ## [1.3.0] — 2026-08-23
 
 ### Added

@@ -9,7 +9,17 @@ import { useT } from '@/i18n';
 import { useActiveRigClip } from '@/hooks/useActiveRigClip';
 import { buildCustomSkeleton, sampleRigClip } from '@core/customRig';
 import { makeTransform, renderCustomInner } from '@core/svg';
-import { boneCenter, boneRadius, clientToModel, modelToPx, pickBone } from '@components/canvasInteract';
+import {
+  angleDeg,
+  boneBaseTip,
+  boneCenter,
+  boneRadius,
+  clientToModel,
+  clientToViewBox,
+  dist,
+  modelToPx,
+  pickBone,
+} from '@components/canvasInteract';
 import type { Pt } from '@components/canvasInteract';
 
 const CHECKER = 'repeating-conic-gradient(#3a3f4b 0% 25%, #2a2e38 0% 50%) 50% / 20px 20px';
@@ -37,25 +47,72 @@ export const CustomPreview = (): ReactElement => {
 
   // Esqueleto renderizable actual (coords de modelo) para hit-test y selección.
   const skel = useMemo(() => buildCustomSkeleton(rig, poses[frame]), [rig, poses, frame]);
-  const drag = useRef<{ id: string; start: Pt; offset: Pt } | null>(null);
+
+  // Geometría de la selección y sus handles (punta = rotar+largo; lado = ancho).
+  const selected = skel.find((b) => b.id === activeBoneId);
+  const selBone = selected ? rig.bones.find((b) => b.id === activeBoneId) : undefined;
+  const selCenter = selected ? boneCenter(selected) : null;
+  const selPx = selCenter ? modelToPx(selCenter.x, selCenter.y, tf) : null;
+  const selR = selected ? boneRadius(selected) * tf.scale + 5 : 0;
+  const isCircle = selBone?.shape === 'circle';
+  const bt = selected ? boneBaseTip(selected) : null;
+  const dvec = bt ? { x: bt.tip.x - bt.base.x, y: bt.tip.y - bt.base.y } : null;
+  const dlen = dvec ? Math.hypot(dvec.x, dvec.y) : 0;
+  const dir = dvec && dlen > 0.5 ? { x: dvec.x / dlen, y: dvec.y / dlen } : { x: 1, y: 0 };
+  const perp = { x: -dir.y, y: dir.x };
+  const mid = bt ? { x: (bt.base.x + bt.tip.x) / 2, y: (bt.base.y + bt.tip.y) / 2 } : null;
+  const wOff = selBone ? selBone.width / 2 + 3 : 0;
+  const tipPx = bt && !isCircle ? modelToPx(bt.tip.x, bt.tip.y, tf) : null;
+  const widthPx = mid ? modelToPx(mid.x + perp.x * wOff, mid.y + perp.y * wOff, tf) : null;
+
+  const drag = useRef<
+    | { mode: 'move'; id: string; start: Pt; offset: Pt }
+    | { mode: 'tip'; id: string; base: Pt; startAngle: number; grabA: number }
+    | { mode: 'width'; id: string; base: Pt; perp: Pt; circle: boolean }
+    | null
+  >(null);
 
   const onPointerDown = (e: ReactPointerEvent<SVGSVGElement>): void => {
     const svg = e.currentTarget;
+    const vb = clientToViewBox(svg, e.clientX, e.clientY);
     const m = clientToModel(svg, e.clientX, e.clientY, tf);
+    if (selBone && bt) {
+      if (tipPx && dist(vb, tipPx) < 13) {
+        drag.current = { mode: 'tip', id: selBone.id, base: bt.base, startAngle: selBone.angle, grabA: angleDeg(bt.base, bt.tip) };
+        svg.setPointerCapture(e.pointerId);
+        return;
+      }
+      if (widthPx && dist(vb, widthPx) < 13) {
+        drag.current = { mode: 'width', id: selBone.id, base: isCircle ? { x: selCenter!.x, y: selCenter!.y } : mid!, perp, circle: !!isCircle };
+        svg.setPointerCapture(e.pointerId);
+        return;
+      }
+    }
     const id = pickBone(skel, m);
     selectBone(id);
     if (id) {
       const b = rig.bones.find((x) => x.id === id);
-      drag.current = { id, start: m, offset: b?.offset ?? { x: 0, y: 0 } };
+      drag.current = { mode: 'move', id, start: m, offset: b?.offset ?? { x: 0, y: 0 } };
       svg.setPointerCapture(e.pointerId);
     }
   };
 
   const onPointerMove = (e: ReactPointerEvent<SVGSVGElement>): void => {
-    if (!drag.current) return;
+    const d = drag.current;
+    if (!d) return;
     const m = clientToModel(e.currentTarget, e.clientX, e.clientY, tf);
-    const { id, start, offset } = drag.current;
-    updateBone(id, { offset: { x: offset.x + (m.x - start.x), y: offset.y + (m.y - start.y) } });
+    if (d.mode === 'move') {
+      updateBone(d.id, { offset: { x: d.offset.x + (m.x - d.start.x), y: d.offset.y + (m.y - d.start.y) } });
+    } else if (d.mode === 'tip') {
+      // Apunta el hueso hacia el cursor (rotar) y ajusta su largo (estirar).
+      updateBone(d.id, {
+        angle: Math.round(d.startAngle + (angleDeg(d.base, m) - d.grabA)),
+        length: Math.round(Math.max(2, dist(d.base, m)) * 10) / 10,
+      });
+    } else {
+      const off = Math.abs((m.x - d.base.x) * d.perp.x + (m.y - d.base.y) * d.perp.y);
+      updateBone(d.id, { width: Math.max(1, Math.round((d.circle ? dist(d.base, m) * 2 : off * 2) * 10) / 10) });
+    }
   };
 
   const endDrag = (e: ReactPointerEvent<SVGSVGElement>): void => {
@@ -64,10 +121,6 @@ export const CustomPreview = (): ReactElement => {
       drag.current = null;
     }
   };
-
-  const selected = skel.find((b) => b.id === activeBoneId);
-  const selPx = selected ? modelToPx(boneCenter(selected).x, boneCenter(selected).y, tf) : null;
-  const selR = selected ? boneRadius(selected) * tf.scale + 5 : 0;
 
   return (
     <Stack spacing={1} sx={{ height: '100%' }}>
@@ -109,7 +162,15 @@ export const CustomPreview = (): ReactElement => {
           )}
           <g dangerouslySetInnerHTML={{ __html: inner }} />
           {selPx && (
-            <circle cx={selPx.x} cy={selPx.y} r={selR} fill="none" stroke="#22d3ee" strokeWidth={2} strokeDasharray="5 4" />
+            <>
+              <circle cx={selPx.x} cy={selPx.y} r={selR} fill="none" stroke="#22d3ee" strokeWidth={2} strokeDasharray="5 4" />
+              {tipPx && (
+                <circle cx={tipPx.x} cy={tipPx.y} r={6} fill="#22d3ee" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'grab' }} />
+              )}
+              {widthPx && (
+                <rect x={widthPx.x - 6} y={widthPx.y - 6} width={12} height={12} rx={2} fill="#a5f3fc" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'ew-resize' }} />
+              )}
+            </>
           )}
         </svg>
       </Box>
