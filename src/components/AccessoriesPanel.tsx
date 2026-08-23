@@ -22,6 +22,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useProjectStore } from '@store/useProjectStore';
 import { ColorField } from '@components/ColorField';
+import { NumberInput } from '@components/NumberInput';
 import { SectionAccordion } from '@components/SectionAccordion';
 import { useT } from '@/i18n';
 import { ANCHOR_NAMES, ANCHOR_LABELS } from '@core/rig';
@@ -99,13 +100,13 @@ const Row = ({
   onChange: (v: number) => void;
 }): ReactElement => (
   <Box>
-    <Stack direction="row" justifyContent="space-between">
-      <Typography variant="caption" color="text.secondary">
-        {label}
-      </Typography>
-      <Typography variant="caption">{value}</Typography>
+    <Typography variant="caption" color="text.secondary">
+      {label}
+    </Typography>
+    <Stack direction="row" spacing={1} alignItems="center">
+      <Slider size="small" value={value} min={min} max={max} step={step} onChange={(_, v) => onChange(v as number)} sx={{ flex: 1 }} />
+      <NumberInput value={value} step={step} min={min} onChange={onChange} inputStyle={{ width: 56, padding: '2px 6px' }} />
     </Stack>
-    <Slider size="small" value={value} min={min} max={max} step={step} onChange={(_, v) => onChange(v as number)} />
   </Box>
 );
 
@@ -148,6 +149,7 @@ const Editor = ({ acc }: { acc: Accessory }): ReactElement => {
         <ToggleButton value="capsule">{t('Barra')}</ToggleButton>
         <ToggleButton value="circle">{t('Círculo')}</ToggleButton>
         <ToggleButton value="rect">{t('Rect')}</ToggleButton>
+        <ToggleButton value="triangle">{t('Tri')}</ToggleButton>
       </ToggleButtonGroup>
 
       <Row label={t('Desplazar sobre el hueso')} value={acc.offsetAlong} min={-30} max={30} step={0.5} onChange={(v) => set({ offsetAlong: v })} />

@@ -4,6 +4,25 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] — 2026-08-22
+
+### Added
+- Ammo/projectile props on both rigs: **Laser** (glowing bolt) and **Projectile**
+  (elongated triangle), so bullets can be drawn as their own sprites.
+- New **triangle** shape for accessories and custom-rig bones.
+- Custom-rig weapon presets: every humanoid weapon/prop is now available as a
+  standalone rig (creatures + weapons sections in the template gallery, and in the
+  rig preset dropdown), so weapons can be created/animated/exported on their own.
+  Weapons are derived from a single source (`PROP_TEMPLATES`), so any new one shows
+  up on both the humanoid and custom-rig sides automatically.
+
+### Changed
+- Accessory/weapon sliders now have numeric inputs (like the rig editor) for exact values.
+
+### Fixed
+- Death animation: the fallen body is re-centered horizontally so the head no longer
+  clips past the export cell edge.
+
 ## [1.0.0] — 2026-08-18
 
 First public release. A free, 100% local web app to design, animate and export 2D

@@ -5,7 +5,7 @@ import type { Vec2 } from './rig';
 import type { EasingKind } from './easing';
 import { applyEasing } from './easing';
 
-export type BoneShape = 'capsule' | 'circle' | 'rect';
+export type BoneShape = 'capsule' | 'circle' | 'rect' | 'triangle';
 
 // Pose de un rig: offset de ángulo por hueso (se suma al ángulo de reposo).
 export type RigPose = Record<string, number>;
@@ -33,6 +33,8 @@ export type Bone = {
   readonly curve: number;           // curvatura suave (0 = recto)
   readonly color: string | null;    // null = color base del rig
   readonly z: number;               // orden de dibujo (menor = atrás)
+  readonly offset?: Vec2;           // corrimiento extra de la base en espacio del rig
+                                    // (para posicionar piezas libres, ej. armas)
 };
 
 export type CustomRig = {
@@ -86,6 +88,7 @@ export const buildCustomSkeleton = (rig: CustomRig, pose?: RigPose): RBone[] => 
       const d = parent.length * Math.max(0, Math.min(1, b.attach));
       base = { x: pBase.x + pDir.x * d, y: pBase.y + pDir.y * d };
     }
+    if (b.offset) base = { x: base.x + b.offset.x, y: base.y + b.offset.y };
     baseCache.set(b.id, base);
     return base;
   };
@@ -102,20 +105,24 @@ export const buildCustomSkeleton = (rig: CustomRig, pose?: RigPose): RBone[] => 
       const cx = base.x + dir.x * (b.length / 2);
       const cy = base.y + dir.y * (b.length / 2);
       out.push({ kind: 'circle', cx, cy, r: b.width / 2, color, z: b.z });
-    } else if (b.shape === 'rect') {
+    } else if (b.shape === 'rect' || b.shape === 'triangle') {
       const perp = { x: Math.cos(rad(wa)), y: Math.sin(rad(wa)) };
       const hw = b.width / 2;
-      out.push({
-        kind: 'rect',
-        pts: [
-          { x: base.x + perp.x * hw, y: base.y + perp.y * hw },
-          { x: base.x - perp.x * hw, y: base.y - perp.y * hw },
-          { x: tip.x - perp.x * hw, y: tip.y - perp.y * hw },
-          { x: tip.x + perp.x * hw, y: tip.y + perp.y * hw },
-        ],
-        color,
-        z: b.z,
-      });
+      // Triángulo: base (dos esquinas) + vértice alargado en la punta.
+      const pts =
+        b.shape === 'triangle'
+          ? [
+              { x: base.x + perp.x * hw, y: base.y + perp.y * hw },
+              { x: base.x - perp.x * hw, y: base.y - perp.y * hw },
+              tip,
+            ]
+          : [
+              { x: base.x + perp.x * hw, y: base.y + perp.y * hw },
+              { x: base.x - perp.x * hw, y: base.y - perp.y * hw },
+              { x: tip.x - perp.x * hw, y: tip.y - perp.y * hw },
+              { x: tip.x + perp.x * hw, y: tip.y + perp.y * hw },
+            ];
+      out.push({ kind: 'rect', pts, color, z: b.z });
     } else {
       let ctrl: Vec2 | undefined;
       if (b.curve) {

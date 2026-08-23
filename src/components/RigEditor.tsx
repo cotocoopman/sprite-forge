@@ -24,7 +24,7 @@ import { ColorField } from '@components/ColorField';
 import { SectionAccordion } from '@components/SectionAccordion';
 import { renderCustomSvg } from '@core/svg';
 import { downloadBlob, svgToPngBlob } from '@core/export';
-import { RIG_PRESETS } from '@core/customRig';
+import { ALL_RIG_PRESETS } from '@core/weaponRigs';
 import { useT } from '@/i18n';
 import type { Bone, BoneShape } from '@core/customRig';
 
@@ -79,6 +79,7 @@ const BoneEditor = ({ bone, others }: { bone: Bone; others: readonly Bone[] }): 
         <ToggleButton value="capsule">{t('Barra')}</ToggleButton>
         <ToggleButton value="circle">{t('Círculo')}</ToggleButton>
         <ToggleButton value="rect">{t('Rect')}</ToggleButton>
+        <ToggleButton value="triangle">{t('Tri')}</ToggleButton>
       </ToggleButtonGroup>
 
       {bone.parentId && (
@@ -142,13 +143,13 @@ export const RigEditor = (): ReactElement => {
         label={t('Cargar preset')}
         value=""
         onChange={(e) => {
-          const p = RIG_PRESETS.find((r) => r.id === e.target.value);
+          const p = ALL_RIG_PRESETS.find((r) => r.id === e.target.value);
           if (p) loadRigPreset(p.build());
         }}
         fullWidth
       >
-        {RIG_PRESETS.map((p) => (
-          <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>
+        {ALL_RIG_PRESETS.map((p) => (
+          <MenuItem key={p.id} value={p.id}>{p.emoji} {p.name}</MenuItem>
         ))}
       </TextField>
 

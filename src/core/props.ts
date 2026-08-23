@@ -160,6 +160,26 @@ export const PROP_TEMPLATES: readonly PropTemplate[] = [
     ], 120),
   },
   {
+    id: 'laser',
+    name: 'Laser',
+    emoji: '⚡',
+    // Bala simple tipo láser: cápsula exterior + núcleo brillante, apunta al frente.
+    parts: rotProp([
+      part('Bolt', { shape: 'capsule', offsetAlong: 0, offsetPerp: 0, angle: 0, length: 18, width: 3, color: '#ff3b3b' }),
+      part('Core', { shape: 'capsule', offsetAlong: 2, offsetPerp: 0, angle: 0, length: 13, width: 1.2, color: '#fff3b0' }),
+    ], 120),
+  },
+  {
+    id: 'projectile',
+    name: 'Projectile',
+    emoji: '🔺',
+    // Proyectil genérico: triángulo alargado hacia la punta (dirección de vuelo).
+    parts: rotProp([
+      part('Body', { shape: 'triangle', offsetAlong: -7, offsetPerp: 0, angle: 0, length: 18, width: 9, color: '#ffca28' }),
+      part('Tail', { shape: 'triangle', offsetAlong: -7, offsetPerp: 0, angle: 180, length: 5, width: 9, color: '#ff8f00' }),
+    ], 120),
+  },
+  {
     id: 'flag',
     name: 'Flag',
     emoji: '🚩',

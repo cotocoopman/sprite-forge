@@ -115,12 +115,22 @@ export const accessoriesToPrimitives = (
       out.push({ kind: 'line', x1: a.px, y1: a.py, x2: b.px, y2: b.py, width: acc.width * tf.scale, ...common });
     } else {
       const hw = acc.width / 2;
-      const corners = [
-        { x: base.x + perpS.x * hw, y: base.y + perpS.y * hw },
-        { x: base.x - perpS.x * hw, y: base.y - perpS.y * hw },
-        { x: base.x - perpS.x * hw + dir.x * acc.length, y: base.y - perpS.y * hw + dir.y * acc.length },
-        { x: base.x + perpS.x * hw + dir.x * acc.length, y: base.y + perpS.y * hw + dir.y * acc.length },
-      ];
+      const tip = { x: base.x + dir.x * acc.length, y: base.y + dir.y * acc.length };
+      // Triángulo: dos esquinas en la base + vértice alargado en la punta.
+      // Rectángulo: cuatro esquinas.
+      const corners =
+        acc.shape === 'triangle'
+          ? [
+              { x: base.x + perpS.x * hw, y: base.y + perpS.y * hw },
+              { x: base.x - perpS.x * hw, y: base.y - perpS.y * hw },
+              tip,
+            ]
+          : [
+              { x: base.x + perpS.x * hw, y: base.y + perpS.y * hw },
+              { x: base.x - perpS.x * hw, y: base.y - perpS.y * hw },
+              { x: tip.x - perpS.x * hw, y: tip.y - perpS.y * hw },
+              { x: tip.x + perpS.x * hw, y: tip.y + perpS.y * hw },
+            ];
       const pts = corners.map((p) => {
         const q = toPx(p.x, p.y, tf);
         return { x: q.px, y: q.py };

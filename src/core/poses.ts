@@ -73,7 +73,7 @@ export const DEFAULT_PARTS: PartsConfig = PART_NAMES.reduce((acc, name) => {
 }, {} as Record<PartName, PartStyle>);
 
 // Accesorio anclado a un hueso (arma, sombrero, capa, escudo, etc.).
-export type AccessoryShape = 'capsule' | 'circle' | 'rect';
+export type AccessoryShape = 'capsule' | 'circle' | 'rect' | 'triangle';
 
 export type Accessory = {
   readonly id: string;
