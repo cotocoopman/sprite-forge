@@ -4,6 +4,27 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.0.0] — 2026-08-24
+
+**Canvas editor & Layers milestone.** This release cuts a version for the whole pool of
+on-canvas editing added on top of the parametric generator (shipped incrementally in
+1.2 → 1.11):
+
+- **Canvas editor** — a toolbar over the preview (Select · Pencil · Shape · Eraser),
+  freehand drawing, parametric shapes (rectangle / circle / triangle / trapezoid / star /
+  bolt / bar), on-canvas transform (drag to move, tip handle to rotate + resize length,
+  corner handle for width), object copy / cut / paste / duplicate / flip, a Figma-style
+  right-click context menu, and Shift snapping. Works in both humanoid and custom-rig
+  modes; everything drawn is a real, animatable object that follows the rig.
+- **Layers panel** — a Capas tab listing every body part, accessory or bone with
+  show/hide, color, inline rename, duplicate, delete, and drag-to-reorder.
+- **Object→object anchoring** — accessories can hang off another object's base / center /
+  tip (cycle-safe) instead of only body bones.
+
+### Docs
+- Refreshed the README screenshots to the current UI (canvas toolbar, Layers panel and
+  custom rig) and added a Layers panel image.
+
 ## [1.11.2] — 2026-08-24
 
 ### Docs
@@ -202,4 +223,5 @@ silhouette sprites for games, with Godot-ready output.
 - Autosave and project import/export with tolerant migration.
 - Responsive layout. Pure core covered by 50 Vitest tests.
 
+[2.0.0]: https://github.com/cotocoopman/sprite-forge/releases/tag/v2.0.0
 [1.0.0]: https://github.com/cotocoopman/sprite-forge/releases/tag/v1.0.0

@@ -20,11 +20,22 @@ toggle in the top bar).
 </p>
 
 Design proportions, keyframe the motion, and export sprite sheets or a Godot
-`SpriteFrames` resource — no drawing required.
+`SpriteFrames` resource — or draw straight on the canvas with the built-in tools.
 
-![Humanoid mode](docs/img/01-app.png)
+![Humanoid mode with the canvas toolbar, 3D-turn dial and animation timeline](docs/img/01-app.png)
+
+*Humanoid mode — canvas toolbar (Select · Pencil · Shape · Eraser), 8-direction 3D-turn
+dial, draggable keyframe timeline and frame thumbnails.*
+
+![Layers panel](docs/img/03-layers.png)
+
+*Layers panel (Capas tab) — every body part and accessory as a row with show/hide, color,
+inline rename, duplicate, delete and drag-to-reorder.*
 
 ![Custom rig mode](docs/img/02-custom-rig.png)
+
+*Custom rig — a quadruped from the preset gallery with a per-bone angle editor; the same
+canvas editor, layers and animation tools apply to any bone tree.*
 
 ---
 
