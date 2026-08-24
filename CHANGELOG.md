@@ -4,6 +4,13 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.11.0] — 2026-08-23
+
+### Added
+- **Right-click context menu** on the canvas (both modes): right-clicking selects the
+  object under the cursor and opens a Figma-style menu with Duplicate, Copy, Cut, Paste,
+  Flip H/V and Delete (with their keyboard shortcuts).
+
 ## [1.10.0] — 2026-08-23
 
 ### Added

@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import type { PointerEvent as ReactPointerEvent, ReactElement } from 'react';
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, ReactElement } from 'react';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -14,6 +14,7 @@ import { sampleClip } from '@core/poses';
 import { makeTransform, renderCharacterInner, resolveAccessoryGeom, skeletonToPrimitives } from '@core/svg';
 import type { SvgPrimitive } from '@core/svg';
 import { CanvasToolbar } from '@components/CanvasToolbar';
+import { CanvasContextMenu } from '@components/CanvasContextMenu';
 import { accWorldAngleTo, angleDeg, BOX_SHAPES, clientToModel, clientToViewBox, dist, modelToPx } from '@components/canvasInteract';
 import type { Pt } from '@components/canvasInteract';
 import { genId } from '@store/useProjectStore';
@@ -133,6 +134,7 @@ export const PreviewCanvas = (): ReactElement => {
   const [lightBg, setLightBg] = useState(false);
   const [onion, setOnion] = useState(false);
   const [guides, setGuides] = useState(true);
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
 
   const { poses, frame } = useMemo(() => {
     if (!clip) return { poses: [] as Pose[], frame: 0 };
@@ -378,6 +380,13 @@ export const PreviewCanvas = (): ReactElement => {
     }
   };
 
+  const onContextMenu = (e: ReactMouseEvent<SVGSVGElement>): void => {
+    e.preventDefault();
+    const id = pickAccessory(clientToModel(e.currentTarget, e.clientX, e.clientY, tf));
+    if (id) selectAccessory(id);
+    setMenu({ x: e.clientX, y: e.clientY });
+  };
+
   return (
     <Stack spacing={1} sx={{ height: '100%' }}>
       <Stack direction="row" spacing={2} flexWrap="wrap">
@@ -431,6 +440,7 @@ export const PreviewCanvas = (): ReactElement => {
           onPointerMove={onPointerMove}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
+          onContextMenu={onContextMenu}
         >
           {/* Borde del canvas (lo que realmente se exporta). Lo de afuera se recorta. */}
           <rect x={0} y={0} width={cs} height={cs} fill="none" stroke="#7c9cff" strokeWidth={1} strokeDasharray="3 3" opacity={0.6} />
@@ -476,6 +486,7 @@ export const PreviewCanvas = (): ReactElement => {
       <Typography variant="caption" color="text.secondary" align="center">
         {clip ? `${clip.name} · ${frame + 1}/${n}` : t('Sin clip activo')}
       </Typography>
+      <CanvasContextMenu position={menu} onClose={() => setMenu(null)} />
     </Stack>
   );
 };

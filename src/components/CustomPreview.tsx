@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import type { PointerEvent as ReactPointerEvent, ReactElement } from 'react';
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, ReactElement } from 'react';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -12,6 +12,7 @@ import type { Bone } from '@core/customRig';
 import { makeTransform, renderCustomInner } from '@core/svg';
 import { genId } from '@store/useProjectStore';
 import { CanvasToolbar } from '@components/CanvasToolbar';
+import { CanvasContextMenu } from '@components/CanvasContextMenu';
 import {
   angleDeg,
   boneAngleTo,
@@ -46,6 +47,7 @@ export const CustomPreview = (): ReactElement => {
 
   const [lightBg, setLightBg] = useState(false);
   const [guides, setGuides] = useState(true);
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const t = useT();
 
   const cs = render.cellSize;
@@ -214,6 +216,13 @@ export const CustomPreview = (): ReactElement => {
     }
   };
 
+  const onContextMenu = (e: ReactMouseEvent<SVGSVGElement>): void => {
+    e.preventDefault();
+    const id = pickBone(skel, clientToModel(e.currentTarget, e.clientX, e.clientY, tf));
+    if (id) selectBone(id);
+    setMenu({ x: e.clientX, y: e.clientY });
+  };
+
   return (
     <Stack spacing={1} sx={{ height: '100%' }}>
       <Stack direction="row" spacing={2}>
@@ -245,6 +254,7 @@ export const CustomPreview = (): ReactElement => {
           onPointerMove={onPointerMove}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
+          onContextMenu={onContextMenu}
         >
           <rect x={0} y={0} width={cs} height={cs} fill="none" stroke="#7c9cff" strokeWidth={1} strokeDasharray="3 3" opacity={0.6} />
           {guides && (
@@ -267,6 +277,7 @@ export const CustomPreview = (): ReactElement => {
           )}
         </svg>
       </Box>
+      <CanvasContextMenu position={menu} onClose={() => setMenu(null)} />
     </Stack>
   );
 };
