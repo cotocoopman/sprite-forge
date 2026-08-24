@@ -150,6 +150,7 @@ export type ProjectState = {
   readonly duplicateAccessory: (id: string) => void;
   readonly removeAccessory: (id: string) => void;
   readonly reorderAccessory: (id: string, delta: number) => void;
+  readonly moveAccessoryToIndex: (id: string, toFrontIndex: number) => void;
   readonly insertAccessory: (acc: Accessory) => void;
   readonly selectAccessory: (id: string | null) => void;
 
@@ -178,6 +179,7 @@ export type ProjectState = {
   readonly removeBone: (id: string) => void;
   readonly toggleBoneVisible: (id: string) => void;
   readonly reorderBone: (id: string, delta: number) => void;
+  readonly moveBoneToIndex: (id: string, toFrontIndex: number) => void;
   readonly insertBone: (bone: Bone) => void;
   readonly setRigField: (patch: { name?: string; color?: string; originX?: number; originY?: number }) => void;
   readonly resetAllBoneColors: () => void;
@@ -598,6 +600,18 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         return { project: { ...s.project, accessories: arr } };
       }),
 
+    // Reordena por drag: mueve el accesorio a una posición del listado "de frente
+    // hacia atrás" (índice 0 = más al frente). El array se guarda en orden inverso.
+    moveAccessoryToIndex: (id, toFrontIndex) =>
+      set((s) => {
+        const front = [...s.project.accessories].reverse();
+        const from = front.findIndex((a) => a.id === id);
+        if (from < 0) return {};
+        const [moved] = front.splice(from, 1);
+        front.splice(Math.max(0, Math.min(front.length, toFrontIndex)), 0, moved);
+        return { project: { ...s.project, accessories: front.reverse() } };
+      }),
+
     insertAccessory: (acc) =>
       set((s) => ({
         project: { ...s.project, accessories: [...s.project.accessories, acc] },
@@ -766,6 +780,25 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         if (pos < 0 || swap < 0 || swap >= order.length) return {};
         [order[pos], order[swap]] = [order[swap], order[pos]];
         const rank = new Map(order.map((b, idx) => [b.id, idx]));
+        const newBones = bones.map((b) => ({ ...b, z: rank.get(b.id) ?? b.z }));
+        return { project: { ...s.project, customRig: { ...s.project.customRig, bones: newBones } } };
+      }),
+
+    // Reordena por drag: mueve el hueso a una posición "de frente hacia atrás"
+    // (índice 0 = mayor z) y reasigna z para reflejar el nuevo orden de dibujo.
+    moveBoneToIndex: (id, toFrontIndex) =>
+      set((s) => {
+        const bones = s.project.customRig.bones;
+        const front = bones
+          .map((b, i) => ({ b, i }))
+          .sort((a, c) => c.b.z - a.b.z || a.i - c.i)
+          .map((o) => o.b);
+        const from = front.findIndex((b) => b.id === id);
+        if (from < 0) return {};
+        const [moved] = front.splice(from, 1);
+        front.splice(Math.max(0, Math.min(front.length, toFrontIndex)), 0, moved);
+        const n = front.length;
+        const rank = new Map(front.map((b, idx) => [b.id, n - 1 - idx]));
         const newBones = bones.map((b) => ({ ...b, z: rank.get(b.id) ?? b.z }));
         return { project: { ...s.project, customRig: { ...s.project.customRig, bones: newBones } } };
       }),

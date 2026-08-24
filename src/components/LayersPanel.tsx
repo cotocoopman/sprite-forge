@@ -11,6 +11,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import LayersIcon from '@mui/icons-material/Layers';
 import { useProjectStore } from '@store/useProjectStore';
 import { ColorField } from '@components/ColorField';
@@ -33,6 +34,8 @@ const LayerRow = ({
   onDown,
   onDelete,
   onRename,
+  dragId,
+  onDropReorder,
   indent,
 }: {
   name: string;
@@ -48,10 +51,13 @@ const LayerRow = ({
   onDown?: () => void;
   onDelete?: () => void;
   onRename?: (v: string) => void;
+  dragId?: string;
+  onDropReorder?: (fromId: string) => void;
   indent?: boolean;
 }): ReactElement => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(name);
+  const [over, setOver] = useState(false);
   const commit = (): void => {
     setEditing(false);
     const v = draft.trim();
@@ -62,15 +68,35 @@ const LayerRow = ({
     direction="row"
     alignItems="center"
     spacing={0.25}
+    onDragOver={onDropReorder ? (e) => { e.preventDefault(); setOver(true); } : undefined}
+    onDragLeave={onDropReorder ? () => setOver(false) : undefined}
+    onDrop={onDropReorder ? (e) => {
+      e.preventDefault();
+      setOver(false);
+      const from = e.dataTransfer.getData('text/plain');
+      if (from) onDropReorder(from);
+    } : undefined}
     sx={{
-      pl: indent ? 1 : 0.25,
+      pl: indent ? 0.25 : 0.25,
       pr: 0.25,
       py: 0.25,
       borderRadius: 1,
       bgcolor: selected ? 'action.selected' : 'transparent',
+      borderTop: '2px solid',
+      borderColor: over ? 'primary.main' : 'transparent',
       '&:hover': { bgcolor: selected ? 'action.selected' : 'action.hover' },
     }}
   >
+    {dragId && (
+      <Box
+        component="span"
+        draggable
+        onDragStart={(e) => e.dataTransfer.setData('text/plain', dragId)}
+        sx={{ display: 'flex', cursor: 'grab', color: 'text.disabled', '&:active': { cursor: 'grabbing' } }}
+      >
+        <DragIndicatorIcon fontSize="inherit" />
+      </Box>
+    )}
     <Tooltip title={visible ? 'Ocultar' : 'Mostrar'}>
       <IconButton size="small" onClick={onToggle} sx={{ opacity: visible ? 1 : 0.4 }}>
         {visible ? <VisibilityIcon fontSize="inherit" /> : <VisibilityOffIcon fontSize="inherit" />}
@@ -141,6 +167,7 @@ const HumanoidLayers = (): ReactElement => {
   const updateAccessory = useProjectStore((s) => s.updateAccessory);
   const removeAccessory = useProjectStore((s) => s.removeAccessory);
   const reorderAccessory = useProjectStore((s) => s.reorderAccessory);
+  const moveAccessoryToIndex = useProjectStore((s) => s.moveAccessoryToIndex);
   const selectAccessory = useProjectStore((s) => s.selectAccessory);
   const t = useT();
 
@@ -170,7 +197,7 @@ const HumanoidLayers = (): ReactElement => {
           {t('Sin accesorios.')}
         </Typography>
       ) : (
-        accFrontFirst.map((a) => (
+        accFrontFirst.map((a, i) => (
           <LayerRow
             key={a.id}
             indent
@@ -178,6 +205,8 @@ const HumanoidLayers = (): ReactElement => {
             visible={!a.hidden}
             selected={a.id === activeId}
             color={a.color}
+            dragId={a.id}
+            onDropReorder={(from) => moveAccessoryToIndex(from, i)}
             onToggle={() => updateAccessory(a.id, { hidden: !a.hidden })}
             onColor={(v) => updateAccessory(a.id, { color: v })}
             onSelect={() => selectAccessory(a.id)}
@@ -201,18 +230,21 @@ const BoneLayers = (): ReactElement => {
   const removeBone = useProjectStore((s) => s.removeBone);
   const toggleBoneVisible = useProjectStore((s) => s.toggleBoneVisible);
   const reorderBone = useProjectStore((s) => s.reorderBone);
+  const moveBoneToIndex = useProjectStore((s) => s.moveBoneToIndex);
 
   const frontFirst = [...rig.bones].sort((a, b) => b.z - a.z);
 
   return (
     <Stack spacing={0.25}>
-      {frontFirst.map((b) => (
+      {frontFirst.map((b, i) => (
         <LayerRow
           key={b.id}
           name={b.name}
           visible={!b.hidden}
           selected={b.id === activeBoneId}
           color={b.color ?? rig.color}
+          dragId={b.id}
+          onDropReorder={(from) => moveBoneToIndex(from, i)}
           onToggle={() => toggleBoneVisible(b.id)}
           onColor={(v) => updateBone(b.id, { color: v })}
           onColorReset={() => updateBone(b.id, { color: null })}

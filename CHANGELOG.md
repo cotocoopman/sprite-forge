@@ -4,6 +4,13 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.9.0] — 2026-08-23
+
+### Added
+- **Drag-to-reorder layers:** each layer row has a drag handle; drop it on another row
+  to change its draw order (works for accessories and bones, alongside the up/down
+  buttons).
+
 ## [1.8.1] — 2026-08-23
 
 ### Fixed
