@@ -4,6 +4,17 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.11.1] — 2026-08-24
+
+### Changed
+- Drawn shapes get a default layer name by kind (Rectángulo, Círculo, Triángulo,
+  Trapecio, Estrella, Rayo, Barra) instead of "Forma".
+- Any layer can be renamed by double-click, including body parts.
+
+### Fixed
+- Flip horizontal/vertical now mirrors the object in place instead of moving it to the
+  opposite side of its anchor.
+
 ## [1.11.0] — 2026-08-23
 
 ### Added

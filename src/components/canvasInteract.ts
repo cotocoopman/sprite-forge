@@ -11,6 +11,13 @@ export type Pt = { x: number; y: number };
 // Círculo/estrella/barra se crean radiales/direccionales.
 export const BOX_SHAPES = new Set(['rect', 'triangle', 'trapezoid', 'bolt']);
 
+// Nombre por defecto de una capa según su forma.
+const SHAPE_LABELS: Record<string, string> = {
+  rect: 'Rectángulo', circle: 'Círculo', triangle: 'Triángulo', trapezoid: 'Trapecio',
+  star: 'Estrella', bolt: 'Rayo', capsule: 'Barra', path: 'Trazo',
+};
+export const shapeLabel = (s: string): string => SHAPE_LABELS[s] ?? 'Forma';
+
 export const clientToViewBox = (svg: SVGSVGElement, clientX: number, clientY: number): Pt => {
   const m = svg.getScreenCTM();
   if (!m) return { x: 0, y: 0 };

@@ -15,7 +15,7 @@ import { makeTransform, renderCharacterInner, resolveAccessoryGeom, skeletonToPr
 import type { SvgPrimitive } from '@core/svg';
 import { CanvasToolbar } from '@components/CanvasToolbar';
 import { CanvasContextMenu } from '@components/CanvasContextMenu';
-import { accWorldAngleTo, angleDeg, BOX_SHAPES, clientToModel, clientToViewBox, dist, modelToPx } from '@components/canvasInteract';
+import { accWorldAngleTo, angleDeg, BOX_SHAPES, clientToModel, clientToViewBox, dist, modelToPx, shapeLabel } from '@components/canvasInteract';
 import type { Pt } from '@components/canvasInteract';
 import { genId } from '@store/useProjectStore';
 import type { Accessory } from '@core/poses';
@@ -250,7 +250,7 @@ export const PreviewCanvas = (): ReactElement => {
       const dy = m.y - anchor.pos.y;
       const id = genId();
       const acc: Accessory = {
-        id, name: 'Forma', anchor: anchorName, shape: shapeKind,
+        id, name: shapeLabel(shapeKind), anchor: anchorName, shape: shapeKind,
         offsetAlong: dx * along.x + dy * along.y,
         offsetPerp: dx * perp.x + dy * perp.y,
         angle: 0, length: 2, width: shapeKind === 'circle' ? 2 : brushWidth,

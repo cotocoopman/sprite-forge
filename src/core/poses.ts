@@ -64,7 +64,7 @@ export type EffectsConfig = {
 };
 
 // Estilo por parte del cuerpo: visibilidad + color (null = usa el color base).
-export type PartStyle = { readonly visible: boolean; readonly color: string | null };
+export type PartStyle = { readonly visible: boolean; readonly color: string | null; readonly name?: string };
 export type PartsConfig = Record<PartName, PartStyle>;
 
 export const DEFAULT_PARTS: PartsConfig = PART_NAMES.reduce((acc, name) => {

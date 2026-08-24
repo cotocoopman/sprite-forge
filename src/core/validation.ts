@@ -188,6 +188,7 @@ const validateParts = (v: unknown, character: unknown): PartsConfig => {
     out[name] = {
       visible: isBool(p.visible) ? p.visible : true,
       color: isStr(p.color) ? p.color : null,
+      ...(isStr(p.name) ? { name: p.name } : {}),
     };
   }
   // Migración: si venía headColorEnabled + headColor, pasarlo a la cabeza.

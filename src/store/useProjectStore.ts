@@ -139,6 +139,7 @@ export type ProjectState = {
   readonly togglePartVisible: (part: PartName) => void;
   readonly setPartColor: (part: PartName, color: string) => void;
   readonly resetPartColor: (part: PartName) => void;
+  readonly setPartName: (part: PartName, name: string) => void;
 
   // Accesorios
   readonly activeAccessoryId: string | null;
@@ -477,6 +478,14 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         },
       })),
 
+    setPartName: (part, name) =>
+      set((s) => ({
+        project: {
+          ...s.project,
+          parts: { ...s.project.parts, [part]: { ...s.project.parts[part], name } },
+        },
+      })),
+
     activeAccessoryId: null,
 
     addAccessory: () => {
@@ -683,9 +692,9 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       } else {
         const a = s.project.accessories.find((x) => x.id === s.activeAccessoryId);
         if (!a) return;
+        // Espeja en el lugar (no negamos el offset, para no mover el objeto).
         s.updateAccessory(a.id, {
           angle: axis === 'h' ? -a.angle : 180 - a.angle,
-          ...(axis === 'h' ? { offsetPerp: -a.offsetPerp } : { offsetAlong: -a.offsetAlong }),
           ...(a.points ? { points: flipPoints(a.points, axis) } : {}),
         });
       }

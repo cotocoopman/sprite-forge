@@ -25,6 +25,7 @@ import {
   dist,
   modelToPx,
   pickBone,
+  shapeLabel,
 } from '@components/canvasInteract';
 import type { Pt } from '@components/canvasInteract';
 
@@ -121,7 +122,7 @@ export const CustomPreview = (): ReactElement => {
       const id = genId();
       const maxZ = rig.bones.reduce((mx, b) => Math.max(mx, b.z), 0);
       const bone: Bone = {
-        id, name: 'Forma', parentId: null, attach: 0, angle: 90, length: 2,
+        id, name: shapeLabel(shapeKind), parentId: null, attach: 0, angle: 90, length: 2,
         width: shapeKind === 'circle' ? 2 : brushWidth, shape: shapeKind, curve: 0,
         color: null, z: maxZ + 1, offset: { x: m.x - rig.origin.x, y: m.y - rig.origin.y },
       };

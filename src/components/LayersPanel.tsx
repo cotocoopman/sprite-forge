@@ -174,6 +174,7 @@ const HumanoidLayers = (): ReactElement => {
   const togglePartVisible = useProjectStore((s) => s.togglePartVisible);
   const setPartColor = useProjectStore((s) => s.setPartColor);
   const resetPartColor = useProjectStore((s) => s.resetPartColor);
+  const setPartName = useProjectStore((s) => s.setPartName);
   const updateAccessory = useProjectStore((s) => s.updateAccessory);
   const removeAccessory = useProjectStore((s) => s.removeAccessory);
   const reorderAccessory = useProjectStore((s) => s.reorderAccessory);
@@ -192,13 +193,14 @@ const HumanoidLayers = (): ReactElement => {
         <LayerRow
           key={p}
           indent
-          name={t(PART_LABELS[p])}
+          name={parts[p].name ?? t(PART_LABELS[p])}
           visible={parts[p].visible}
           color={parts[p].color ?? character.color}
           onToggle={() => togglePartVisible(p)}
           onColor={(v) => setPartColor(p, v)}
           onColorReset={() => resetPartColor(p)}
           canReset={parts[p].color !== null}
+          onRename={(v) => setPartName(p, v)}
         />
       ))}
 
