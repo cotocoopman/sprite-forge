@@ -4,6 +4,13 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.11.2] — 2026-08-24
+
+### Docs
+- Documented the canvas editor (drawing tools, shapes, layers, on-canvas transform,
+  object ops + context menu, object→object anchoring) in the README, the in-app quick
+  guide, and the roadmap.
+
 ## [1.11.1] — 2026-08-24
 
 ### Changed

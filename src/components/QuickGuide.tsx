@@ -32,8 +32,23 @@ const ENTRIES: readonly Entry[] = [
   },
   {
     section: 'Accesorios',
-    what: 'Armas, sombreros, capas… anclados a un hueso (mano, cabeza) que siguen la animación.',
+    what: 'Armas, sombreros, capas… anclados a un hueso (mano, cabeza) o a OTRO objeto, que siguen la animación.',
     example: 'Sumá una "Espada" a la mano derecha: en el clip "attack" se blande sola.',
+  },
+  {
+    section: 'Dibujo (Lápiz · Formas · Goma)',
+    what: 'Barra arriba del canvas. Lápiz para dibujo libre (Shift = recta), Formas (cuadrado, círculo, triángulo, trapecio, estrella, rayo, barra) con click-arrastre (Shift = snap 45°) y Goma para borrar. Cada trazo/forma es un objeto real que se anima con el rig.',
+    example: 'Elegí "Estrella", arrastrá sobre el pecho y quedará pegada al torso al animar.',
+  },
+  {
+    section: 'Editar en el canvas',
+    what: 'Con "Seleccionar": clic para elegir, arrastrar para mover, tirador de punta para rotar/estirar y el de esquina para el ancho. Copiar/cortar/pegar/duplicar y voltear H/V por teclado (Ctrl+C/X/V/D, Supr, H, V) o con click derecho.',
+    example: 'Dibujá algo, click derecho → "Duplicar", y movés la copia a otro lado.',
+  },
+  {
+    section: 'Capas',
+    what: 'Pestaña "Capas" (panel derecho): lista todos los objetos (partes del cuerpo, accesorios o huesos). Ojito para mostrar/ocultar, color, renombrar (doble clic), duplicar, borrar y reordenar (flechas o arrastrando).',
+    example: 'Ocultá una capa con el ojito, o arrastrala para ponerla adelante/atrás.',
   },
   {
     section: 'Efectos',

@@ -16,18 +16,32 @@ Project status — what's done and what's pending. Updated by hand.
 - **Parts**: on/off visibility (hidden = greyed in the editor, excluded from
   export) and per-part color with reset to base.
 - **Effects**: shadow (floor / drop mode), glow outline, outline/border.
-- **Accessories**: shapes (bar/circle/rect) anchored to a bone, following the animation.
+- **Accessories & objects**: shapes (bar/circle/rect/triangle/trapezoid/star/bolt/
+  freehand path) anchored to a bone **or to another object** (base/center/tip),
+  following the animation.
 - **3D turn** (facing) with an 8-direction dial + slider.
 - **Animation**: 9 default clips, draggable timeline, per-joint pose editor
   (mirror/copy/paste), per-keyframe easing, playback, onion skin, guides, thumbnails.
 
 ### Custom rig mode (non-humanoid)
 - **Phase 1** — bone-tree editor (parent, attach point, angle, length, width,
-  bar/circle/rect shape, curvature, per-bone color, z), cycle-safe FK, presets
-  (Quadruped/Bird/Slime/Blank), numeric inputs, static PNG/SVG export.
+  shape (bar/circle/rect/triangle/trapezoid/star/bolt/path), curvature, per-bone
+  color, z), cycle-safe FK, presets, numeric inputs, static PNG/SVG export.
 - **Phase 2** — per-bone keyframe animation: rig clips, draggable timeline,
   per-bone angle editor, easing, playback, thumbnails, and animated-rig export
   (sheets/frames/SVG/manifest/Godot `.tres`).
+
+### Canvas editor / "mini-Krita" (v1.1–1.11)
+- **Drawing tools**: pencil (freehand → polyline primitive, Shift = straight line),
+  shape tool (rect/circle/triangle/trapezoid/star/bolt/bar, Shift = 45° snap), eraser.
+- **On-canvas transform**: select, move, rotate + resize (tip handle), width (corner
+  handle), Shift = 15° snap.
+- **Object ops**: copy/cut/paste/duplicate, flip H/V — keyboard, toolbar and a
+  right-click context menu.
+- **Layers panel** (tab): show/hide, color, rename (incl. body parts), duplicate,
+  delete, reorder via buttons or drag-and-drop.
+- **Object→object anchoring** + weapons/props as standalone rigs. Group move by prop.
+- Everything drawn/loaded is an animatable object that follows the rig.
 
 ### Export
 - Cell size by presets (16…1024) or custom.

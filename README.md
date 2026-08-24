@@ -83,10 +83,35 @@ There are **two modes** (toggle in the top bar):
 - **Glow** outline: color, opacity, expansion, intensity.
 - **Outline / border**: color and width.
 
-### Accessories
-- Shapes (capsule / circle / rect) **anchored to a bone** (hand, head, shoulder,
-  foot, hip…) that follow the animation. Color, opacity, offset, angle,
-  front/behind the silhouette.
+### Accessories & objects
+- Shapes (capsule / circle / rect / triangle / trapezoid / star / bolt / freehand
+  path) **anchored to a bone** (hand, head, shoulder, foot, hip…) — or to
+  **another object** (its base / center / tip) — that follow the animation. Color,
+  opacity, offset, angle, front/behind the silhouette.
+- Weapon/prop gallery (sword, axe, staff, pistol, dual pistols, shield, bow, rifle,
+  bomb, bazooka, laser, projectile, flag). The same weapons are available as
+  standalone rigs in custom mode.
+
+### Editing & drawing (canvas editor)
+- **Toolbar** over the canvas: Select · Pencil · Shape · Eraser.
+- **Pencil**: freehand strokes (hold `Shift` for a straight line), adjustable thickness.
+- **Shape tool**: draw rectangle / circle / triangle / trapezoid / star / bolt / bar by
+  click-and-drag (`Shift` snaps the angle to 45°). Each shape becomes a real object.
+- **Eraser**: click an object to delete it.
+- **On-canvas transform**: click to select, drag to move, the tip handle to rotate +
+  resize length, the corner handle to change width (`Shift` snaps rotation to 15°).
+  Dragging a weapon piece moves the whole group.
+- **Object ops**: copy / cut / paste / duplicate and flip horizontal / vertical — via
+  keyboard (`Ctrl+C/X/V/D`, `Del`, `H`, `V`), toolbar buttons, or a **right-click
+  context menu** (Figma-style).
+- Everything you draw, load or place is a movable, recolorable, **animatable** object
+  that follows the rig.
+
+### Layers
+- A **Layers panel** (a tab next to Animaciones) lists every object: body parts +
+  accessories (humanoid) or bones (custom rig). Per layer: show/hide (eye), color,
+  **rename** (double-click, body parts included), **duplicate**, delete, and reorder
+  with the ↑/↓ buttons or **drag-and-drop**.
 
 ### 3D turn
 - Simulates turning the character around its vertical axis (front / profile /
@@ -107,11 +132,14 @@ There are **two modes** (toggle in the top bar):
 
 ### Custom rig (non-humanoid)
 - **Bone tree**: each bone has a parent, attach point on the parent (0=base,
-  1=tip), relative angle, length, width, **shape** (capsule / circle / rect),
-  curvature, own color, and draw order (z). All with slider + input.
+  1=tip), relative angle, length, width, **shape** (capsule / circle / rect /
+  triangle / trapezoid / star / bolt / freehand path), curvature, own color, and
+  draw order (z). All with slider + input.
 - Add / delete bones (deleting cascades to children), selection and editing with
-  live preview. Cycle-safe forward kinematics.
-- **Presets**: Quadruped, Bird, Slime, Blank.
+  live preview. Cycle-safe forward kinematics. The canvas editor (draw / transform /
+  layers) works here too.
+- **Presets**: Dog/Wolf, Cat, Bird, Slime, Snake, Spider, Shark, Bat, Rocket, Star,
+  Cloud, Explosion, Wave, Blank — plus every weapon as a standalone rig.
 - Per-bone color + individual reset or **reset all to base color**.
 - **Animation** (same as humanoid): rig clips with `frames`/`fps`/`loop`,
   draggable keyframe timeline, **per-bone angle editor** per keyframe, easing,
