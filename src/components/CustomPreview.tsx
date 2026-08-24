@@ -18,6 +18,7 @@ import {
   boneBaseTip,
   boneCenter,
   boneRadius,
+  BOX_SHAPES,
   clientToModel,
   clientToViewBox,
   dist,
@@ -73,7 +74,12 @@ export const CustomPreview = (): ReactElement => {
   const mid = bt ? { x: (bt.base.x + bt.tip.x) / 2, y: (bt.base.y + bt.tip.y) / 2 } : null;
   const wOff = selBone ? selBone.width / 2 + 3 : 0;
   const tipPx = bt && !isCircle && !isPath ? modelToPx(bt.tip.x, bt.tip.y, tf) : null;
-  const widthPx = mid ? modelToPx(mid.x + perp.x * wOff, mid.y + perp.y * wOff, tf) : null;
+  // Handle de ancho en la ESQUINA (punta + perpendicular), estilo caja estándar.
+  const widthPx = isCircle
+    ? (selCenter ? modelToPx(selCenter.x + perp.x * wOff, selCenter.y + perp.y * wOff, tf) : null)
+    : bt
+      ? modelToPx(bt.tip.x + perp.x * (selBone!.width / 2), bt.tip.y + perp.y * (selBone!.width / 2), tf)
+      : null;
 
   const drag = useRef<
     | { mode: 'move'; id: string; start: Pt; offset: Pt }
@@ -161,14 +167,22 @@ export const CustomPreview = (): ReactElement => {
     }
     if (create.current) {
       const m = clientToModel(e.currentTarget, e.clientX, e.clientY, tf);
-      const len = dist(create.current.base, m);
+      const c = create.current.base;
       if (shapeKind === 'circle') {
-        updateBone(create.current.id, { width: Math.max(2, Math.round(len * 2 * 10) / 10) });
+        updateBone(create.current.id, { width: Math.max(2, Math.round(dist(c, m) * 2 * 10) / 10) });
+      } else if (BOX_SHAPES.has(shapeKind)) {
+        // Caja centrada en el clic, ejes de pantalla (no rota al mover).
+        const dx = Math.abs(m.x - c.x);
+        const dy = Math.abs(m.y - c.y);
+        const length = Math.max(2, Math.round((shift ? Math.max(dx, dy) : dy) * 2 * 10) / 10);
+        const width = Math.max(2, Math.round((shift ? Math.max(dx, dy) : dx) * 2 * 10) / 10);
+        updateBone(create.current.id, { angle: 0, length, width, offset: { x: c.x - rig.origin.x, y: c.y + length / 2 - rig.origin.y } });
       } else {
-        const a = boneAngleTo(create.current.base, m);
+        // Barra / estrella: direccional, apunta al cursor.
+        const a = boneAngleTo(c, m);
         updateBone(create.current.id, {
           angle: Math.round(shift ? Math.round(a / 45) * 45 : a),
-          length: Math.max(2, Math.round(len * 10) / 10),
+          length: Math.max(2, Math.round(dist(c, m) * 10) / 10),
         });
       }
       return;
@@ -242,12 +256,12 @@ export const CustomPreview = (): ReactElement => {
           <g dangerouslySetInnerHTML={{ __html: inner }} />
           {selPx && (
             <>
-              <circle cx={selPx.x} cy={selPx.y} r={selR} fill="none" stroke="#22d3ee" strokeWidth={2} strokeDasharray="5 4" />
+              <circle cx={selPx.x} cy={selPx.y} r={selR} fill="none" stroke="#22d3ee" strokeWidth={1} strokeDasharray="3 3" opacity={0.55} />
               {tool === 'select' && tipPx && (
-                <circle cx={tipPx.x} cy={tipPx.y} r={6} fill="#22d3ee" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'grab' }} />
+                <circle cx={tipPx.x} cy={tipPx.y} r={5} fill="#22d3ee" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'grab' }} />
               )}
               {tool === 'select' && widthPx && (
-                <rect x={widthPx.x - 6} y={widthPx.y - 6} width={12} height={12} rx={2} fill="#a5f3fc" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'ew-resize' }} />
+                <rect x={widthPx.x - 5} y={widthPx.y - 5} width={10} height={10} rx={2} fill="#a5f3fc" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'nwse-resize' }} />
               )}
             </>
           )}

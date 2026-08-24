@@ -6,6 +6,8 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import Snackbar from '@mui/material/Snackbar';
@@ -123,6 +125,19 @@ export const App = (): ReactElement => {
   const [exportOpen, setExportOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [rightTab, setRightTab] = useState<'anim' | 'layers'>('anim');
+
+  const rightTabs = (
+    <Tabs
+      value={rightTab}
+      onChange={(_, v) => setRightTab(v as 'anim' | 'layers')}
+      variant="fullWidth"
+      sx={{ minHeight: 40, mb: 1 }}
+    >
+      <Tab value="anim" label={t('Animaciones')} sx={{ minHeight: 40 }} />
+      <Tab value="layers" label={t('Capas')} sx={{ minHeight: 40 }} />
+    </Tabs>
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dirtyRef = useRef(false);
 
@@ -350,8 +365,6 @@ export const App = (): ReactElement => {
               <Divider />
               <RigEditor />
               <Divider />
-              <LayersPanel />
-              <Divider />
               <EffectsPanel />
             </Stack>
           </Paper>
@@ -367,13 +380,18 @@ export const App = (): ReactElement => {
             <PlaybackControls />
             <RigFrameStrip />
           </Box>
-          {/* Derecha — Animación del rig */}
+          {/* Derecha — Animación del rig / Capas */}
           <Paper square sx={{ ...columnSx, width: { xs: '100%', md: 360 }, flexShrink: { md: 0 } }}>
-            <Stack spacing={2}>
-              <RigAnimationPanel />
-              <Divider />
-              <AnimationIO />
-            </Stack>
+            {rightTabs}
+            {rightTab === 'layers' ? (
+              <LayersPanel bare />
+            ) : (
+              <Stack spacing={2}>
+                <RigAnimationPanel />
+                <Divider />
+                <AnimationIO />
+              </Stack>
+            )}
           </Paper>
         </Box>
       ) : (
@@ -388,8 +406,6 @@ export const App = (): ReactElement => {
               <PartsPanel />
               <Divider />
               <AccessoriesPanel />
-              <Divider />
-              <LayersPanel />
               <Divider />
               <EffectsPanel />
               <Divider />
@@ -411,17 +427,22 @@ export const App = (): ReactElement => {
             <FrameStrip />
           </Box>
 
-          {/* Derecha — Animación y pose */}
+          {/* Derecha — Animación y pose / Capas */}
           <Paper square sx={{ ...columnSx, width: { xs: '100%', md: 360 }, flexShrink: { md: 0 } }}>
-            <Stack spacing={2}>
-              <AnimationList />
-              <Divider />
-              <KeyframeTimeline />
-              <Divider />
-              <PoseEditor />
-              <Divider />
-              <AnimationIO />
-            </Stack>
+            {rightTabs}
+            {rightTab === 'layers' ? (
+              <LayersPanel bare />
+            ) : (
+              <Stack spacing={2}>
+                <AnimationList />
+                <Divider />
+                <KeyframeTimeline />
+                <Divider />
+                <PoseEditor />
+                <Divider />
+                <AnimationIO />
+              </Stack>
+            )}
           </Paper>
         </Box>
       )}

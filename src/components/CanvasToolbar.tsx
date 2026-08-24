@@ -6,10 +6,11 @@ import Typography from '@mui/material/Typography';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Tooltip from '@mui/material/Tooltip';
+import SvgIcon from '@mui/material/SvgIcon';
+import type { ReactElement as RE } from 'react';
 import NearMeIcon from '@mui/icons-material/NearMe';
-import GestureIcon from '@mui/icons-material/Gesture';
+import EditIcon from '@mui/icons-material/Edit';
 import CategoryIcon from '@mui/icons-material/Category';
-import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
 import CropSquareIcon from '@mui/icons-material/CropSquare';
 import CircleIcon from '@mui/icons-material/Circle';
 import ChangeHistoryIcon from '@mui/icons-material/ChangeHistory';
@@ -27,6 +28,13 @@ import { NumberInput } from '@components/NumberInput';
 import { useT } from '@/i18n';
 import type { DrawTool } from '@store/useProjectStore';
 import type { AccessoryShape } from '@core/poses';
+
+// Goma (no hay icono estándar en MUI): rombo con esquina "de contacto".
+const EraserIcon = (): RE => (
+  <SvgIcon fontSize="small">
+    <path d="M16.24 3.56l4.2 4.2a2 2 0 0 1 0 2.83L12.83 18H21v2H9l-4.24-4.24a2 2 0 0 1 0-2.83l8.66-8.66a2 2 0 0 1 2.82 0M7.6 15l2.83 2.83 5.66-5.66-2.83-2.83z" />
+  </SvgIcon>
+);
 
 export const CanvasToolbar = (): ReactElement => {
   const tool = useProjectStore((s) => s.tool);
@@ -53,13 +61,13 @@ export const CanvasToolbar = (): ReactElement => {
           <Tooltip title={t('Seleccionar / mover')}><NearMeIcon fontSize="small" /></Tooltip>
         </ToggleButton>
         <ToggleButton value="pencil" aria-label="pencil">
-          <Tooltip title={t('Lápiz (dibujo libre)')}><GestureIcon fontSize="small" /></Tooltip>
+          <Tooltip title={t('Lápiz (dibujo libre)')}><EditIcon fontSize="small" /></Tooltip>
         </ToggleButton>
         <ToggleButton value="shape" aria-label="shape">
           <Tooltip title={t('Dibujar forma')}><CategoryIcon fontSize="small" /></Tooltip>
         </ToggleButton>
         <ToggleButton value="eraser" aria-label="eraser">
-          <Tooltip title={t('Goma (borrar objeto)')}><CleaningServicesIcon fontSize="small" /></Tooltip>
+          <Tooltip title={t('Goma (borrar objeto)')}><EraserIcon /></Tooltip>
         </ToggleButton>
       </ToggleButtonGroup>
 

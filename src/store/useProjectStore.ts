@@ -180,6 +180,7 @@ export type ProjectState = {
   readonly toggleBoneVisible: (id: string) => void;
   readonly reorderBone: (id: string, delta: number) => void;
   readonly moveBoneToIndex: (id: string, toFrontIndex: number) => void;
+  readonly duplicateBone: (id: string) => void;
   readonly insertBone: (bone: Bone) => void;
   readonly setRigField: (patch: { name?: string; color?: string; originX?: number; originY?: number }) => void;
   readonly resetAllBoneColors: () => void;
@@ -802,6 +803,13 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         const newBones = bones.map((b) => ({ ...b, z: rank.get(b.id) ?? b.z }));
         return { project: { ...s.project, customRig: { ...s.project.customRig, bones: newBones } } };
       }),
+
+    duplicateBone: (id) => {
+      const src = get().project.customRig.bones.find((b) => b.id === id);
+      if (!src) return;
+      const off = src.offset ?? { x: 0, y: 0 };
+      get().insertBone({ ...src, id: genId(), name: `${src.name} copia`, offset: { x: off.x + 6, y: off.y + 6 } });
+    },
 
     insertBone: (bone) =>
       set((s) => ({

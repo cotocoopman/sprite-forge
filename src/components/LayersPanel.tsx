@@ -11,6 +11,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import LayersIcon from '@mui/icons-material/Layers';
 import { useProjectStore } from '@store/useProjectStore';
@@ -33,6 +34,7 @@ const LayerRow = ({
   onUp,
   onDown,
   onDelete,
+  onDuplicate,
   onRename,
   dragId,
   onDropReorder,
@@ -50,6 +52,7 @@ const LayerRow = ({
   onUp?: () => void;
   onDown?: () => void;
   onDelete?: () => void;
+  onDuplicate?: () => void;
   onRename?: (v: string) => void;
   dragId?: string;
   onDropReorder?: (fromId: string) => void;
@@ -140,6 +143,13 @@ const LayerRow = ({
         <KeyboardArrowDownIcon fontSize="inherit" />
       </IconButton>
     )}
+    {onDuplicate && (
+      <Tooltip title="Duplicar">
+        <IconButton size="small" onClick={onDuplicate}>
+          <ContentCopyIcon fontSize="inherit" />
+        </IconButton>
+      </Tooltip>
+    )}
     {onDelete && (
       <IconButton size="small" onClick={onDelete}>
         <DeleteIcon fontSize="inherit" />
@@ -168,6 +178,7 @@ const HumanoidLayers = (): ReactElement => {
   const removeAccessory = useProjectStore((s) => s.removeAccessory);
   const reorderAccessory = useProjectStore((s) => s.reorderAccessory);
   const moveAccessoryToIndex = useProjectStore((s) => s.moveAccessoryToIndex);
+  const duplicateAccessory = useProjectStore((s) => s.duplicateAccessory);
   const selectAccessory = useProjectStore((s) => s.selectAccessory);
   const t = useT();
 
@@ -213,6 +224,7 @@ const HumanoidLayers = (): ReactElement => {
             onRename={(v) => updateAccessory(a.id, { name: v })}
             onUp={() => reorderAccessory(a.id, 1)}
             onDown={() => reorderAccessory(a.id, -1)}
+            onDuplicate={() => duplicateAccessory(a.id)}
             onDelete={() => removeAccessory(a.id)}
           />
         ))
@@ -231,6 +243,7 @@ const BoneLayers = (): ReactElement => {
   const toggleBoneVisible = useProjectStore((s) => s.toggleBoneVisible);
   const reorderBone = useProjectStore((s) => s.reorderBone);
   const moveBoneToIndex = useProjectStore((s) => s.moveBoneToIndex);
+  const duplicateBone = useProjectStore((s) => s.duplicateBone);
 
   const frontFirst = [...rig.bones].sort((a, b) => b.z - a.z);
 
@@ -253,6 +266,7 @@ const BoneLayers = (): ReactElement => {
           onRename={(v) => updateBone(b.id, { name: v })}
           onUp={() => reorderBone(b.id, 1)}
           onDown={() => reorderBone(b.id, -1)}
+          onDuplicate={() => duplicateBone(b.id)}
           onDelete={() => removeBone(b.id)}
         />
       ))}
@@ -260,11 +274,13 @@ const BoneLayers = (): ReactElement => {
   );
 };
 
-export const LayersPanel = (): ReactElement => {
+export const LayersPanel = ({ bare }: { bare?: boolean } = {}): ReactElement => {
   const mode = useProjectStore((s) => s.project.mode);
+  const content = mode === 'custom' ? <BoneLayers /> : <HumanoidLayers />;
+  if (bare) return content;
   return (
     <SectionAccordion title="Capas" defaultExpanded icon={<LayersIcon fontSize="small" color="secondary" />}>
-      {mode === 'custom' ? <BoneLayers /> : <HumanoidLayers />}
+      {content}
     </SectionAccordion>
   );
 };

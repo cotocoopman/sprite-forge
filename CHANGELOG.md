@@ -4,6 +4,24 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.10.0] — 2026-08-23
+
+### Added
+- **Layers moved to the right panel** as a tab (Animaciones / Capas), out of the left
+  column, with a **Duplicate** button per layer row.
+
+### Changed
+- Pencil and Eraser toolbar icons now look like a pencil and an eraser.
+- Selection outline is more subtle; the resize handle sits at the shape's corner.
+- The Accessories panel no longer duplicates the object list (that lives in Capas now);
+  select a layer to edit it.
+
+### Fixed
+- **Rotation direction**: dragging the rotate handle now turns objects toward the cursor
+  (accessory angle convention was inverted).
+- **Shape creation**: rectangle / triangle / trapezoid / bolt are now drawn as a centered
+  bounding box instead of a thin bar stretched along the mouse (circle/star/bar unchanged).
+
 ## [1.9.0] — 2026-08-23
 
 ### Added

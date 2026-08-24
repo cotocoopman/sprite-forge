@@ -7,6 +7,10 @@ import type { RBone } from '@core/customRig';
 
 export type Pt = { x: number; y: number };
 
+// Formas que se crean como "caja" (bounding box centrado, sin rotar al arrastrar).
+// Círculo/estrella/barra se crean radiales/direccionales.
+export const BOX_SHAPES = new Set(['rect', 'triangle', 'trapezoid', 'bolt']);
+
 export const clientToViewBox = (svg: SVGSVGElement, clientX: number, clientY: number): Pt => {
   const m = svg.getScreenCTM();
   if (!m) return { x: 0, y: 0 };

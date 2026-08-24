@@ -12,14 +12,10 @@ import MenuItem from '@mui/material/MenuItem';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
-import List from '@mui/material/List';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import AddIcon from '@mui/icons-material/Add';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import DeleteIcon from '@mui/icons-material/Delete';
 import { useProjectStore } from '@store/useProjectStore';
 import { ColorField } from '@components/ColorField';
 import { NumberInput } from '@components/NumberInput';
@@ -210,9 +206,7 @@ export const AccessoriesPanel = (): ReactElement => {
   const accessories = useProjectStore((s) => s.project.accessories);
   const activeId = useProjectStore((s) => s.activeAccessoryId);
   const addAccessory = useProjectStore((s) => s.addAccessory);
-  const duplicateAccessory = useProjectStore((s) => s.duplicateAccessory);
   const duplicateActiveProp = useProjectStore((s) => s.duplicateActiveProp);
-  const removeAccessory = useProjectStore((s) => s.removeAccessory);
   const selectAccessory = useProjectStore((s) => s.selectAccessory);
   const t = useT();
 
@@ -234,34 +228,11 @@ export const AccessoriesPanel = (): ReactElement => {
 
       <PropGallery />
 
-      {accessories.length === 0 ? (
-        <Typography variant="caption" color="text.secondary">
-          {t('Sin accesorios. Agregá uno (arma, sombrero, capa, escudo…) anclado a un hueso.')}
-        </Typography>
-      ) : (
-        <List dense disablePadding sx={{ maxHeight: 160, overflowY: 'auto' }}>
-          {accessories.map((a) => (
-            <ListItemButton
-              key={a.id}
-              selected={a.id === activeId}
-              onClick={() => selectAccessory(a.id)}
-              sx={{ borderRadius: 1, opacity: a.hidden ? 0.45 : 1 }}
-            >
-              <ListItemText primary={a.name} secondary={t(ANCHOR_LABELS[a.anchor])} />
-              <Tooltip title={t('Duplicar esta pieza')}>
-                <IconButton size="small" onClick={(e) => { e.stopPropagation(); duplicateAccessory(a.id); }}>
-                  <ContentCopyIcon fontSize="inherit" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title={t('Eliminar')}>
-                <IconButton size="small" onClick={(e) => { e.stopPropagation(); removeAccessory(a.id); }}>
-                  <DeleteIcon fontSize="inherit" />
-                </IconButton>
-              </Tooltip>
-            </ListItemButton>
-          ))}
-        </List>
-      )}
+      <Typography variant="caption" color="text.secondary">
+        {accessories.length === 0
+          ? t('Sin accesorios. Agregá uno o dibujá algo; se listan y editan en la pestaña "Capas".')
+          : t('Seleccioná una capa en "Capas" (panel derecho) para editarla acá.')}
+      </Typography>
 
       {accessories.length > 0 && (
         <Button size="small" variant="outlined" startIcon={<ContentCopyIcon />} onClick={duplicateActiveProp} disabled={!active}>

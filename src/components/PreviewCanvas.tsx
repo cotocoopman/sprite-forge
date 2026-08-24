@@ -14,7 +14,7 @@ import { sampleClip } from '@core/poses';
 import { makeTransform, renderCharacterInner, resolveAccessoryGeom, skeletonToPrimitives } from '@core/svg';
 import type { SvgPrimitive } from '@core/svg';
 import { CanvasToolbar } from '@components/CanvasToolbar';
-import { accWorldAngleTo, angleDeg, clientToModel, clientToViewBox, dist, modelToPx } from '@components/canvasInteract';
+import { accWorldAngleTo, angleDeg, BOX_SHAPES, clientToModel, clientToViewBox, dist, modelToPx } from '@components/canvasInteract';
 import type { Pt } from '@components/canvasInteract';
 import { genId } from '@store/useProjectStore';
 import type { Accessory } from '@core/poses';
@@ -177,7 +177,12 @@ export const PreviewCanvas = (): ReactElement => {
   const selR = selG ? selG.radius * tf.scale : 0;
   const tipPx = selG && !isCircle && !isPath ? modelToPx(selG.tip.x, selG.tip.y, tf) : null;
   const wOff = selAcc ? selAcc.width / 2 + 3 : 0;
-  const widthPx = selG ? modelToPx(selG.center.x + selG.perp.x * wOff, selG.center.y + selG.perp.y * wOff, tf) : null;
+  // Handle de ancho en la ESQUINA (punta + perpendicular) para formas; círculo al lado.
+  const widthPx = selG
+    ? isCircle
+      ? modelToPx(selG.center.x + selG.perp.x * wOff, selG.center.y + selG.perp.y * wOff, tf)
+      : modelToPx(selG.tip.x + selG.perp.x * (selAcc!.width / 2), selG.tip.y + selG.perp.y * (selAcc!.width / 2), tf)
+    : null;
 
   const drag = useRef<
     | { mode: 'move'; start: Pt; members: { id: string; a0: number; p0: number; along: Pt; perp: Pt }[] }
@@ -198,7 +203,7 @@ export const PreviewCanvas = (): ReactElement => {
     return hit;
   };
 
-  const create = useRef<{ id: string; base: Pt; anchorAngle: number } | null>(null);
+  const create = useRef<{ id: string; base: Pt; anchorPos: Pt; anchorAngle: number; along: Pt; perp: Pt } | null>(null);
   const pencil = useRef<{ id: string; pts: Pt[]; anchorPos: Pt; along: Pt; perp: Pt } | null>(null);
 
   const onPointerDown = (e: ReactPointerEvent<SVGSVGElement>): void => {
@@ -250,7 +255,7 @@ export const PreviewCanvas = (): ReactElement => {
         color: character.color, opacity: 1, front: true,
       };
       insertAccessory(acc);
-      create.current = { id, base: m, anchorAngle: anchor.angle };
+      create.current = { id, base: m, anchorPos: anchor.pos, anchorAngle: anchor.angle, along, perp };
       svg.setPointerCapture(e.pointerId);
       return;
     }
@@ -311,14 +316,30 @@ export const PreviewCanvas = (): ReactElement => {
     }
     if (create.current) {
       const m = clientToModel(e.currentTarget, e.clientX, e.clientY, tf);
-      const len = dist(create.current.base, m);
+      const cc = create.current;
       if (shapeKind === 'circle') {
-        updateAccessory(create.current.id, { width: Math.max(2, Math.round(len * 2 * 10) / 10) });
+        updateAccessory(cc.id, { width: Math.max(2, Math.round(dist(cc.base, m) * 2 * 10) / 10) });
+      } else if (BOX_SHAPES.has(shapeKind)) {
+        // Caja centrada en el clic; ejes de pantalla (dir hacia arriba). No rota.
+        const dx = Math.abs(m.x - cc.base.x);
+        const dy = Math.abs(m.y - cc.base.y);
+        const length = Math.max(2, Math.round((shift ? Math.max(dx, dy) : dy) * 2 * 10) / 10);
+        const width = Math.max(2, Math.round((shift ? Math.max(dx, dy) : dx) * 2 * 10) / 10);
+        // dir de pantalla "arriba" (0,-1): base = centro + (0, length/2). angle = 180 - A.
+        const bx = cc.base.x;
+        const by = cc.base.y + length / 2;
+        updateAccessory(cc.id, {
+          angle: Math.round(180 - cc.anchorAngle),
+          length,
+          width,
+          offsetAlong: (bx - cc.anchorPos.x) * cc.along.x + (by - cc.anchorPos.y) * cc.along.y,
+          offsetPerp: (bx - cc.anchorPos.x) * cc.perp.x + (by - cc.anchorPos.y) * cc.perp.y,
+        });
       } else {
-        const a = accWorldAngleTo(create.current.base, m) - create.current.anchorAngle;
-        updateAccessory(create.current.id, {
+        const a = accWorldAngleTo(cc.base, m) - cc.anchorAngle;
+        updateAccessory(cc.id, {
           angle: Math.round(shift ? Math.round(a / 45) * 45 : a),
-          length: Math.max(2, Math.round(len * 10) / 10),
+          length: Math.max(2, Math.round(dist(cc.base, m) * 10) / 10),
         });
       }
       return;
@@ -336,7 +357,8 @@ export const PreviewCanvas = (): ReactElement => {
         });
       }
     } else if (d.mode === 'tip') {
-      const a = d.startAngle + (angleDeg(d.base, m) - d.grabA);
+      // Convención de accesorios: el ángulo de pantalla decrece al crecer acc.angle → resta.
+      const a = d.startAngle - (angleDeg(d.base, m) - d.grabA);
       updateAccessory(d.id, {
         angle: Math.round(shift ? Math.round(a / 15) * 15 : a),
         length: Math.round(Math.max(1, dist(d.base, m)) * 10) / 10,
@@ -439,12 +461,12 @@ export const PreviewCanvas = (): ReactElement => {
           <g dangerouslySetInnerHTML={{ __html: characterInner }} />
           {selPx && (
             <>
-              <circle cx={selPx.x} cy={selPx.y} r={selR} fill="none" stroke="#22d3ee" strokeWidth={2} strokeDasharray="5 4" />
+              <circle cx={selPx.x} cy={selPx.y} r={selR} fill="none" stroke="#22d3ee" strokeWidth={1} strokeDasharray="3 3" opacity={0.55} />
               {tool === 'select' && tipPx && (
-                <circle cx={tipPx.x} cy={tipPx.y} r={6} fill="#22d3ee" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'grab' }} />
+                <circle cx={tipPx.x} cy={tipPx.y} r={5} fill="#22d3ee" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'grab' }} />
               )}
               {tool === 'select' && widthPx && (
-                <rect x={widthPx.x - 6} y={widthPx.y - 6} width={12} height={12} rx={2} fill="#a5f3fc" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'ew-resize' }} />
+                <rect x={widthPx.x - 5} y={widthPx.y - 5} width={10} height={10} rx={2} fill="#a5f3fc" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'nwse-resize' }} />
               )}
             </>
           )}
