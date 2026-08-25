@@ -14,6 +14,8 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -61,6 +63,7 @@ import { AnimationList } from '@components/AnimationList';
 import { KeyframeTimeline } from '@components/KeyframeTimeline';
 import { PoseEditor } from '@components/PoseEditor';
 import { ExportDialog } from '@components/ExportDialog';
+import { MobileLayout } from '@components/MobileLayout';
 
 // Columnas: en desktop scrollean internas a altura de viewport; en móvil se
 // apilan con altura automática y scrollea la página.
@@ -128,6 +131,8 @@ export const App = (): ReactElement => {
   const redo = useProjectStore((s) => s.redo);
 
   const resetProject = useProjectStore((s) => s.resetProject);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [exportOpen, setExportOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
@@ -261,8 +266,24 @@ export const App = (): ReactElement => {
     reader.readAsText(file);
   };
 
+  const handleExportProject = (): void => {
+    exportProjectJson(project);
+    dirtyRef.current = false;
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {isMobile ? (
+        <MobileLayout
+          onImportClick={() => fileInputRef.current?.click()}
+          onExportProject={handleExportProject}
+          onExportSprites={() => setExportOpen(true)}
+          onGuide={() => setGuideOpen(true)}
+          onShortcuts={() => setShortcutsOpen(true)}
+          onReset={() => setResetOpen(true)}
+        />
+      ) : (
+        <>
       <AppBar position="static" color="default" elevation={1}>
         <Toolbar variant="dense" sx={{ flexWrap: 'wrap', gap: 1, py: { xs: 1, md: 0 } }}>
           <Typography variant="h6" sx={{ fontWeight: 700, mr: 0.75 }}>
@@ -294,13 +315,6 @@ export const App = (): ReactElement => {
               <ToggleButton value="en">EN</ToggleButton>
             </ToggleButtonGroup>
           </Tooltip>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="application/json,.json"
-            hidden
-            onChange={handleImportFile}
-          />
           <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
             <Tooltip title={t('Deshacer (Ctrl+Z)')}>
               <span>
@@ -344,13 +358,7 @@ export const App = (): ReactElement => {
               </Button>
             </Tooltip>
             <Tooltip title={t('Guardar TODO el proyecto editable como .json (backup / seguir después)')}>
-              <Button
-                startIcon={<SaveAltIcon />}
-                onClick={() => {
-                  exportProjectJson(project);
-                  dirtyRef.current = false;
-                }}
-              >
+              <Button startIcon={<SaveAltIcon />} onClick={handleExportProject}>
                 {t('Exportar proyecto')}
               </Button>
             </Tooltip>
@@ -462,6 +470,16 @@ export const App = (): ReactElement => {
           </Paper>
         </Box>
       )}
+        </>
+      )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/json,.json"
+        hidden
+        onChange={handleImportFile}
+      />
 
       <ExportDialog open={exportOpen} onClose={() => setExportOpen(false)} />
       <KeyboardShortcuts open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />

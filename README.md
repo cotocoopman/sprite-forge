@@ -140,6 +140,14 @@ There are **two modes** (toggle in the top bar):
   `↘ 45°`, `↓ 90°`, `↙ 135°`, `← 180°`, `↖ 225°`, `↑ 270°`, `↗ 315°`.
 - Export can generate **all 8 directions** (`_d0`…`_d7`).
 
+### Mobile
+- On phones (below the `md` breakpoint) the app switches to a **mobile-first shell**
+  (desktop is unchanged): the canvas fills almost the whole screen, a compact top bar
+  holds the Humano/Rig toggle + an overflow menu (import/export, language, guide,
+  shortcuts, GitHub, reset), and a **bottom navigation** (Diseño · Capas · Animar ·
+  Girar) opens swipeable **bottom sheets** with each panel group, so editors stay
+  usable one-handed without covering the canvas.
+
 ### Animation
 - Clips (`idle`, `walk`, `run`, `jump`, `fall`, `attack`, `defend`, `hurt`,
   `death` by default) with `frames` / `fps` / `loop`.

@@ -4,6 +4,22 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.2.0] — 2026-08-25
+
+- **Mobile layout.** Below the `md` breakpoint the app now uses a phone-first shell
+  (desktop is unchanged): the canvas fills almost the whole screen, with everything
+  else reachable without scrolling past it.
+  - **Compact top bar**: title · Humano/Rig mode toggle · export-sprites button · a
+    `⋮` overflow menu with undo/redo, import, export project/sprites, language,
+    quick guide, shortcuts, GitHub and master reset.
+  - **Bottom navigation** (Diseño · Capas · Animar · Girar) — each opens a swipeable
+    **bottom sheet** with that panel group (character/accessories/effects/presets,
+    layers, animation timeline + pose, or the 3D-turn dial), so object editors stay
+    usable one-handed without covering the canvas.
+  - Playback controls stay pinned under the canvas; the thumbnail strip moves into
+    the Animar sheet to give the canvas more room.
+  - All panels are reused as-is — no duplicate logic.
+
 ## [2.1.1] — 2026-08-25
 
 - **Master reset** — a reset button at the end of the top toolbar wipes the current
