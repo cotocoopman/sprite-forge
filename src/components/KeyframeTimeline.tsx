@@ -120,9 +120,9 @@ export const KeyframeTimeline = (): ReactElement => {
                 borderRadius: '3px',
                 transform: 'translate(-50%, -50%) rotate(45deg)',
                 cursor: 'grab',
-                background: i === activeKeyframeIndex ? 'primary.main' : 'grey.500',
+                background: i === activeKeyframeIndex ? '#ffb300' : 'grey.500',
                 border: '2px solid',
-                borderColor: i === activeKeyframeIndex ? 'primary.light' : 'grey.700',
+                borderColor: i === activeKeyframeIndex ? '#ffe082' : 'grey.700',
                 zIndex: 2,
               }}
             />

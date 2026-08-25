@@ -4,6 +4,12 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.4.3] — 2026-08-25
+
+- **Consistent keyframe highlight.** The active keyframe diamond in the right-panel
+  timeline (humanoid and rig) is now the same amber as the selected marker on the
+  playback bar, reinforcing that they refer to the same keyframe.
+
 ## [2.4.2] — 2026-08-25
 
 - **Clearer keyframe markers on the playback bar.** The diamonds now sit just above

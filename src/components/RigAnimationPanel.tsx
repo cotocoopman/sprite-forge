@@ -151,7 +151,7 @@ export const RigAnimationPanel = (): ReactElement => {
                 <Box
                   onPointerDown={(e) => { e.stopPropagation(); selectRigKeyframe(i); setDragIndex(i); (e.target as Element).setPointerCapture?.(e.pointerId); }}
                   onClick={() => selectRigKeyframe(i)}
-                  sx={{ position: 'absolute', top: '50%', left: `${kf.t * 100}%`, width: 14, height: 14, borderRadius: '3px', transform: 'translate(-50%, -50%) rotate(45deg)', cursor: 'grab', background: i === activeKf ? 'primary.main' : 'grey.500', border: '2px solid', borderColor: i === activeKf ? 'primary.light' : 'grey.700', zIndex: 2 }}
+                  sx={{ position: 'absolute', top: '50%', left: `${kf.t * 100}%`, width: 14, height: 14, borderRadius: '3px', transform: 'translate(-50%, -50%) rotate(45deg)', cursor: 'grab', background: i === activeKf ? '#ffb300' : 'grey.500', border: '2px solid', borderColor: i === activeKf ? '#ffe082' : 'grey.700', zIndex: 2 }}
                 />
               </Tooltip>
             ))}
