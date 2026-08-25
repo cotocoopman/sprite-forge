@@ -203,6 +203,19 @@ export const sampleClip = (clip: AnimationClip): Pose[] => {
   return out;
 };
 
+// --- Mapeo frame ↔ t (0..1) ---
+// Un solo cursor de tiempo: el frame muestreado y el keyframe viven en la misma
+// línea. El denominador replica el de sampleClip (loop usa frames; si no, frames-1),
+// para que un keyframe "en el frame k" caiga exactamente donde el preview lo muestra.
+export const clipFrameDenom = (frames: number, loop: boolean): number =>
+  loop ? Math.max(1, frames) : Math.max(1, frames - 1);
+
+export const frameToT = (frame: number, frames: number, loop: boolean): number =>
+  frames <= 1 ? 0 : frame / clipFrameDenom(frames, loop);
+
+export const tToFrame = (t: number, frames: number, loop: boolean): number =>
+  Math.max(0, Math.min(Math.max(0, frames - 1), Math.round(t * clipFrameDenom(frames, loop))));
+
 const clip = (
   id: string,
   name: string,

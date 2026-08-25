@@ -17,7 +17,7 @@ import type {
 import type { Bone, CustomRig, RigClip, RigPose } from '@core/customRig';
 import { rigPoseAt } from '@core/customRig';
 import type { Lang } from '@/i18n';
-import { buildDefaultProject, poseAt } from '@core/poses';
+import { buildDefaultProject, frameToT, poseAt, tToFrame } from '@core/poses';
 import { validateProject } from '@core/validation';
 import { CHARACTER_TEMPLATES, randomCharacter } from '@core/templates';
 
@@ -120,6 +120,7 @@ export type ProjectState = {
   readonly activeKeyframeIndex: number;
   readonly currentFrame: number;
   readonly isPlaying: boolean;
+  readonly autoKey: boolean;
   readonly copiedPose: Pose | null;
   readonly presets: readonly CharacterPreset[];
   readonly notification: Notification;
@@ -254,6 +255,7 @@ export type ProjectState = {
   readonly setCurrentFrame: (frame: number) => void;
   readonly setPlaying: (playing: boolean) => void;
   readonly togglePlay: () => void;
+  readonly setAutoKey: (v: boolean) => void;
   readonly nextFrame: () => void;
   readonly prevFrame: () => void;
 
@@ -335,15 +337,36 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     });
   };
 
+  // Índice del keyframe que cae exactamente en un frame (o -1).
+  const kfIndexAtFrame = (
+    keyframes: readonly { readonly t: number }[],
+    frames: number,
+    loop: boolean,
+    frame: number,
+  ): number => keyframes.findIndex((kf) => tToFrame(kf.t, frames, loop) === frame);
+
+  // Edita la pose EN EL PLAYHEAD: si hay keyframe en el frame actual lo modifica; si
+  // no, con auto-key crea uno ahí (muestreando la pose interpolada) y lo modifica.
+  // Sin auto-key y sin keyframe en el frame, no hace nada. Deja ese keyframe activo.
   const updateActivePose = (updater: (pose: Pose) => Pose): void => {
-    const { activeKeyframeIndex } = get();
+    const frame = get().currentFrame;
+    const autoKey = get().autoKey;
+    let resultIdx = -1;
     updateActiveClip((clip) => {
-      if (activeKeyframeIndex < 0 || activeKeyframeIndex >= clip.keyframes.length) return clip;
-      const keyframes = clip.keyframes.map((kf, i) =>
-        i === activeKeyframeIndex ? { ...kf, pose: updater(kf.pose) } : kf,
-      );
+      let idx = kfIndexAtFrame(clip.keyframes, clip.frames, clip.loop, frame);
+      let keyframes = clip.keyframes;
+      if (idx < 0) {
+        if (!autoKey) return clip;
+        const t = frameToT(frame, clip.frames, clip.loop);
+        const nk = { t, pose: poseAt(clip.keyframes, t), easing: 'linear' as const };
+        keyframes = [...clip.keyframes, nk].sort((a, b) => a.t - b.t);
+        idx = keyframes.indexOf(nk);
+      }
+      resultIdx = idx;
+      keyframes = keyframes.map((kf, i) => (i === idx ? { ...kf, pose: updater(kf.pose) } : kf));
       return { ...clip, keyframes };
     });
+    if (resultIdx >= 0 && resultIdx !== get().activeKeyframeIndex) set({ activeKeyframeIndex: resultIdx });
   };
 
   // --- Rig personalizado (animación) ---
@@ -357,12 +380,24 @@ export const useProjectStore = create<ProjectState>((set, get) => {
   };
 
   const updateActiveRigPose = (updater: (pose: RigPose) => RigPose): void => {
-    const idx = get().activeRigKeyframeIndex;
+    const frame = get().currentFrame;
+    const autoKey = get().autoKey;
+    let resultIdx = -1;
     updateActiveRigClip((clip) => {
-      if (idx < 0 || idx >= clip.keyframes.length) return clip;
-      const keyframes = clip.keyframes.map((kf, i) => (i === idx ? { ...kf, pose: updater(kf.pose) } : kf));
+      let idx = kfIndexAtFrame(clip.keyframes, clip.frames, clip.loop, frame);
+      let keyframes = clip.keyframes;
+      if (idx < 0) {
+        if (!autoKey) return clip;
+        const t = frameToT(frame, clip.frames, clip.loop);
+        const nk = { t, pose: rigPoseAt(clip.keyframes, t), easing: 'linear' as const };
+        keyframes = [...clip.keyframes, nk].sort((a, b) => a.t - b.t);
+        idx = keyframes.indexOf(nk);
+      }
+      resultIdx = idx;
+      keyframes = keyframes.map((kf, i) => (i === idx ? { ...kf, pose: updater(kf.pose) } : kf));
       return { ...clip, keyframes };
     });
+    if (resultIdx >= 0 && resultIdx !== get().activeRigKeyframeIndex) set({ activeRigKeyframeIndex: resultIdx });
   };
 
   const activeRigClip = (): RigClip | undefined =>
@@ -376,6 +411,19 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     }
     const clip = s.project.animations.find((c) => c.id === s.activeAnimationId);
     return clip?.frames ?? 1;
+  };
+
+  // Partial de estado al mover el playhead: fija currentFrame y AUTO-SELECCIONA el
+  // keyframe que caiga en ese frame (o -1 = frame interpolado). Según el modo.
+  const frameSync = (s: ProjectState, cf: number): Partial<ProjectState> => {
+    if (s.project.mode === 'custom') {
+      const clip = s.project.customRig.animations.find((c) => c.id === s.activeRigClipId);
+      const idx = clip ? kfIndexAtFrame(clip.keyframes, clip.frames, clip.loop, cf) : -1;
+      return { currentFrame: cf, activeRigKeyframeIndex: idx };
+    }
+    const clip = s.project.animations.find((c) => c.id === s.activeAnimationId);
+    const idx = clip ? kfIndexAtFrame(clip.keyframes, clip.frames, clip.loop, cf) : -1;
+    return { currentFrame: cf, activeKeyframeIndex: idx };
   };
 
   // Restaura un proyecto del historial, re-anclando índices/selección de forma segura.
@@ -997,17 +1045,31 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     setRigClipFps: (fps) => updateActiveRigClip((c) => ({ ...c, fps: Math.max(1, Math.round(fps)) })),
     setRigClipLoop: (loop) => updateActiveRigClip((c) => ({ ...c, loop })),
 
-    selectRigKeyframe: (index) => set({ activeRigKeyframeIndex: index }),
+    selectRigKeyframe: (index) =>
+      set((s) => {
+        const clip = s.project.customRig.animations.find((c) => c.id === s.activeRigClipId);
+        const kf = clip?.keyframes[index];
+        if (!kf || !clip) return { activeRigKeyframeIndex: index };
+        return { activeRigKeyframeIndex: index, currentFrame: tToFrame(kf.t, clip.frames, clip.loop) };
+      }),
 
     addRigKeyframeAt: (t) => {
       const clip = activeRigClip();
       if (!clip) return;
-      const clampedT = Math.max(0, Math.min(1, t));
-      const pose = rigPoseAt(clip.keyframes, clampedT);
-      const keyframes = [...clip.keyframes, { t: clampedT, pose }].sort((a, b) => a.t - b.t);
-      const index = keyframes.findIndex((kf) => kf.t === clampedT);
+      const frame = tToFrame(t, clip.frames, clip.loop);
+      const existing = kfIndexAtFrame(clip.keyframes, clip.frames, clip.loop, frame);
+      if (existing >= 0) {
+        set({ activeRigKeyframeIndex: existing, currentFrame: frame });
+        return;
+      }
+      const snapT = frameToT(frame, clip.frames, clip.loop);
+      const pose = rigPoseAt(clip.keyframes, snapT);
+      const keyframes = [...clip.keyframes, { t: snapT, pose, easing: 'linear' as const }].sort(
+        (a, b) => a.t - b.t,
+      );
+      const index = keyframes.findIndex((kf) => kf.t === snapT);
       updateActiveRigClip((c) => ({ ...c, keyframes }));
-      set({ activeRigKeyframeIndex: index < 0 ? keyframes.length - 1 : index });
+      set({ activeRigKeyframeIndex: index < 0 ? keyframes.length - 1 : index, currentFrame: frame });
     },
 
     duplicateRigKeyframe: (index) => {
@@ -1034,11 +1096,15 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     },
 
     moveRigKeyframe: (index, t) => {
-      const clampedT = Math.max(0, Math.min(1, t));
-      updateActiveRigClip((c) => {
-        if (index < 0 || index >= c.keyframes.length) return c;
-        return { ...c, keyframes: c.keyframes.map((kf, i) => (i === index ? { ...kf, t: clampedT } : kf)) };
-      });
+      const clip = activeRigClip();
+      if (!clip || index < 0 || index >= clip.keyframes.length) return;
+      const frame = tToFrame(t, clip.frames, clip.loop);
+      const snapT = frameToT(frame, clip.frames, clip.loop);
+      updateActiveRigClip((c) => ({
+        ...c,
+        keyframes: c.keyframes.map((kf, i) => (i === index ? { ...kf, t: snapT } : kf)),
+      }));
+      set({ currentFrame: frame, activeRigKeyframeIndex: index });
     },
 
     setRigKeyframeEasing: (index, easing) =>
@@ -1194,34 +1260,54 @@ export const useProjectStore = create<ProjectState>((set, get) => {
 
     setClipLoop: (loop) => updateActiveClip((c) => ({ ...c, loop })),
 
-    setCurrentFrame: (frame) => set((s) => ({ currentFrame: clampFrame(frame, framesFor(s)) })),
+    setCurrentFrame: (frame) => set((s) => frameSync(s, clampFrame(frame, framesFor(s)))),
 
     setPlaying: (playing) => set({ isPlaying: playing }),
     togglePlay: () => set((s) => ({ isPlaying: !s.isPlaying })),
 
+    autoKey: true,
+    setAutoKey: (v) => set({ autoKey: v }),
+
     nextFrame: () =>
       set((s) => {
         const frames = framesFor(s);
-        return { currentFrame: (s.currentFrame + 1) % frames, isPlaying: false };
+        return { ...frameSync(s, (s.currentFrame + 1) % frames), isPlaying: false };
       }),
 
     prevFrame: () =>
       set((s) => {
         const frames = framesFor(s);
-        return { currentFrame: (s.currentFrame - 1 + frames) % frames, isPlaying: false };
+        return { ...frameSync(s, (s.currentFrame - 1 + frames) % frames), isPlaying: false };
       }),
 
-    selectKeyframe: (index) => set({ activeKeyframeIndex: index }),
+    // Seleccionar keyframe = mover el playhead a su frame (un solo cursor).
+    selectKeyframe: (index) =>
+      set((s) => {
+        const clip = s.project.animations.find((c) => c.id === s.activeAnimationId);
+        const kf = clip?.keyframes[index];
+        if (!kf || !clip) return { activeKeyframeIndex: index };
+        return { activeKeyframeIndex: index, currentFrame: tToFrame(kf.t, clip.frames, clip.loop) };
+      }),
 
+    // Agregar keyframe en el frame `t` (0..1): lo pega a la grilla de frames. Si ya
+    // hay uno en ese frame, lo selecciona en vez de duplicar.
     addKeyframeAt: (t) => {
       const clip = get().project.animations.find((c) => c.id === get().activeAnimationId);
       if (!clip) return;
-      const clampedT = Math.max(0, Math.min(1, t));
-      const newPose = poseAt(clip.keyframes, clampedT);
-      const keyframes = [...clip.keyframes, { t: clampedT, pose: newPose }].sort((a, b) => a.t - b.t);
-      const index = keyframes.findIndex((kf) => kf.t === clampedT);
+      const frame = tToFrame(t, clip.frames, clip.loop);
+      const existing = kfIndexAtFrame(clip.keyframes, clip.frames, clip.loop, frame);
+      if (existing >= 0) {
+        set({ activeKeyframeIndex: existing, currentFrame: frame });
+        return;
+      }
+      const snapT = frameToT(frame, clip.frames, clip.loop);
+      const newPose = poseAt(clip.keyframes, snapT);
+      const keyframes = [...clip.keyframes, { t: snapT, pose: newPose, easing: 'linear' as const }].sort(
+        (a, b) => a.t - b.t,
+      );
+      const index = keyframes.findIndex((kf) => kf.t === snapT);
       updateActiveClip((c) => ({ ...c, keyframes }));
-      set({ activeKeyframeIndex: index < 0 ? keyframes.length - 1 : index });
+      set({ activeKeyframeIndex: index < 0 ? keyframes.length - 1 : index, currentFrame: frame });
     },
 
     duplicateKeyframe: (index) => {
@@ -1249,12 +1335,15 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     },
 
     moveKeyframe: (index, t) => {
-      const clampedT = Math.max(0, Math.min(1, t));
-      updateActiveClip((c) => {
-        if (index < 0 || index >= c.keyframes.length) return c;
-        const keyframes = c.keyframes.map((kf, i) => (i === index ? { ...kf, t: clampedT } : kf));
-        return { ...c, keyframes };
-      });
+      const clip = get().project.animations.find((c) => c.id === get().activeAnimationId);
+      if (!clip || index < 0 || index >= clip.keyframes.length) return;
+      const frame = tToFrame(t, clip.frames, clip.loop);
+      const snapT = frameToT(frame, clip.frames, clip.loop);
+      updateActiveClip((c) => ({
+        ...c,
+        keyframes: c.keyframes.map((kf, i) => (i === index ? { ...kf, t: snapT } : kf)),
+      }));
+      set({ currentFrame: frame, activeKeyframeIndex: index });
     },
 
     setKeyframeEasing: (index, easing) =>

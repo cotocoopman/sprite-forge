@@ -24,6 +24,8 @@ import { useActiveRigClip } from '@/hooks/useActiveRigClip';
 import { NumberInput } from '@components/NumberInput';
 import { useT } from '@/i18n';
 import type { EasingKind } from '@core/poses';
+import { frameToT } from '@core/poses';
+import { rigPoseAt } from '@core/customRig';
 
 const EASINGS: readonly { value: EasingKind; label: string }[] = [
   { value: 'linear', label: 'Lineal' },
@@ -33,10 +35,12 @@ const EASINGS: readonly { value: EasingKind; label: string }[] = [
 ];
 
 const BoneAngleSlider = ({ boneId, name }: { boneId: string; name: string }): ReactElement => {
+  // Valor = pose muestreada en el playhead (frame actual), no del keyframe activo.
   const value = useProjectStore((s) => {
     const clip = s.project.customRig.animations.find((c) => c.id === s.activeRigClipId);
-    const kf = clip?.keyframes[s.activeRigKeyframeIndex];
-    return kf ? kf.pose[boneId] ?? 0 : 0;
+    if (!clip) return 0;
+    const tt = frameToT(s.currentFrame, clip.frames, clip.loop);
+    return rigPoseAt(clip.keyframes, tt)[boneId] ?? 0;
   });
   const setBoneAngleOffset = useProjectStore((s) => s.setBoneAngleOffset);
   return (
@@ -70,6 +74,8 @@ export const RigAnimationPanel = (): ReactElement => {
   const deleteRigKeyframe = useProjectStore((s) => s.deleteRigKeyframe);
   const moveRigKeyframe = useProjectStore((s) => s.moveRigKeyframe);
   const setRigKeyframeEasing = useProjectStore((s) => s.setRigKeyframeEasing);
+  const autoKey = useProjectStore((s) => s.autoKey);
+  const setAutoKey = useProjectStore((s) => s.setAutoKey);
   const clip = useActiveRigClip();
   const tr = useT();
 
@@ -80,7 +86,8 @@ export const RigAnimationPanel = (): ReactElement => {
 
   const frames = Math.max(1, clip?.frames ?? 1);
   const scrubT = frames > 1 ? currentFrame / (frames - 1) : 0;
-  const easing: EasingKind = (clip && clip.keyframes[activeKf]?.easing) || 'linear';
+  const onKeyframe = !!clip && activeKf >= 0 && activeKf < clip.keyframes.length;
+  const easing: EasingKind = (onKeyframe && clip.keyframes[activeKf].easing) || 'linear';
 
   const tFromEvent = (e: ReactPointerEvent): number => {
     const rect = trackRef.current?.getBoundingClientRect();
@@ -150,15 +157,33 @@ export const RigAnimationPanel = (): ReactElement => {
             ))}
           </Box>
 
-          <TextField select size="small" label={tr('Easing (salida del keyframe)')} value={easing}
-            onChange={(e) => setRigKeyframeEasing(activeKf, e.target.value as EasingKind)} fullWidth>
-            {EASINGS.map((e) => <MenuItem key={e.value} value={e.value}>{tr(e.label)}</MenuItem>)}
-          </TextField>
+          {onKeyframe && (
+            <TextField select size="small" label={tr('Easing (salida del keyframe)')} value={easing}
+              onChange={(e) => setRigKeyframeEasing(activeKf, e.target.value as EasingKind)} fullWidth>
+              {EASINGS.map((e) => <MenuItem key={e.value} value={e.value}>{tr(e.label)}</MenuItem>)}
+            </TextField>
+          )}
 
           <Divider />
 
-          <Typography variant="subtitle2">{tr('Ángulos por hueso')} (kf {activeKf})</Typography>
-          <Stack spacing={1}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Typography variant="subtitle2">
+              {tr('Ángulos por hueso')} · {tr('frame')} {currentFrame + 1}/{frames}
+            </Typography>
+            <FormControlLabel
+              control={<Switch size="small" checked={autoKey} onChange={(e) => setAutoKey(e.target.checked)} />}
+              label={<Typography variant="caption">{tr('Auto-key')}</Typography>}
+              sx={{ mr: 0 }}
+            />
+          </Stack>
+          <Typography variant="caption" color={onKeyframe ? 'primary.main' : 'text.secondary'}>
+            {onKeyframe
+              ? tr('Keyframe — editás su pose')
+              : autoKey
+                ? tr('Interpolado — al editar se crea un keyframe acá')
+                : tr('Interpolado — activá Auto-key o creá un keyframe para editar')}
+          </Typography>
+          <Stack spacing={1} sx={{ opacity: !onKeyframe && !autoKey ? 0.5 : 1 }}>
             {bones.map((b) => <BoneAngleSlider key={b.id} boneId={b.id} name={b.name} />)}
           </Stack>
         </>

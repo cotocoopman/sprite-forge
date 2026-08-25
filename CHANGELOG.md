@@ -4,6 +4,20 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.4.0] — 2026-08-25
+
+- **Unified animation timeline (single playhead + auto-key).** Keyframes and the
+  frame/playback cursor are no longer separate: there is one time cursor.
+  - Selecting a keyframe moves the playhead to it, and moving the playhead onto a
+    keyframe selects it. Keyframes snap to real frame positions (no abstract `t`).
+  - The pose editor now shows the pose **at the playhead** (sampled), and every joint
+    is always editable.
+  - **Auto-key**: editing a pose on an interpolated frame creates a keyframe there
+    (toggle "Auto-key", on by default; off = classic select-keyframe-then-edit, with a
+    clear hint). The editor labels the frame as *keyframe* vs *interpolated*.
+  - Applies to both the humanoid and the custom-rig animation panels. The tweened,
+    sparse-keyframe model is unchanged — only the editing UX is fixed.
+
 ## [2.3.0] — 2026-08-25
 
 - **Move & rotate body parts.** Body parts can now be **repositioned** and **rotated**

@@ -151,7 +151,12 @@ There are **two modes** (toggle in the top bar):
 
 ### Animation
 - Clips (`idle`, `walk`, `run`, `jump`, `fall`, `attack`, `defend`, `hurt`,
-  `death` by default) with `frames` / `fps` / `loop`.
+  `death` by default) with `frames` / `fps` / `loop`. Sparse **keyframes** are tweened
+  into the `frames` sampled poses (you set a few key moments, not every frame).
+- **Single playhead**: keyframes live on the same time cursor as playback — selecting a
+  keyframe moves the playhead and vice versa, and keyframes snap to frame positions.
+- **Auto-key**: the pose editor shows the pose at the playhead and is always editable;
+  editing on an interpolated frame creates a keyframe there (toggle, on by default).
 - **Draggable** keyframe timeline; add / duplicate / delete.
 - Per-joint pose editor (accordions) with mirror / copy / paste pose.
 - **Per-keyframe easing** (linear / ease-in / ease-out / ease-in-out).

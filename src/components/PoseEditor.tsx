@@ -9,6 +9,8 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
+import Switch from '@mui/material/Switch';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FlipIcon from '@mui/icons-material/Flip';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -19,6 +21,7 @@ import { NumberInput } from '@components/NumberInput';
 import { useT } from '@/i18n';
 import type { Pose } from '@core/rig';
 import type { EasingKind } from '@core/poses';
+import { frameToT, poseAt } from '@core/poses';
 
 const EASINGS: readonly { value: EasingKind; label: string }[] = [
   { value: 'linear', label: 'Lineal' },
@@ -76,10 +79,12 @@ const GROUPS: readonly Group[] = [
 ];
 
 const JointSlider = ({ joint }: { joint: Joint }): ReactElement => {
+  // Valor = pose muestreada EN EL PLAYHEAD (frame actual), no del keyframe activo.
   const value = useProjectStore((s) => {
     const clip = s.project.animations.find((c) => c.id === s.activeAnimationId);
-    const kf = clip?.keyframes[s.activeKeyframeIndex];
-    return kf ? kf.pose[joint.key] : 0;
+    if (!clip) return 0;
+    const tt = frameToT(s.currentFrame, clip.frames, clip.loop);
+    return poseAt(clip.keyframes, tt)[joint.key];
   });
   const setPoseField = useProjectStore((s) => s.setPoseField);
   const t = useT();
@@ -111,17 +116,38 @@ export const PoseEditor = (): ReactElement => {
   const pastePose = useProjectStore((s) => s.pastePose);
   const setKeyframeEasing = useProjectStore((s) => s.setKeyframeEasing);
   const activeKeyframeIndex = useProjectStore((s) => s.activeKeyframeIndex);
+  const currentFrame = useProjectStore((s) => s.currentFrame);
+  const autoKey = useProjectStore((s) => s.autoKey);
+  const setAutoKey = useProjectStore((s) => s.setAutoKey);
   const clip = useActiveClip();
 
   const t = useT();
-  const hasKeyframe = !!clip && activeKeyframeIndex >= 0 && activeKeyframeIndex < clip.keyframes.length;
-  const easing: EasingKind = (hasKeyframe && clip.keyframes[activeKeyframeIndex].easing) || 'linear';
+  // El frame actual es un keyframe si activeKeyframeIndex (sincronizado) es válido.
+  const onKeyframe = !!clip && activeKeyframeIndex >= 0 && activeKeyframeIndex < clip.keyframes.length;
+  const easing: EasingKind = (onKeyframe && clip.keyframes[activeKeyframeIndex].easing) || 'linear';
+  const frames = clip?.frames ?? 1;
+  // Editar sin keyframe acá y sin auto-key no hace nada: lo avisamos.
+  const editsIgnored = !onKeyframe && !autoKey;
 
   return (
     <Stack spacing={1}>
       <Stack spacing={0.5}>
-        <Typography variant="subtitle2">
-          {t('Pose')} {hasKeyframe ? `(kf ${activeKeyframeIndex})` : ''}
+        <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Typography variant="subtitle2">
+            {t('Pose')} · {t('frame')} {currentFrame + 1}/{frames}
+          </Typography>
+          <FormControlLabel
+            control={<Switch size="small" checked={autoKey} onChange={(e) => setAutoKey(e.target.checked)} />}
+            label={<Typography variant="caption">{t('Auto-key')}</Typography>}
+            sx={{ mr: 0 }}
+          />
+        </Stack>
+        <Typography variant="caption" color={onKeyframe ? 'primary.main' : 'text.secondary'}>
+          {onKeyframe
+            ? t('Keyframe — editás su pose')
+            : autoKey
+              ? t('Interpolado — al editar se crea un keyframe acá')
+              : t('Interpolado — activá Auto-key o creá un keyframe para editar')}
         </Typography>
         <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
           <Button size="small" startIcon={<FlipIcon />} onClick={mirrorPose}>
@@ -136,13 +162,7 @@ export const PoseEditor = (): ReactElement => {
         </Stack>
       </Stack>
 
-      {!hasKeyframe && (
-        <Typography variant="body2" color="text.secondary">
-          {t('Seleccioná un keyframe para editar su pose.')}
-        </Typography>
-      )}
-
-      {hasKeyframe && (
+      {onKeyframe && (
         <TextField
           select
           size="small"
@@ -159,8 +179,8 @@ export const PoseEditor = (): ReactElement => {
         </TextField>
       )}
 
-      {hasKeyframe &&
-        GROUPS.map((group) => (
+      <Box sx={{ opacity: editsIgnored ? 0.5 : 1 }}>
+        {GROUPS.map((group) => (
           <Accordion key={group.title} disableGutters defaultExpanded={group.title === 'Torso'}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="body2" fontWeight={600}>
@@ -176,6 +196,7 @@ export const PoseEditor = (): ReactElement => {
             </AccordionDetails>
           </Accordion>
         ))}
+      </Box>
     </Stack>
   );
 };
