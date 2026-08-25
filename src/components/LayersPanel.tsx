@@ -44,13 +44,21 @@ const PartEditor = ({ part }: { part: PartName }): ReactElement => {
   const setPartShape = useProjectStore((s) => s.setPartShape);
   const setPartWidthScale = useProjectStore((s) => s.setPartWidthScale);
   const setPartLengthScale = useProjectStore((s) => s.setPartLengthScale);
+  const setPartRotate = useProjectStore((s) => s.setPartRotate);
   const resetPartSize = useProjectStore((s) => s.resetPartSize);
   const t = useT();
 
   const shape = style.shape ?? 'capsule';
   const width = style.widthScale ?? 1;
   const length = style.lengthScale ?? 1;
-  const dirty = style.shape !== undefined || style.widthScale !== undefined || style.lengthScale !== undefined;
+  const rotate = style.rotate ?? 0;
+  const dirty =
+    style.shape !== undefined ||
+    style.widthScale !== undefined ||
+    style.lengthScale !== undefined ||
+    style.rotate !== undefined ||
+    style.dx !== undefined ||
+    style.dy !== undefined;
   // La cabeza es un círculo: no tiene "largo" a escalar por la cadena.
   const showLength = part !== 'head';
 
@@ -98,6 +106,22 @@ const PartEditor = ({ part }: { part: PartName }): ReactElement => {
           />
         </Box>
       )}
+      <Box>
+        <Typography variant="caption" color="text.secondary">
+          {t('Rotación')} · {Math.round(rotate)}°
+        </Typography>
+        <Slider
+          size="small"
+          value={Math.max(-180, Math.min(180, rotate))}
+          min={-180}
+          max={180}
+          step={1}
+          onChange={(_, v) => setPartRotate(part, v as number)}
+        />
+      </Box>
+      <Typography variant="caption" color="text.secondary">
+        {t('Tip: arrastrá la parte en el canvas para moverla; la punta rota + estira.')}
+      </Typography>
       <Button
         size="small"
         variant="text"

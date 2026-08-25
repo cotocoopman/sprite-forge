@@ -210,6 +210,27 @@ const rotateAround = (point: Vec2, pivot: Vec2, angleDeg: number): Vec2 => {
   };
 };
 
+// Transforma un punto de una parte del cuerpo: lo rota `rotateDeg` alrededor de un
+// pivote (la base de la parte) y luego lo desplaza (dx, dy). Se aplica en render e
+// interacción, encima de la cinemática, para poder mover/rotar cada parte libremente
+// sin tocar el esqueleto (poses/animaciones siguen intactas).
+export const applyPartXform = (
+  p: Vec2,
+  pivot: Vec2,
+  rotateDeg: number,
+  dx: number,
+  dy: number,
+): Vec2 => {
+  if (!rotateDeg && !dx && !dy) return { x: p.x + dx, y: p.y + dy };
+  const r = rad(rotateDeg);
+  const ax = p.x - pivot.x;
+  const ay = p.y - pivot.y;
+  return {
+    x: pivot.x + ax * Math.cos(r) - ay * Math.sin(r) + dx,
+    y: pivot.y + ax * Math.sin(r) + ay * Math.cos(r) + dy,
+  };
+};
+
 // `facing` (grados) simula un giro 3D del personaje alrededor de su eje vertical:
 // 0 = de frente, 90 = perfil derecho, 180 = de espaldas, 270 = perfil izquierdo.
 export const buildSkeleton = (

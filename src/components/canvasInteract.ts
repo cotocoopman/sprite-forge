@@ -4,8 +4,8 @@
 // SVG mapea puntero→viewBox(px) y de ahí invertimos toPx para llegar al modelo.
 import type { PxTransform } from '@core/svg';
 import type { RBone } from '@core/customRig';
-import type { PartName, Skeleton } from '@core/rig';
-import { PART_NAMES } from '@core/rig';
+import type { PartName, Skeleton, Vec2 } from '@core/rig';
+import { applyPartXform, PART_NAMES } from '@core/rig';
 import type { PartsConfig } from '@core/poses';
 
 export type Pt = { x: number; y: number };
@@ -115,10 +115,27 @@ const widthScaleOf = (parts: PartsConfig, part: PartName): number => {
   return typeof v === 'number' && v > 0 ? v : 1;
 };
 
+// Base (pivote de rotación) de una parte y su transform libre (rotate + dx/dy).
+const partBaseOf = (skel: Skeleton, part: PartName): Vec2 => {
+  if (part === 'head') return skel.headCenter;
+  const first = skel.capsules.find((c) => (c.part ?? 'torso') === part);
+  return first ? first.from : { x: 0, y: 0 };
+};
+const xformOf = (skel: Skeleton, parts: PartsConfig, part: PartName): (p: Vec2) => Vec2 => {
+  const st = parts[part];
+  const rot = st?.rotate ?? 0;
+  const dx = st?.dx ?? 0;
+  const dy = st?.dy ?? 0;
+  if (!rot && !dx && !dy) return (p) => p;
+  const pivot = partBaseOf(skel, part);
+  return (p) => applyPartXform(p, pivot, rot, dx, dy);
+};
+
 export const partGeom = (skel: Skeleton, parts: PartsConfig, part: PartName): PartHandles => {
   const ws = widthScaleOf(parts, part);
+  const xf = xformOf(skel, parts, part);
   if (part === 'head') {
-    const c = skel.headCenter;
+    const c = xf(skel.headCenter);
     return {
       base: c, tip: c, center: c,
       dir: { x: 0, y: -1 }, perp: { x: 1, y: 0 },
@@ -131,8 +148,8 @@ export const partGeom = (skel: Skeleton, parts: PartsConfig, part: PartName): Pa
     const z = { x: 0, y: 0 };
     return { base: z, tip: z, center: z, dir: { x: 0, y: 1 }, perp: { x: 1, y: 0 }, baseWidth: 1, scaledWidth: ws, radius: ws, circle: false };
   }
-  const base = caps[0].from;
-  const tip = caps[caps.length - 1].to;
+  const base = xf(caps[0].from);
+  const tip = xf(caps[caps.length - 1].to);
   const center = { x: (base.x + tip.x) / 2, y: (base.y + tip.y) / 2 };
   const dx = tip.x - base.x;
   const dy = tip.y - base.y;
@@ -141,10 +158,10 @@ export const partGeom = (skel: Skeleton, parts: PartsConfig, part: PartName): Pa
   const perp = { x: dir.y, y: -dir.x };
   const baseWidth = caps[0].width;
   const scaledWidth = baseWidth * ws;
-  // Radio de selección: alcanza el punto más lejano de la cadena + medio ancho.
+  // Radio de selección: alcanza el punto (transformado) más lejano + medio ancho.
   let far = 0;
   for (const c of caps) {
-    far = Math.max(far, dist(center, c.from), dist(center, c.to));
+    far = Math.max(far, dist(center, xf(c.from)), dist(center, xf(c.to)));
   }
   return { base, tip, center, dir, perp, baseWidth, scaledWidth, radius: far + scaledWidth / 2, circle: false };
 };
@@ -156,15 +173,17 @@ export const pickPart = (skel: Skeleton, parts: PartsConfig, p: Pt): PartName | 
   const margin = 2;
   for (const name of PART_NAMES) {
     if (!parts[name]?.visible) continue;
+    const xf = xformOf(skel, parts, name);
     if (name === 'head') {
+      const c = xf(skel.headCenter);
       const r = skel.headRadius * widthScaleOf(parts, 'head');
-      if (dist(p, skel.headCenter) <= r + margin) hit = 'head';
+      if (dist(p, c) <= r + margin) hit = 'head';
       continue;
     }
     const ws = widthScaleOf(parts, name);
     for (const c of skel.capsules) {
       if ((c.part ?? 'torso') !== name) continue;
-      if (pointSegDist(p, c.from, c.to) <= (c.width * ws) / 2 + margin) {
+      if (pointSegDist(p, xf(c.from), xf(c.to)) <= (c.width * ws) / 2 + margin) {
         hit = name;
         break;
       }

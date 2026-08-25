@@ -69,6 +69,8 @@ export type EffectsConfig = {
 //   - shape:       forma con la que se dibuja cada segmento (default 'capsule').
 //   - widthScale:  multiplicador de grosor, solo render (default 1).
 //   - lengthScale: multiplicador de largo, horneado en la cinemática (default 1).
+//   - rotate:      rotación libre (grados) alrededor de la base de la parte, en render.
+//   - dx, dy:      desplazamiento libre (unidades) de la parte, en render.
 export type PartStyle = {
   readonly visible: boolean;
   readonly color: string | null;
@@ -76,6 +78,9 @@ export type PartStyle = {
   readonly shape?: AccessoryShape;
   readonly widthScale?: number;
   readonly lengthScale?: number;
+  readonly rotate?: number;
+  readonly dx?: number;
+  readonly dy?: number;
 };
 export type PartsConfig = Record<PartName, PartStyle>;
 

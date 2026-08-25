@@ -135,6 +135,8 @@ export const PreviewCanvas = (): ReactElement => {
   const selectPart = useProjectStore((s) => s.selectPart);
   const setPartWidthScale = useProjectStore((s) => s.setPartWidthScale);
   const setPartLengthScale = useProjectStore((s) => s.setPartLengthScale);
+  const setPartRotate = useProjectStore((s) => s.setPartRotate);
+  const setPartOffset = useProjectStore((s) => s.setPartOffset);
   const tool = useProjectStore((s) => s.tool);
   const shapeKind = useProjectStore((s) => s.shapeKind);
   const brushWidth = useProjectStore((s) => s.brushWidth);
@@ -205,8 +207,9 @@ export const PreviewCanvas = (): ReactElement => {
     | { mode: 'move'; start: Pt; members: { id: string; a0: number; p0: number; along: Pt; perp: Pt }[] }
     | { mode: 'tip'; id: string; base: Pt; startAngle: number; grabA: number }
     | { mode: 'width'; id: string; base: Pt; perp: Pt; circle: boolean }
-    | { mode: 'partLen'; part: PartName; base: Pt; startDist: number; startScale: number }
+    | { mode: 'partTip'; part: PartName; pivot: Pt; startTipAngle: number; startRotate: number; startDist: number; startScale: number }
     | { mode: 'partWidth'; part: PartName; ref: Pt; perp: Pt; baseWidth: number; circle: boolean }
+    | { mode: 'partMove'; part: PartName; start: Pt; startDx: number; startDy: number }
     | null
   >(null);
 
@@ -305,13 +308,15 @@ export const PreviewCanvas = (): ReactElement => {
       }
     }
 
-    // Handles de la parte del cuerpo seleccionada (escala largo / grosor).
+    // Handles de la parte del cuerpo seleccionada (rotar+largo en la punta / grosor).
     if (selPart && pG) {
       if (pTipPx && dist(vb, pTipPx) < 13) {
         drag.current = {
-          mode: 'partLen',
+          mode: 'partTip',
           part: selPart,
-          base: pG.base,
+          pivot: pG.base,
+          startTipAngle: angleDeg(pG.base, pG.tip),
+          startRotate: parts[selPart].rotate ?? 0,
           startDist: Math.max(0.001, dist(pG.base, pG.tip)),
           startScale: parts[selPart].lengthScale ?? 1,
         };
@@ -357,10 +362,13 @@ export const PreviewCanvas = (): ReactElement => {
       return;
     }
 
-    // Sin accesorio bajo el cursor: intentar seleccionar una parte del cuerpo.
+    // Sin accesorio bajo el cursor: seleccionar una parte del cuerpo y moverla.
     const partHit = skel ? pickPart(skel, parts, m) : null;
     if (partHit) {
       selectPart(partHit);
+      const st = parts[partHit];
+      drag.current = { mode: 'partMove', part: partHit, start: m, startDx: st.dx ?? 0, startDy: st.dy ?? 0 };
+      svg.setPointerCapture(e.pointerId);
       return;
     }
     selectAccessory(null);
@@ -436,10 +444,19 @@ export const PreviewCanvas = (): ReactElement => {
     } else if (d.mode === 'width') {
       const off = Math.abs((m.x - d.base.x) * d.perp.x + (m.y - d.base.y) * d.perp.y);
       updateAccessory(d.id, { width: Math.max(1, Math.round((d.circle ? dist(d.base, m) * 2 : off * 2) * 10) / 10) });
-    } else if (d.mode === 'partLen') {
-      // Escala relativa: proporción respecto de la distancia base→punta al empezar.
-      const scale = d.startScale * (dist(d.base, m) / d.startDist);
+    } else if (d.mode === 'partTip') {
+      // Punta: rota la parte alrededor de su base y escala el largo (como accesorio).
+      const scale = d.startScale * (dist(d.pivot, m) / d.startDist);
       setPartLengthScale(d.part, Math.min(4, Math.max(0.1, Math.round(scale * 100) / 100)));
+      let rot = d.startRotate + (angleDeg(d.pivot, m) - d.startTipAngle);
+      if (shift) rot = Math.round(rot / 15) * 15;
+      setPartRotate(d.part, Math.round(rot * 10) / 10);
+    } else if (d.mode === 'partMove') {
+      setPartOffset(
+        d.part,
+        Math.round((d.startDx + (m.x - d.start.x)) * 10) / 10,
+        Math.round((d.startDy + (m.y - d.start.y)) * 10) / 10,
+      );
     } else {
       // partWidth: distancia perpendicular al eje (o radial en la cabeza) → widthScale.
       const off = d.circle

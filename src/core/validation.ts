@@ -186,10 +186,16 @@ const validateParts = (v: unknown, character: unknown): PartsConfig => {
   // Escala válida y acotada; ignora valores no numéricos o fuera de rango.
   const scale = (x: unknown): number | undefined =>
     isNum(x) && x > 0 ? Math.min(4, Math.max(0.1, x)) : undefined;
+  // Offset/rotación acotados; undefined si no es número (u 0 → se omite).
+  const clamped = (x: unknown, lim: number): number | undefined =>
+    isNum(x) && x !== 0 ? Math.min(lim, Math.max(-lim, x)) : undefined;
   for (const name of PART_NAMES) {
     const p = isRecord(rec[name]) ? rec[name] : {};
     const ws = scale(p.widthScale);
     const ol = scale(p.lengthScale);
+    const rot = clamped(p.rotate, 360);
+    const dx = clamped(p.dx, 200);
+    const dy = clamped(p.dy, 200);
     out[name] = {
       visible: isBool(p.visible) ? p.visible : true,
       color: isStr(p.color) ? p.color : null,
@@ -197,6 +203,9 @@ const validateParts = (v: unknown, character: unknown): PartsConfig => {
       ...(ACC_SHAPES.has(p.shape as string) ? { shape: p.shape as PartStyle['shape'] } : {}),
       ...(ws !== undefined ? { widthScale: ws } : {}),
       ...(ol !== undefined ? { lengthScale: ol } : {}),
+      ...(rot !== undefined ? { rotate: rot } : {}),
+      ...(dx !== undefined ? { dx } : {}),
+      ...(dy !== undefined ? { dy } : {}),
     };
   }
   // Migración: si venía headColorEnabled + headColor, pasarlo a la cabeza.

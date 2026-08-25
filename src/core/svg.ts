@@ -2,7 +2,7 @@
 // El preview de React reutiliza skeletonToPrimitives; el export reutiliza el markup.
 
 import type { Anchor, AnchorName, CharacterDefinition, PartName, PartScales, Pose, Skeleton, Vec2 } from './rig';
-import { buildSkeleton, PART_NAMES } from './rig';
+import { applyPartXform, buildSkeleton, PART_NAMES } from './rig';
 import type { Accessory, AccessoryShape, EffectsConfig, PartsConfig, RenderConfig } from './poses';
 import type { CustomRig, RBone, RigPose } from './customRig';
 import { buildCustomSkeleton } from './customRig';
@@ -119,15 +119,35 @@ export const skeletonToPrimitives = (
   };
   const shapeOf = (p: PartName): AccessoryShape => parts?.[p]?.shape ?? 'capsule';
 
+  // Base (pivote de rotación) de cada parte: la primera cápsula que la compone.
+  const partBase = new Map<PartName, Vec2>();
+  for (const cap of skel.capsules) {
+    const p = cap.part ?? 'torso';
+    if (!partBase.has(p)) partBase.set(p, cap.from);
+  }
+  // Transform libre de la parte (rotar alrededor de su base + desplazar).
+  const xf = (part: PartName, pt: Vec2): Vec2 => {
+    const st = parts?.[part];
+    if (!st) return pt;
+    const rot = st.rotate ?? 0;
+    const dx = st.dx ?? 0;
+    const dy = st.dy ?? 0;
+    if (!rot && !dx && !dy) return pt;
+    const pivot = part === 'head' ? skel.headCenter : partBase.get(part) ?? pt;
+    return applyPartXform(pt, pivot, rot, dx, dy);
+  };
+
   for (const cap of skel.capsules) {
     const part = cap.part ?? 'torso';
     const width = cap.width * wScale(part);
     const shape = shapeOf(part);
+    const from = xf(part, cap.from);
+    const to = xf(part, cap.to);
     // 'capsule' (y 'path', que no aplica a partes) → línea con punta redonda.
     if (shape === 'capsule' || shape === 'path') {
-      const a = toPx(cap.from.x, cap.from.y, tf);
-      const b = toPx(cap.to.x, cap.to.y, tf);
-      const ctrl = cap.ctrl ? toPx(cap.ctrl.x, cap.ctrl.y, tf) : undefined;
+      const a = toPx(from.x, from.y, tf);
+      const b = toPx(to.x, to.y, tf);
+      const ctrl = cap.ctrl ? toPx(xf(part, cap.ctrl).x, xf(part, cap.ctrl).y, tf) : undefined;
       prims.push({
         kind: 'line',
         x1: a.px,
@@ -140,18 +160,18 @@ export const skeletonToPrimitives = (
       });
       continue;
     }
-    const dx = cap.to.x - cap.from.x;
-    const dy = cap.to.y - cap.from.y;
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
     const len = Math.hypot(dx, dy) || 0.0001;
     const dir = { x: dx / len, y: dy / len };
     const perp = { x: dir.y, y: -dir.x };
     if (shape === 'circle') {
-      const mid = { x: (cap.from.x + cap.to.x) / 2, y: (cap.from.y + cap.to.y) / 2 };
+      const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
       const c = toPx(mid.x, mid.y, tf);
       prims.push({ kind: 'circle', cx: c.px, cy: c.py, r: (width / 2) * tf.scale, part });
       continue;
     }
-    const pts = segmentShapePoints(shape, cap.from, dir, perp, len, width).map((p) => {
+    const pts = segmentShapePoints(shape, from, dir, perp, len, width).map((p) => {
       const q = toPx(p.x, p.y, tf);
       return { x: q.px, y: q.py };
     });
@@ -163,7 +183,8 @@ export const skeletonToPrimitives = (
   const rUnit = skel.headRadius * headScale;
   const headShape = shapeOf('head');
   if (headShape === 'circle' || headShape === 'capsule' || headShape === 'path') {
-    const head = toPx(skel.headCenter.x, skel.headCenter.y, tf);
+    const hc = xf('head', skel.headCenter);
+    const head = toPx(hc.x, hc.y, tf);
     prims.push({ kind: 'circle', cx: head.px, cy: head.py, r: rUnit * tf.scale, part: 'head' });
   } else {
     // Forma centrada en la cabeza: eje vertical (arriba), lado = diámetro.
@@ -171,7 +192,8 @@ export const skeletonToPrimitives = (
     const dir = { x: 0, y: -1 };
     const perp = { x: 1, y: 0 };
     const pts = segmentShapePoints(headShape, base, dir, perp, rUnit * 2, rUnit * 2).map((p) => {
-      const q = toPx(p.x, p.y, tf);
+      const w = xf('head', p);
+      const q = toPx(w.x, w.y, tf);
       return { x: q.px, y: q.py };
     });
     prims.push({ kind: 'poly', pts, part: 'head' });

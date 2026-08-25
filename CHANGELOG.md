@@ -4,6 +4,16 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.3.0] — 2026-08-25
+
+- **Move & rotate body parts.** Body parts can now be **repositioned** and **rotated**
+  freely, not just lengthened/thickened. On the canvas: drag a part's body to move it,
+  drag the tip handle to rotate + set length (like accessories, `Shift` snaps to 15°),
+  and the side handle for thickness. The Layers editor also gains a **rotation** slider.
+  Transforms are applied on top of the kinematics, so poses/animations keep working and
+  the skeleton stays intact. New per-part fields `rotate` / `dx` / `dy` (validated,
+  clamped, and cleared by "Restablecer forma/tamaño"); older projects default to 0.
+
 ## [2.2.0] — 2026-08-25
 
 - **Mobile layout.** Below the `md` breakpoint the app now uses a phone-first shell

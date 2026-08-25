@@ -145,6 +145,8 @@ export type ProjectState = {
   readonly setPartShape: (part: PartName, shape: AccessoryShape) => void;
   readonly setPartWidthScale: (part: PartName, scale: number) => void;
   readonly setPartLengthScale: (part: PartName, scale: number) => void;
+  readonly setPartRotate: (part: PartName, deg: number) => void;
+  readonly setPartOffset: (part: PartName, dx: number, dy: number) => void;
   readonly resetPartSize: (part: PartName) => void;
 
   // Accesorios
@@ -505,9 +507,37 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         },
       })),
 
+    setPartRotate: (part, deg) =>
+      set((s) => ({
+        project: {
+          ...s.project,
+          parts: {
+            ...s.project.parts,
+            [part]: { ...s.project.parts[part], rotate: Math.min(360, Math.max(-360, deg)) },
+          },
+        },
+      })),
+
+    setPartOffset: (part, dx, dy) =>
+      set((s) => ({
+        project: {
+          ...s.project,
+          parts: {
+            ...s.project.parts,
+            [part]: {
+              ...s.project.parts[part],
+              dx: Math.min(200, Math.max(-200, dx)),
+              dy: Math.min(200, Math.max(-200, dy)),
+            },
+          },
+        },
+      })),
+
     resetPartSize: (part) =>
       set((s) => {
-        const { widthScale: _w, lengthScale: _l, shape: _s, ...rest } = s.project.parts[part];
+        // Descarta forma/tamaño/posición/rotación; conserva visible/color/name.
+        const { widthScale: _w, lengthScale: _l, shape: _s, rotate: _r, dx: _dx, dy: _dy, ...rest } =
+          s.project.parts[part];
         return {
           project: { ...s.project, parts: { ...s.project.parts, [part]: rest } },
         };

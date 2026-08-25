@@ -126,12 +126,13 @@ There are **two modes** (toggle in the top bar):
   with the ↑/↓ buttons or **drag-and-drop**.
 - **Body parts are editable layers too.** Select any part (head, torso, arms, legs)
   to change its **shape** (capsule, rectangle, triangle, circle, trapezoid, star,
-  bolt), **thickness** and **length** — independently per part, so one arm can be
-  longer/chunkier than the other. Edit from the panel (shape + width× + length×) or
-  **on the canvas** by dragging the amber handles (tip = length, side = thickness).
-  Length is baked into the kinematics, so the chain stays connected and
-  poses/animations keep working (accessory anchors follow the resized limb). Older
-  projects load unchanged (missing fields default to capsule / ×1).
+  bolt), **thickness**, **length**, plus free **move** and **rotate** — independently
+  per part, so one arm can be longer/chunkier/tilted than the other. Edit from the
+  panel (shape + width× + length× + rotation) or **on the canvas**: drag the part's
+  body to move it, the tip handle to rotate + set length, the side handle for
+  thickness. Length is baked into the kinematics and move/rotate are applied on top, so
+  the chain stays connected and poses/animations keep working. Older projects load
+  unchanged (missing fields default to capsule / ×1 / 0°).
 
 ### 3D turn
 - Simulates turning the character around its vertical axis (front / profile /
