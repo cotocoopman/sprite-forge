@@ -63,27 +63,31 @@ export const PlaybackControls = (): ReactElement => {
           onChange={(_, v) => setCurrentFrame(v as number)}
           sx={{ flex: 1 }}
         />
-        {/* Diamantes de keyframe sobre la barra (no bloquean el arrastre). */}
+        {/* Diamantes de keyframe apenas por encima de la barra (no bloquean el arrastre).
+            El del frame actual (keyframe seleccionado) va en ámbar para destacarlo. */}
         <Box sx={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-          {kfFrames.map((f) => (
-            <Box
-              key={f}
-              title={t('Keyframe · frame') + ` ${f + 1}/${frames}`}
-              sx={{
-                position: 'absolute',
-                left: `${leftPct(f)}%`,
-                top: '50%',
-                width: 9,
-                height: 9,
-                transform: 'translate(-50%, -50%) rotate(45deg)',
-                bgcolor: 'primary.main',
-                border: '1.5px solid',
-                borderColor: 'background.paper',
-                borderRadius: '2px',
-                boxShadow: 1,
-              }}
-            />
-          ))}
+          {kfFrames.map((f) => {
+            const selected = f === currentFrame;
+            return (
+              <Box
+                key={f}
+                title={t('Keyframe · frame') + ` ${f + 1}/${frames}`}
+                sx={{
+                  position: 'absolute',
+                  left: `${leftPct(f)}%`,
+                  top: '50%',
+                  width: selected ? 11 : 9,
+                  height: selected ? 11 : 9,
+                  transform: 'translate(-50%, -175%) rotate(45deg)',
+                  bgcolor: selected ? '#ffb300' : 'primary.main',
+                  border: '1.5px solid',
+                  borderColor: selected ? '#ffe082' : 'background.paper',
+                  borderRadius: '2px',
+                  boxShadow: 1,
+                }}
+              />
+            );
+          })}
         </Box>
       </Box>
       <Typography variant="caption" sx={{ minWidth: 48, textAlign: 'right' }}>

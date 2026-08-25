@@ -4,6 +4,13 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.4.2] — 2026-08-25
+
+- **Clearer keyframe markers on the playback bar.** The diamonds now sit just above
+  the slider line (instead of on it, where they were easy to miss), and the selected
+  keyframe's diamond is highlighted in amber (and slightly larger) so it's obvious
+  which keyframe the playhead is on.
+
 ## [2.4.1] — 2026-08-25
 
 - **Keyframe markers on the playback bar.** The play/frame slider now shows a small
