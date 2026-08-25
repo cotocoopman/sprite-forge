@@ -4,6 +4,13 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.4.1] — 2026-08-25
+
+- **Keyframe markers on the playback bar.** The play/frame slider now shows a small
+  diamond at each keyframe's frame position (same mapping as the timeline), so it's
+  obvious which frames are keyframes (e.g. 12/30, 24/30) while scrubbing. Works for
+  humanoid and rig.
+
 ## [2.4.0] — 2026-08-25
 
 - **Unified animation timeline (single playhead + auto-key).** Keyframes and the
