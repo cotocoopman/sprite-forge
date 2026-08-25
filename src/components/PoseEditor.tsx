@@ -23,12 +23,14 @@ import type { Pose } from '@core/rig';
 import type { EasingKind } from '@core/poses';
 import { frameToT, poseAt } from '@core/poses';
 
-const EASINGS: readonly { value: EasingKind; label: string }[] = [
-  { value: 'linear', label: 'Lineal' },
-  { value: 'easeIn', label: 'Ease-in (arranca lento)' },
-  { value: 'easeOut', label: 'Ease-out (frena al final)' },
-  { value: 'easeInOut', label: 'Ease-in-out' },
+const EASINGS: readonly { value: EasingKind; label: string; desc: string }[] = [
+  { value: 'linear', label: 'Lineal', desc: 'Velocidad constante de principio a fin' },
+  { value: 'easeIn', label: 'Ease-in', desc: 'Arranca lento y acelera hacia el final' },
+  { value: 'easeOut', label: 'Ease-out', desc: 'Arranca rápido y frena al final' },
+  { value: 'easeInOut', label: 'Ease-in-out', desc: 'Suave al inicio y al final, rápido en el medio' },
 ];
+
+const easingLabel = (v: EasingKind): string => EASINGS.find((e) => e.value === v)?.label ?? String(v);
 
 type Joint = { readonly key: keyof Pose; readonly label: string; readonly min: number; readonly max: number };
 type Group = { readonly title: string; readonly joints: readonly Joint[] };
@@ -170,10 +172,16 @@ export const PoseEditor = (): ReactElement => {
           value={easing}
           onChange={(e) => setKeyframeEasing(activeKeyframeIndex, e.target.value as EasingKind)}
           fullWidth
+          slotProps={{ select: { renderValue: (v) => t(easingLabel(v as EasingKind)) } }}
         >
           {EASINGS.map((e) => (
             <MenuItem key={e.value} value={e.value}>
-              {t(e.label)}
+              <Stack sx={{ py: 0.25 }}>
+                <Typography variant="body2">{t(e.label)}</Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'normal' }}>
+                  {t(e.desc)}
+                </Typography>
+              </Stack>
             </MenuItem>
           ))}
         </TextField>

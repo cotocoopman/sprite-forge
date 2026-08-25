@@ -4,6 +4,13 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.4.4] — 2026-08-25
+
+- **Easing descriptions.** The easing dropdown (humanoid and rig) now shows a short
+  description under each option — Lineal (constant), Ease-in (slow start, speeds up),
+  Ease-out (fast start, brakes at the end), Ease-in-out (soft at both ends) — so it's
+  clear what each does. The closed field still shows just the name.
+
 ## [2.4.3] — 2026-08-25
 
 - **Consistent keyframe highlight.** The active keyframe diamond in the right-panel

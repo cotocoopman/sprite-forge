@@ -27,12 +27,14 @@ import type { EasingKind } from '@core/poses';
 import { frameToT } from '@core/poses';
 import { rigPoseAt } from '@core/customRig';
 
-const EASINGS: readonly { value: EasingKind; label: string }[] = [
-  { value: 'linear', label: 'Lineal' },
-  { value: 'easeIn', label: 'Ease-in' },
-  { value: 'easeOut', label: 'Ease-out' },
-  { value: 'easeInOut', label: 'Ease-in-out' },
+const EASINGS: readonly { value: EasingKind; label: string; desc: string }[] = [
+  { value: 'linear', label: 'Lineal', desc: 'Velocidad constante de principio a fin' },
+  { value: 'easeIn', label: 'Ease-in', desc: 'Arranca lento y acelera hacia el final' },
+  { value: 'easeOut', label: 'Ease-out', desc: 'Arranca rápido y frena al final' },
+  { value: 'easeInOut', label: 'Ease-in-out', desc: 'Suave al inicio y al final, rápido en el medio' },
 ];
+
+const easingLabel = (v: EasingKind): string => EASINGS.find((e) => e.value === v)?.label ?? String(v);
 
 const BoneAngleSlider = ({ boneId, name }: { boneId: string; name: string }): ReactElement => {
   // Valor = pose muestreada en el playhead (frame actual), no del keyframe activo.
@@ -159,8 +161,18 @@ export const RigAnimationPanel = (): ReactElement => {
 
           {onKeyframe && (
             <TextField select size="small" label={tr('Easing (salida del keyframe)')} value={easing}
-              onChange={(e) => setRigKeyframeEasing(activeKf, e.target.value as EasingKind)} fullWidth>
-              {EASINGS.map((e) => <MenuItem key={e.value} value={e.value}>{tr(e.label)}</MenuItem>)}
+              onChange={(e) => setRigKeyframeEasing(activeKf, e.target.value as EasingKind)} fullWidth
+              slotProps={{ select: { renderValue: (v) => tr(easingLabel(v as EasingKind)) } }}>
+              {EASINGS.map((e) => (
+                <MenuItem key={e.value} value={e.value}>
+                  <Stack sx={{ py: 0.25 }}>
+                    <Typography variant="body2">{tr(e.label)}</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'normal' }}>
+                      {tr(e.desc)}
+                    </Typography>
+                  </Stack>
+                </MenuItem>
+              ))}
             </TextField>
           )}
 
