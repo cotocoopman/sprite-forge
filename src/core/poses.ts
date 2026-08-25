@@ -63,8 +63,20 @@ export type EffectsConfig = {
   readonly outline: OutlineConfig;
 };
 
-// Estilo por parte del cuerpo: visibilidad + color (null = usa el color base).
-export type PartStyle = { readonly visible: boolean; readonly color: string | null; readonly name?: string };
+// Estilo por parte del cuerpo: visibilidad + color (null = usa el color base) +
+// forma/tamaño editable (como un accesorio). Los campos de tamaño/forma son
+// opcionales: si faltan, la parte se dibuja como cápsula a escala 1 (legacy).
+//   - shape:       forma con la que se dibuja cada segmento (default 'capsule').
+//   - widthScale:  multiplicador de grosor, solo render (default 1).
+//   - lengthScale: multiplicador de largo, horneado en la cinemática (default 1).
+export type PartStyle = {
+  readonly visible: boolean;
+  readonly color: string | null;
+  readonly name?: string;
+  readonly shape?: AccessoryShape;
+  readonly widthScale?: number;
+  readonly lengthScale?: number;
+};
 export type PartsConfig = Record<PartName, PartStyle>;
 
 export const DEFAULT_PARTS: PartsConfig = PART_NAMES.reduce((acc, name) => {

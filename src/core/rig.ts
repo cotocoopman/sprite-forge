@@ -81,6 +81,12 @@ export type Skeleton = {
   readonly anchors: Record<AnchorName, Anchor>;
 };
 
+// Escala de largo por parte (multiplicador ≥0, 1 = sin cambio). Se hornea en la
+// cinemática para que la cadena siga conectada (una parte más larga empuja a sus
+// hijas y las anclas de accesorios la siguen). El grosor NO va acá: no mueve
+// articulaciones, así que se aplica en render (ver skeletonToPrimitives).
+export type PartScales = Partial<Record<PartName, { readonly lengthScale?: number }>>;
+
 export type CharacterDefinition = {
   readonly id: string;
   readonly name: string;
@@ -206,13 +212,24 @@ const rotateAround = (point: Vec2, pivot: Vec2, angleDeg: number): Vec2 => {
 
 // `facing` (grados) simula un giro 3D del personaje alrededor de su eje vertical:
 // 0 = de frente, 90 = perfil derecho, 180 = de espaldas, 270 = perfil izquierdo.
-export const buildSkeleton = (char: CharacterDefinition, pose: Pose, facing = 0): Skeleton => {
+export const buildSkeleton = (
+  char: CharacterDefinition,
+  pose: Pose,
+  facing = 0,
+  scales?: PartScales,
+): Skeleton => {
+  // Multiplicador de largo por parte (≥0; default 1). Solo afecta la cinemática.
+  const ls = (p: PartName): number => {
+    const v = scales?.[p]?.lengthScale;
+    return typeof v === 'number' && v > 0 ? v : 1;
+  };
+
   const hipY = 100 - char.legHeight;
   const headRadius = char.headDiameter / 2;
   // neckLength separa la cabeza del cuerpo (?? 0 protege proyectos legacy).
   const headDistance = hipY - headRadius + (char.neckLength ?? 0);
   const torsoWidth = char.torsoWidth;
-  const torsoDrawLength = char.torsoHeight + 5;
+  const torsoDrawLength = char.torsoHeight * ls('torso') + 5;
   const shoulderOffset = torsoWidth / 2 - 0.8;
   const bodyDepth = torsoWidth * 0.5; // separación frente↔atrás de miembros cercano/lejano
   const legUpperLength = char.legHeight * char.legUpperRatio;
@@ -261,10 +278,11 @@ export const buildSkeleton = (char: CharacterDefinition, pose: Pose, facing = 0)
 
   // Brazos — hijos del torso. Se resta la inclinación del torso.
   const buildArm = (upper: number, lower: number, side: number, part: PartName): void => {
+    const sc = ls(part);
     const shoulder = alongTorso(char.shoulderDistance, side * (shoulderOffset + (char.armSpacing ?? 0)));
     const upperAngle = upper - pose.torsoLean;
-    const elbow = advance(shoulder, upperAngle, char.armUpperLength);
-    const hand = advance(elbow, upperAngle + lower, char.armLowerLength);
+    const elbow = advance(shoulder, upperAngle, char.armUpperLength * sc);
+    const hand = advance(elbow, upperAngle + lower, char.armLowerLength * sc);
     const on = curveApplies(char.armCurveTarget ?? 'both', side);
     const bU = on ? (char.armCurveUpper ?? 0) * side : 0;
     const bL = on ? (char.armCurveLower ?? 0) * side : 0;
@@ -277,10 +295,11 @@ export const buildSkeleton = (char: CharacterDefinition, pose: Pose, facing = 0)
 
   // Piernas — parten de la cadera y NO heredan la inclinación del torso.
   const buildLeg = (upper: number, lower: number, side: number, part: PartName): void => {
+    const sc = ls(part);
     const hipPoint: Vec2 = { x: side * char.hipOffset, y: hip.y };
-    const knee = advance(hipPoint, upper, legUpperLength);
+    const knee = advance(hipPoint, upper, legUpperLength * sc);
     const ankleAngle = upper + lower;
-    const ankle = advance(knee, ankleAngle, legLowerLength);
+    const ankle = advance(knee, ankleAngle, legLowerLength * sc);
     const on = curveApplies(char.legCurveTarget ?? 'both', side);
     const bU = on ? (char.legCurveUpper ?? 0) * side : 0;
     const bL = on ? (char.legCurveLower ?? 0) * side : 0;
@@ -288,7 +307,7 @@ export const buildSkeleton = (char: CharacterDefinition, pose: Pose, facing = 0)
     capsules.push({ ...bent(hipPoint, knee, char.legWidth, bU), depth: d, part });
     capsules.push({ ...bent(knee, ankle, char.legWidth, bL), depth: d, part });
     // Pie — cápsula desde el tobillo, ángulo tobillo + 90.
-    const toe = advance(ankle, ankleAngle + 90, char.footLength);
+    const toe = advance(ankle, ankleAngle + 90, char.footLength * sc);
     capsules.push({ from: ankle, to: toe, width: char.footWidth, depth: d, part });
   };
   buildLeg(pose.legFarUpper, pose.legFarLower, -1, 'legFar');

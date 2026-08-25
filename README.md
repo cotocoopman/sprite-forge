@@ -124,10 +124,20 @@ There are **two modes** (toggle in the top bar):
   accessories (humanoid) or bones (custom rig). Per layer: show/hide (eye), color,
   **rename** (double-click, body parts included), **duplicate**, delete, and reorder
   with the ↑/↓ buttons or **drag-and-drop**.
+- **Body parts are editable layers too.** Select any part (head, torso, arms, legs)
+  to change its **shape** (capsule, rectangle, triangle, circle, trapezoid, star,
+  bolt), **thickness** and **length** — independently per part, so one arm can be
+  longer/chunkier than the other. Edit from the panel (shape + width× + length×) or
+  **on the canvas** by dragging the amber handles (tip = length, side = thickness).
+  Length is baked into the kinematics, so the chain stays connected and
+  poses/animations keep working (accessory anchors follow the resized limb). Older
+  projects load unchanged (missing fields default to capsule / ×1).
 
 ### 3D turn
 - Simulates turning the character around its vertical axis (front / profile /
-  back) by foreshortening the lateral axis. 8-direction dial (top-down) + slider.
+  back) by foreshortening the lateral axis. 8-direction dial + slider + a **typeable
+  degrees field** (0–359, wraps at 360). Directions follow screen angles: `→ 0°`,
+  `↘ 45°`, `↓ 90°`, `↙ 135°`, `← 180°`, `↖ 225°`, `↑ 270°`, `↗ 315°`.
 - Export can generate **all 8 directions** (`_d0`…`_d7`).
 
 ### Animation

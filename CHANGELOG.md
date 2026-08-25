@@ -4,6 +4,24 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.1.0] — 2026-08-25
+
+- **Body parts are editable layers now.** Each body part (head, torso, arms, legs)
+  can change **shape** (capsule, rectangle, triangle, circle, trapezoid, star, bolt),
+  **thickness** (`widthScale`) and **length** (`lengthScale`) — independently per
+  part, so you can make one arm longer/chunkier than the other. Length is baked into
+  the kinematics, so the chain stays connected and poses/animations keep working
+  (accessory anchors follow the resized limb).
+  - **Layers panel** — body-part rows are now selectable and open an inline editor
+    (shape + grosor× + largo× + reset), mirroring accessories.
+  - **On-canvas** — select a body part directly on the canvas and drag its amber
+    handles to scale length (tip) and thickness (side).
+  - Thumbnails and exports (single cell + sheet) reflect the new per-part shape/size.
+  - Older projects load unchanged: missing shape/scale fields default to
+    capsule / ×1 (validated and clamped on import).
+- **3D-turn degree input** — the Giro 3D dial (humanoid *and* custom rig) now has a
+  typeable degrees field next to the slider; values wrap into 0–359 (360 → 0).
+
 ## [2.0.2] — 2026-08-24
 
 - **Docs** — README now documents the Privacy/Analytics behavior: the hosted demo

@@ -27,6 +27,39 @@ describe('buildSkeleton — pose neutra', () => {
   });
 });
 
+describe('buildSkeleton — escala de largo por parte', () => {
+  const d = (a: { x: number; y: number }, b: { x: number; y: number }): number =>
+    Math.hypot(a.x - b.x, a.y - b.y);
+
+  it('lengthScale del brazo cercano alarga la cadena hombro→mano ~2x', () => {
+    const base = buildSkeleton(DEFAULT_CHARACTER, NEUTRAL_POSE);
+    const scaled = buildSkeleton(DEFAULT_CHARACTER, NEUTRAL_POSE, 0, { armNear: { lengthScale: 2 } });
+    const baseLen = d(base.anchors.shoulderNear.pos, base.anchors.handNear.pos);
+    const scaledLen = d(scaled.anchors.shoulderNear.pos, scaled.anchors.handNear.pos);
+    expect(scaledLen).toBeCloseTo(baseLen * 2, 4);
+  });
+
+  it('no afecta a las otras partes (brazo lejano intacto)', () => {
+    const base = buildSkeleton(DEFAULT_CHARACTER, NEUTRAL_POSE);
+    const scaled = buildSkeleton(DEFAULT_CHARACTER, NEUTRAL_POSE, 0, { armNear: { lengthScale: 2 } });
+    expect(scaled.anchors.handFar.pos.x).toBeCloseTo(base.anchors.handFar.pos.x, 5);
+    expect(scaled.anchors.handFar.pos.y).toBeCloseTo(base.anchors.handFar.pos.y, 5);
+  });
+
+  it('lengthScale de la pierna cercana baja el pie', () => {
+    const base = buildSkeleton(DEFAULT_CHARACTER, NEUTRAL_POSE);
+    const scaled = buildSkeleton(DEFAULT_CHARACTER, NEUTRAL_POSE, 0, { legNear: { lengthScale: 1.5 } });
+    expect(scaled.anchors.footNear.pos.y).toBeGreaterThan(base.anchors.footNear.pos.y + 1);
+  });
+
+  it('escala inválida (≤0) se ignora (queda en 1)', () => {
+    const base = buildSkeleton(DEFAULT_CHARACTER, NEUTRAL_POSE);
+    const bad = buildSkeleton(DEFAULT_CHARACTER, NEUTRAL_POSE, 0, { armNear: { lengthScale: 0 } });
+    expect(bad.anchors.handNear.pos.x).toBeCloseTo(base.anchors.handNear.pos.x, 5);
+    expect(bad.anchors.handNear.pos.y).toBeCloseTo(base.anchors.handNear.pos.y, 5);
+  });
+});
+
 describe('buildSkeleton — inclinaciones', () => {
   it('con torsoLean > 0 el torsoTop se mueve hacia +x', () => {
     const skel = buildSkeleton(DEFAULT_CHARACTER, { ...NEUTRAL_POSE, torsoLean: 25 });

@@ -9,13 +9,13 @@ import { useProjectStore } from '@store/useProjectStore';
 import { useT } from '@/i18n';
 import { useActiveClip } from '@/hooks/useActiveClip';
 import { buildSkeleton } from '@core/rig';
-import type { Pose } from '@core/rig';
+import type { PartName, Pose } from '@core/rig';
 import { sampleClip } from '@core/poses';
-import { makeTransform, renderCharacterInner, resolveAccessoryGeom, skeletonToPrimitives } from '@core/svg';
+import { makeTransform, partScales, renderCharacterInner, resolveAccessoryGeom, skeletonToPrimitives } from '@core/svg';
 import type { SvgPrimitive } from '@core/svg';
 import { CanvasToolbar } from '@components/CanvasToolbar';
 import { CanvasContextMenu } from '@components/CanvasContextMenu';
-import { accWorldAngleTo, angleDeg, BOX_SHAPES, clientToModel, clientToViewBox, dist, modelToPx, shapeLabel } from '@components/canvasInteract';
+import { accWorldAngleTo, angleDeg, BOX_SHAPES, clientToModel, clientToViewBox, dist, modelToPx, partGeom, pickPart, shapeLabel } from '@components/canvasInteract';
 import type { Pt } from '@components/canvasInteract';
 import { genId } from '@store/useProjectStore';
 import type { Accessory } from '@core/poses';
@@ -67,23 +67,27 @@ const PrimitiveGroup = ({
   opacity: number;
 }): ReactElement => (
   <g fill={color} stroke={color} opacity={opacity}>
-    {prims.map((p, i) =>
-      p.kind === 'line' ? (
-        <path
-          key={i}
-          d={
-            p.cx !== undefined && p.cy !== undefined
-              ? `M ${p.x1} ${p.y1} Q ${p.cx} ${p.cy} ${p.x2} ${p.y2}`
-              : `M ${p.x1} ${p.y1} L ${p.x2} ${p.y2}`
-          }
-          strokeWidth={p.width}
-          strokeLinecap="round"
-          fill={p.cx !== undefined ? 'none' : undefined}
-        />
-      ) : (
-        <circle key={i} cx={p.cx} cy={p.cy} r={p.r} />
-      ),
-    )}
+    {prims.map((p, i) => {
+      if (p.kind === 'line') {
+        return (
+          <path
+            key={i}
+            d={
+              p.cx !== undefined && p.cy !== undefined
+                ? `M ${p.x1} ${p.y1} Q ${p.cx} ${p.cy} ${p.x2} ${p.y2}`
+                : `M ${p.x1} ${p.y1} L ${p.x2} ${p.y2}`
+            }
+            strokeWidth={p.width}
+            strokeLinecap="round"
+            fill={p.cx !== undefined ? 'none' : undefined}
+          />
+        );
+      }
+      if (p.kind === 'poly') {
+        return <polygon key={i} points={p.pts.map((q) => `${q.x},${q.y}`).join(' ')} />;
+      }
+      return <circle key={i} cx={p.cx} cy={p.cy} r={p.r} />;
+    })}
   </g>
 );
 
@@ -99,6 +103,13 @@ const boundingBox = (prims: readonly SvgPrimitive[]) => {
       maxX = Math.max(maxX, p.x1 + h, p.x2 + h);
       minY = Math.min(minY, p.y1 - h, p.y2 - h);
       maxY = Math.max(maxY, p.y1 + h, p.y2 + h);
+    } else if (p.kind === 'poly') {
+      for (const q of p.pts) {
+        minX = Math.min(minX, q.x);
+        maxX = Math.max(maxX, q.x);
+        minY = Math.min(minY, q.y);
+        maxY = Math.max(maxY, q.y);
+      }
     } else {
       minX = Math.min(minX, p.cx - p.r);
       maxX = Math.max(maxX, p.cx + p.r);
@@ -120,6 +131,10 @@ export const PreviewCanvas = (): ReactElement => {
   const updateAccessory = useProjectStore((s) => s.updateAccessory);
   const removeAccessory = useProjectStore((s) => s.removeAccessory);
   const insertAccessory = useProjectStore((s) => s.insertAccessory);
+  const activePartName = useProjectStore((s) => s.activePartName);
+  const selectPart = useProjectStore((s) => s.selectPart);
+  const setPartWidthScale = useProjectStore((s) => s.setPartWidthScale);
+  const setPartLengthScale = useProjectStore((s) => s.setPartLengthScale);
   const tool = useProjectStore((s) => s.tool);
   const shapeKind = useProjectStore((s) => s.shapeKind);
   const brushWidth = useProjectStore((s) => s.brushWidth);
@@ -144,7 +159,7 @@ export const PreviewCanvas = (): ReactElement => {
   }, [clip, currentFrame]);
 
   const primsFor = (pose: Pose): SvgPrimitive[] =>
-    skeletonToPrimitives(buildSkeleton(character, pose, render.facing), render);
+    skeletonToPrimitives(buildSkeleton(character, pose, render.facing, partScales(parts)), render, parts);
 
   const current = poses[frame] ? primsFor(poses[frame]) : [];
   const n = poses.length;
@@ -166,7 +181,7 @@ export const PreviewCanvas = (): ReactElement => {
     : '';
 
   // --- Manipulación en canvas: seleccionar, mover, rotar y escalar accesorios ---
-  const skel = poses[frame] ? buildSkeleton(character, poses[frame], render.facing) : null;
+  const skel = poses[frame] ? buildSkeleton(character, poses[frame], render.facing, partScales(parts)) : null;
   // Marcos de ancla resueltos (incluye anclaje objeto→objeto) para hit-test/drag.
   const frames = skel ? resolveAccessoryGeom(accessories, skel.anchors) : null;
 
@@ -190,8 +205,23 @@ export const PreviewCanvas = (): ReactElement => {
     | { mode: 'move'; start: Pt; members: { id: string; a0: number; p0: number; along: Pt; perp: Pt }[] }
     | { mode: 'tip'; id: string; base: Pt; startAngle: number; grabA: number }
     | { mode: 'width'; id: string; base: Pt; perp: Pt; circle: boolean }
+    | { mode: 'partLen'; part: PartName; base: Pt; startDist: number; startScale: number }
+    | { mode: 'partWidth'; part: PartName; ref: Pt; perp: Pt; baseWidth: number; circle: boolean }
     | null
   >(null);
+
+  // Parte del cuerpo seleccionada (solo si no hay accesorio activo) + sus handles.
+  const selPart: PartName | null = skel && activePartName && !activeAccessoryId ? activePartName : null;
+  const pG = selPart && skel ? partGeom(skel, parts, selPart) : null;
+  const pCenterPx = pG ? modelToPx(pG.center.x, pG.center.y, tf) : null;
+  const pRadiusPx = pG ? pG.radius * tf.scale : 0;
+  // Handle de largo en la punta (cabeza no tiene largo de cadena).
+  const pTipPx = pG && !pG.circle ? modelToPx(pG.tip.x, pG.tip.y, tf) : null;
+  // Handle de grosor al costado del centro (perpendicular al eje).
+  const pWidthOff = pG ? (pG.circle ? pG.scaledWidth + 2 : pG.scaledWidth / 2 + 2) : 0;
+  const pWidthPx = pG
+    ? modelToPx(pG.center.x + pG.perp.x * pWidthOff, pG.center.y + pG.perp.y * pWidthOff, tf)
+    : null;
 
   const pickAccessory = (m: Pt): string | null => {
     if (!frames) return null;
@@ -274,9 +304,37 @@ export const PreviewCanvas = (): ReactElement => {
         return;
       }
     }
+
+    // Handles de la parte del cuerpo seleccionada (escala largo / grosor).
+    if (selPart && pG) {
+      if (pTipPx && dist(vb, pTipPx) < 13) {
+        drag.current = {
+          mode: 'partLen',
+          part: selPart,
+          base: pG.base,
+          startDist: Math.max(0.001, dist(pG.base, pG.tip)),
+          startScale: parts[selPart].lengthScale ?? 1,
+        };
+        svg.setPointerCapture(e.pointerId);
+        return;
+      }
+      if (pWidthPx && dist(vb, pWidthPx) < 13) {
+        drag.current = {
+          mode: 'partWidth',
+          part: selPart,
+          ref: pG.circle ? pG.center : pG.base,
+          perp: pG.perp,
+          baseWidth: pG.baseWidth,
+          circle: pG.circle,
+        };
+        svg.setPointerCapture(e.pointerId);
+        return;
+      }
+    }
+
     const id = pickAccessory(m);
-    selectAccessory(id);
     if (id && frames) {
+      selectAccessory(id);
       const acc = accessories.find((a) => a.id === id)!;
       // Si la pieza pertenece a un arma/prop, mover todo el grupo junto.
       const group = acc.propId ? accessories.filter((a) => a.propId === acc.propId) : [acc];
@@ -296,7 +354,17 @@ export const PreviewCanvas = (): ReactElement => {
         .filter((x): x is NonNullable<typeof x> => x !== null);
       drag.current = { mode: 'move', start: m, members };
       svg.setPointerCapture(e.pointerId);
+      return;
     }
+
+    // Sin accesorio bajo el cursor: intentar seleccionar una parte del cuerpo.
+    const partHit = skel ? pickPart(skel, parts, m) : null;
+    if (partHit) {
+      selectPart(partHit);
+      return;
+    }
+    selectAccessory(null);
+    selectPart(null);
   };
 
   const onPointerMove = (e: ReactPointerEvent<SVGSVGElement>): void => {
@@ -365,9 +433,20 @@ export const PreviewCanvas = (): ReactElement => {
         angle: Math.round(shift ? Math.round(a / 15) * 15 : a),
         length: Math.round(Math.max(1, dist(d.base, m)) * 10) / 10,
       });
-    } else {
+    } else if (d.mode === 'width') {
       const off = Math.abs((m.x - d.base.x) * d.perp.x + (m.y - d.base.y) * d.perp.y);
       updateAccessory(d.id, { width: Math.max(1, Math.round((d.circle ? dist(d.base, m) * 2 : off * 2) * 10) / 10) });
+    } else if (d.mode === 'partLen') {
+      // Escala relativa: proporción respecto de la distancia base→punta al empezar.
+      const scale = d.startScale * (dist(d.base, m) / d.startDist);
+      setPartLengthScale(d.part, Math.min(4, Math.max(0.1, Math.round(scale * 100) / 100)));
+    } else {
+      // partWidth: distancia perpendicular al eje (o radial en la cabeza) → widthScale.
+      const off = d.circle
+        ? dist(m, d.ref)
+        : Math.abs((m.x - d.ref.x) * d.perp.x + (m.y - d.ref.y) * d.perp.y);
+      const scale = d.circle ? off / d.baseWidth : (off * 2) / d.baseWidth;
+      setPartWidthScale(d.part, Math.min(4, Math.max(0.1, Math.round(scale * 100) / 100)));
     }
   };
 
@@ -477,6 +556,18 @@ export const PreviewCanvas = (): ReactElement => {
               )}
               {tool === 'select' && widthPx && (
                 <rect x={widthPx.x - 5} y={widthPx.y - 5} width={10} height={10} rx={2} fill="#a5f3fc" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'nwse-resize' }} />
+              )}
+            </>
+          )}
+          {/* Parte del cuerpo seleccionada: contorno + handles de largo/grosor (ámbar). */}
+          {pCenterPx && (
+            <>
+              <circle cx={pCenterPx.x} cy={pCenterPx.y} r={pRadiusPx} fill="none" stroke="#f5b942" strokeWidth={1} strokeDasharray="3 3" opacity={0.6} />
+              {tool === 'select' && pTipPx && (
+                <circle cx={pTipPx.x} cy={pTipPx.y} r={5} fill="#f5b942" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'grab' }} />
+              )}
+              {tool === 'select' && pWidthPx && (
+                <rect x={pWidthPx.x - 5} y={pWidthPx.y - 5} width={10} height={10} rx={2} fill="#fde68a" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'nwse-resize' }} />
               )}
             </>
           )}

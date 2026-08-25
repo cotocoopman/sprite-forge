@@ -4,6 +4,9 @@
 // SVG mapea puntero→viewBox(px) y de ahí invertimos toPx para llegar al modelo.
 import type { PxTransform } from '@core/svg';
 import type { RBone } from '@core/customRig';
+import type { PartName, Skeleton } from '@core/rig';
+import { PART_NAMES } from '@core/rig';
+import type { PartsConfig } from '@core/poses';
 
 export type Pt = { x: number; y: number };
 
@@ -79,6 +82,96 @@ export const boneBaseTip = (b: RBone): { base: Pt; tip: Pt } => {
 };
 
 export const dist = (a: Pt, b: Pt): number => Math.hypot(a.x - b.x, a.y - b.y);
+
+// Distancia de un punto al segmento a→b (para hit-test de partes/huesos alargados).
+export const pointSegDist = (p: Pt, a: Pt, b: Pt): number => {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const l2 = dx * dx + dy * dy;
+  if (l2 === 0) return Math.hypot(p.x - a.x, p.y - a.y);
+  let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+};
+
+// --- Partes del cuerpo como objetos manipulables ---
+// El grosor NO se hornea en el esqueleto (ver rig.ts), así que skel.capsules trae
+// el ancho SIN escalar; acá lo escalamos con parts[part].widthScale para dibujar y
+// hit-testear. El largo SÍ está horneado (chain refleja lengthScale actual).
+export type PartHandles = {
+  readonly base: Pt;        // nace la cadena (para el handle de largo)
+  readonly tip: Pt;         // extremo de la cadena
+  readonly center: Pt;      // centro (selección + handle de grosor)
+  readonly dir: Pt;         // eje base→tip (unidad)
+  readonly perp: Pt;        // perpendicular al eje
+  readonly baseWidth: number;   // ancho sin escalar (mapea handle → widthScale)
+  readonly scaledWidth: number; // ancho con la escala actual
+  readonly radius: number;      // radio de selección (unidad)
+  readonly circle: boolean;     // cabeza: sin largo, grosor radial
+};
+
+const widthScaleOf = (parts: PartsConfig, part: PartName): number => {
+  const v = parts[part]?.widthScale;
+  return typeof v === 'number' && v > 0 ? v : 1;
+};
+
+export const partGeom = (skel: Skeleton, parts: PartsConfig, part: PartName): PartHandles => {
+  const ws = widthScaleOf(parts, part);
+  if (part === 'head') {
+    const c = skel.headCenter;
+    return {
+      base: c, tip: c, center: c,
+      dir: { x: 0, y: -1 }, perp: { x: 1, y: 0 },
+      baseWidth: skel.headRadius, scaledWidth: skel.headRadius * ws,
+      radius: skel.headRadius * ws, circle: true,
+    };
+  }
+  const caps = skel.capsules.filter((c) => (c.part ?? 'torso') === part);
+  if (caps.length === 0) {
+    const z = { x: 0, y: 0 };
+    return { base: z, tip: z, center: z, dir: { x: 0, y: 1 }, perp: { x: 1, y: 0 }, baseWidth: 1, scaledWidth: ws, radius: ws, circle: false };
+  }
+  const base = caps[0].from;
+  const tip = caps[caps.length - 1].to;
+  const center = { x: (base.x + tip.x) / 2, y: (base.y + tip.y) / 2 };
+  const dx = tip.x - base.x;
+  const dy = tip.y - base.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const dir = { x: dx / len, y: dy / len };
+  const perp = { x: dir.y, y: -dir.x };
+  const baseWidth = caps[0].width;
+  const scaledWidth = baseWidth * ws;
+  // Radio de selección: alcanza el punto más lejano de la cadena + medio ancho.
+  let far = 0;
+  for (const c of caps) {
+    far = Math.max(far, dist(center, c.from), dist(center, c.to));
+  }
+  return { base, tip, center, dir, perp, baseWidth, scaledWidth, radius: far + scaledWidth / 2, circle: false };
+};
+
+// Parte del cuerpo bajo el punto (modelo). Recorre en orden de dibujo (PART_NAMES);
+// la última que califica gana (queda al frente). Ignora partes ocultas.
+export const pickPart = (skel: Skeleton, parts: PartsConfig, p: Pt): PartName | null => {
+  let hit: PartName | null = null;
+  const margin = 2;
+  for (const name of PART_NAMES) {
+    if (!parts[name]?.visible) continue;
+    if (name === 'head') {
+      const r = skel.headRadius * widthScaleOf(parts, 'head');
+      if (dist(p, skel.headCenter) <= r + margin) hit = 'head';
+      continue;
+    }
+    const ws = widthScaleOf(parts, name);
+    for (const c of skel.capsules) {
+      if ((c.part ?? 'torso') !== name) continue;
+      if (pointSegDist(p, c.from, c.to) <= (c.width * ws) / 2 + margin) {
+        hit = name;
+        break;
+      }
+    }
+  }
+  return hit;
+};
 
 // Ángulo de hueso (raíz) para que apunte de `base` a `target`: dirOf(θ)=(sinθ,-cosθ).
 export const boneAngleTo = (base: Pt, target: Pt): number =>

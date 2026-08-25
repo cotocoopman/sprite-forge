@@ -1,9 +1,9 @@
 // Render SVG. Núcleo puro: produce primitivas y strings de markup.
 // El preview de React reutiliza skeletonToPrimitives; el export reutiliza el markup.
 
-import type { Anchor, AnchorName, CharacterDefinition, PartName, Pose, Skeleton, Vec2 } from './rig';
+import type { Anchor, AnchorName, CharacterDefinition, PartName, PartScales, Pose, Skeleton, Vec2 } from './rig';
 import { buildSkeleton, PART_NAMES } from './rig';
-import type { Accessory, EffectsConfig, PartsConfig, RenderConfig } from './poses';
+import type { Accessory, AccessoryShape, EffectsConfig, PartsConfig, RenderConfig } from './poses';
 import type { CustomRig, RBone, RigPose } from './customRig';
 import { buildCustomSkeleton } from './customRig';
 import { shapePolygon, isPolyShape } from './shapes';
@@ -30,7 +30,58 @@ export type SvgCircle = {
   readonly part: PartName;
 };
 
-export type SvgPrimitive = SvgLine | SvgCircle;
+// Parte del cuerpo dibujada con una forma poligonal (rect/triángulo/estrella/…).
+export type SvgPoly = {
+  readonly kind: 'poly';
+  readonly pts: readonly { readonly x: number; readonly y: number }[];
+  readonly part: PartName;
+};
+
+export type SvgPrimitive = SvgLine | SvgCircle | SvgPoly;
+
+// Escalas de largo por parte derivadas de la config de partes (para buildSkeleton).
+// Devuelve undefined si ninguna parte cambia de largo (evita trabajo/ruido).
+export const partScales = (parts?: PartsConfig): PartScales | undefined => {
+  if (!parts) return undefined;
+  const out: Record<string, { lengthScale?: number }> = {};
+  let has = false;
+  for (const name of PART_NAMES) {
+    const ls = parts[name]?.lengthScale;
+    if (typeof ls === 'number' && ls > 0 && ls !== 1) {
+      out[name] = { lengthScale: ls };
+      has = true;
+    }
+  }
+  return has ? (out as PartScales) : undefined;
+};
+
+// Puntos (espacio unidad) de un segmento del cuerpo dibujado con una forma no
+// cápsula. Reutiliza la misma geometría que los accesorios (base→dir, perp).
+const segmentShapePoints = (
+  shape: AccessoryShape,
+  base: Vec2,
+  dir: Vec2,
+  perp: Vec2,
+  length: number,
+  width: number,
+): { x: number; y: number }[] => {
+  if (isPolyShape(shape)) return shapePolygon(shape, base, dir, perp, length, width);
+  const hw = width / 2;
+  const tip = { x: base.x + dir.x * length, y: base.y + dir.y * length };
+  // Triángulo: dos esquinas en la base + vértice en la punta. Rect: cuatro esquinas.
+  return shape === 'triangle'
+    ? [
+        { x: base.x + perp.x * hw, y: base.y + perp.y * hw },
+        { x: base.x - perp.x * hw, y: base.y - perp.y * hw },
+        tip,
+      ]
+    : [
+        { x: base.x + perp.x * hw, y: base.y + perp.y * hw },
+        { x: base.x - perp.x * hw, y: base.y - perp.y * hw },
+        { x: tip.x - perp.x * hw, y: tip.y - perp.y * hw },
+        { x: tip.x + perp.x * hw, y: tip.y + perp.y * hw },
+      ];
+};
 
 export type PxTransform = {
   readonly scale: number;
@@ -52,28 +103,79 @@ const toPx = (x: number, y: number, tf: PxTransform): { px: number; py: number }
 });
 
 // Convierte un esqueleto (coordenadas de unidad) a primitivas en píxeles.
-export const skeletonToPrimitives = (skel: Skeleton, render: RenderConfig): SvgPrimitive[] => {
+// `parts` (opcional) aplica grosor (widthScale) y forma por parte; sin él cada
+// parte se dibuja como cápsula a grosor 1 (comportamiento histórico).
+export const skeletonToPrimitives = (
+  skel: Skeleton,
+  render: RenderConfig,
+  parts?: PartsConfig,
+): SvgPrimitive[] => {
   const tf = makeTransform(render);
   const prims: SvgPrimitive[] = [];
 
+  const wScale = (p: PartName): number => {
+    const v = parts?.[p]?.widthScale;
+    return typeof v === 'number' && v > 0 ? v : 1;
+  };
+  const shapeOf = (p: PartName): AccessoryShape => parts?.[p]?.shape ?? 'capsule';
+
   for (const cap of skel.capsules) {
-    const a = toPx(cap.from.x, cap.from.y, tf);
-    const b = toPx(cap.to.x, cap.to.y, tf);
-    const ctrl = cap.ctrl ? toPx(cap.ctrl.x, cap.ctrl.y, tf) : undefined;
-    prims.push({
-      kind: 'line',
-      x1: a.px,
-      y1: a.py,
-      x2: b.px,
-      y2: b.py,
-      width: cap.width * tf.scale,
-      part: cap.part ?? 'torso',
-      ...(ctrl ? { cx: ctrl.px, cy: ctrl.py } : {}),
+    const part = cap.part ?? 'torso';
+    const width = cap.width * wScale(part);
+    const shape = shapeOf(part);
+    // 'capsule' (y 'path', que no aplica a partes) → línea con punta redonda.
+    if (shape === 'capsule' || shape === 'path') {
+      const a = toPx(cap.from.x, cap.from.y, tf);
+      const b = toPx(cap.to.x, cap.to.y, tf);
+      const ctrl = cap.ctrl ? toPx(cap.ctrl.x, cap.ctrl.y, tf) : undefined;
+      prims.push({
+        kind: 'line',
+        x1: a.px,
+        y1: a.py,
+        x2: b.px,
+        y2: b.py,
+        width: width * tf.scale,
+        part,
+        ...(ctrl ? { cx: ctrl.px, cy: ctrl.py } : {}),
+      });
+      continue;
+    }
+    const dx = cap.to.x - cap.from.x;
+    const dy = cap.to.y - cap.from.y;
+    const len = Math.hypot(dx, dy) || 0.0001;
+    const dir = { x: dx / len, y: dy / len };
+    const perp = { x: dir.y, y: -dir.x };
+    if (shape === 'circle') {
+      const mid = { x: (cap.from.x + cap.to.x) / 2, y: (cap.from.y + cap.to.y) / 2 };
+      const c = toPx(mid.x, mid.y, tf);
+      prims.push({ kind: 'circle', cx: c.px, cy: c.py, r: (width / 2) * tf.scale, part });
+      continue;
+    }
+    const pts = segmentShapePoints(shape, cap.from, dir, perp, len, width).map((p) => {
+      const q = toPx(p.x, p.y, tf);
+      return { x: q.px, y: q.py };
     });
+    prims.push({ kind: 'poly', pts, part });
   }
 
-  const head = toPx(skel.headCenter.x, skel.headCenter.y, tf);
-  prims.push({ kind: 'circle', cx: head.px, cy: head.py, r: skel.headRadius * tf.scale, part: 'head' });
+  // Cabeza: grosor escala el diámetro; forma no-círculo la dibuja como polígono.
+  const headScale = wScale('head');
+  const rUnit = skel.headRadius * headScale;
+  const headShape = shapeOf('head');
+  if (headShape === 'circle' || headShape === 'capsule' || headShape === 'path') {
+    const head = toPx(skel.headCenter.x, skel.headCenter.y, tf);
+    prims.push({ kind: 'circle', cx: head.px, cy: head.py, r: rUnit * tf.scale, part: 'head' });
+  } else {
+    // Forma centrada en la cabeza: eje vertical (arriba), lado = diámetro.
+    const base = { x: skel.headCenter.x, y: skel.headCenter.y + rUnit };
+    const dir = { x: 0, y: -1 };
+    const perp = { x: 1, y: 0 };
+    const pts = segmentShapePoints(headShape, base, dir, perp, rUnit * 2, rUnit * 2).map((p) => {
+      const q = toPx(p.x, p.y, tf);
+      return { x: q.px, y: q.py };
+    });
+    prims.push({ kind: 'poly', pts, part: 'head' });
+  }
 
   return prims;
 };
@@ -245,6 +347,10 @@ const shapesMarkup = (prims: readonly SvgPrimitive[], offsetX: number): string =
         }
         return `<path d="M ${x1} ${fmt(p.y1)} L ${x2} ${fmt(p.y2)}" stroke-width="${fmt(p.width)}" stroke-linecap="round" />`;
       }
+      if (p.kind === 'poly') {
+        const pts = p.pts.map((q) => `${fmt(q.x + offsetX)},${fmt(q.y)}`).join(' ');
+        return `<polygon points="${pts}" />`;
+      }
       return `<circle cx="${fmt(p.cx + offsetX)}" cy="${fmt(p.cy)}" r="${fmt(p.r)}" />`;
     })
     .join('');
@@ -391,8 +497,8 @@ export const renderCharacterInner = (
   ghostHidden = false,
   accessories: readonly Accessory[] = [],
 ): string => {
-  const skel = buildSkeleton(character, poseValue, render.facing);
-  const prims = skeletonToPrimitives(skel, render);
+  const skel = buildSkeleton(character, poseValue, render.facing, partScales(parts));
+  const prims = skeletonToPrimitives(skel, render, parts);
   const accPrims = accessoriesToPrimitives(accessories, skel.anchors, render);
   const tf = makeTransform(render);
   const defs = effectDefs(effects, tf.scale);
@@ -434,8 +540,8 @@ export const renderSheet = (
   const defs = effectDefs(effects, tf.scale);
   const groups = poses
     .map((p, i) => {
-      const skel = buildSkeleton(character, p, render.facing);
-      const prims = skeletonToPrimitives(skel, render);
+      const skel = buildSkeleton(character, p, render.facing, partScales(parts));
+      const prims = skeletonToPrimitives(skel, render, parts);
       const accPrims = accessoriesToPrimitives(accessories, skel.anchors, render);
       return renderCharacterGroup(prims, character.color, {
         offsetX: i * render.cellSize,

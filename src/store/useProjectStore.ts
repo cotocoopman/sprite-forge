@@ -135,11 +135,17 @@ export type ProjectState = {
   readonly setArmCurveTarget: (target: CurveTarget) => void;
   readonly setLegCurveTarget: (target: CurveTarget) => void;
 
-  // Partes (visibilidad + color por parte)
+  // Partes (visibilidad + color + forma/tamaño por parte)
+  readonly activePartName: PartName | null;
+  readonly selectPart: (part: PartName | null) => void;
   readonly togglePartVisible: (part: PartName) => void;
   readonly setPartColor: (part: PartName, color: string) => void;
   readonly resetPartColor: (part: PartName) => void;
   readonly setPartName: (part: PartName, name: string) => void;
+  readonly setPartShape: (part: PartName, shape: AccessoryShape) => void;
+  readonly setPartWidthScale: (part: PartName, scale: number) => void;
+  readonly setPartLengthScale: (part: PartName, scale: number) => void;
+  readonly resetPartSize: (part: PartName) => void;
 
   // Accesorios
   readonly activeAccessoryId: string | null;
@@ -451,6 +457,12 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     setLegCurveTarget: (target) =>
       set((s) => ({ project: { ...s.project, character: { ...s.project.character, legCurveTarget: target } } })),
 
+    activePartName: null,
+
+    // Seleccionar una parte deselecciona el accesorio activo (y viceversa) para
+    // que el canvas y los editores muestren un solo objeto activo a la vez.
+    selectPart: (part) => set({ activePartName: part, ...(part ? { activeAccessoryId: null } : {}) }),
+
     togglePartVisible: (part) =>
       set((s) => ({
         project: {
@@ -461,6 +473,44 @@ export const useProjectStore = create<ProjectState>((set, get) => {
           },
         },
       })),
+
+    setPartShape: (part, shape) =>
+      set((s) => ({
+        project: {
+          ...s.project,
+          parts: { ...s.project.parts, [part]: { ...s.project.parts[part], shape } },
+        },
+      })),
+
+    setPartWidthScale: (part, scale) =>
+      set((s) => ({
+        project: {
+          ...s.project,
+          parts: {
+            ...s.project.parts,
+            [part]: { ...s.project.parts[part], widthScale: Math.min(4, Math.max(0.1, scale)) },
+          },
+        },
+      })),
+
+    setPartLengthScale: (part, scale) =>
+      set((s) => ({
+        project: {
+          ...s.project,
+          parts: {
+            ...s.project.parts,
+            [part]: { ...s.project.parts[part], lengthScale: Math.min(4, Math.max(0.1, scale)) },
+          },
+        },
+      })),
+
+    resetPartSize: (part) =>
+      set((s) => {
+        const { widthScale: _w, lengthScale: _l, shape: _s, ...rest } = s.project.parts[part];
+        return {
+          project: { ...s.project, parts: { ...s.project.parts, [part]: rest } },
+        };
+      }),
 
     setPartColor: (part, color) =>
       set((s) => ({
@@ -628,7 +678,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         activeAccessoryId: acc.id,
       })),
 
-    selectAccessory: (id) => set({ activeAccessoryId: id }),
+    selectAccessory: (id) => set({ activeAccessoryId: id, ...(id ? { activePartName: null } : {}) }),
 
     tool: 'select',
     shapeKind: 'rect',

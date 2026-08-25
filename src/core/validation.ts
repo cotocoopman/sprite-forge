@@ -183,12 +183,20 @@ const validateEffects = (v: unknown): EffectsConfig => {
 const validateParts = (v: unknown, character: unknown): PartsConfig => {
   const rec = isRecord(v) ? v : {};
   const out = {} as Record<PartName, PartStyle>;
+  // Escala válida y acotada; ignora valores no numéricos o fuera de rango.
+  const scale = (x: unknown): number | undefined =>
+    isNum(x) && x > 0 ? Math.min(4, Math.max(0.1, x)) : undefined;
   for (const name of PART_NAMES) {
     const p = isRecord(rec[name]) ? rec[name] : {};
+    const ws = scale(p.widthScale);
+    const ol = scale(p.lengthScale);
     out[name] = {
       visible: isBool(p.visible) ? p.visible : true,
       color: isStr(p.color) ? p.color : null,
       ...(isStr(p.name) ? { name: p.name } : {}),
+      ...(ACC_SHAPES.has(p.shape as string) ? { shape: p.shape as PartStyle['shape'] } : {}),
+      ...(ws !== undefined ? { widthScale: ws } : {}),
+      ...(ol !== undefined ? { lengthScale: ol } : {}),
     };
   }
   // Migración: si venía headColorEnabled + headColor, pasarlo a la cabeza.

@@ -6,12 +6,17 @@ import Typography from '@mui/material/Typography';
 import InputBase from '@mui/material/InputBase';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import Slider from '@mui/material/Slider';
+import Button from '@mui/material/Button';
+import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import LayersIcon from '@mui/icons-material/Layers';
 import { useProjectStore } from '@store/useProjectStore';
@@ -19,6 +24,93 @@ import { ColorField } from '@components/ColorField';
 import { SectionAccordion } from '@components/SectionAccordion';
 import { useT } from '@/i18n';
 import { PART_NAMES, PART_LABELS } from '@core/rig';
+import type { PartName } from '@core/rig';
+import type { AccessoryShape } from '@core/poses';
+
+// Formas ofrecidas para partes del cuerpo (sin 'path' — no aplica a un hueso).
+const PART_SHAPES: readonly { value: AccessoryShape; label: string }[] = [
+  { value: 'capsule', label: 'Cápsula' },
+  { value: 'rect', label: 'Rectángulo' },
+  { value: 'triangle', label: 'Triángulo' },
+  { value: 'circle', label: 'Círculo' },
+  { value: 'trapezoid', label: 'Trapecio' },
+  { value: 'star', label: 'Estrella' },
+  { value: 'bolt', label: 'Rayo' },
+];
+
+// Editor inline de una parte: forma + grosor× + largo×, estilo accesorio.
+const PartEditor = ({ part }: { part: PartName }): ReactElement => {
+  const style = useProjectStore((s) => s.project.parts[part]);
+  const setPartShape = useProjectStore((s) => s.setPartShape);
+  const setPartWidthScale = useProjectStore((s) => s.setPartWidthScale);
+  const setPartLengthScale = useProjectStore((s) => s.setPartLengthScale);
+  const resetPartSize = useProjectStore((s) => s.resetPartSize);
+  const t = useT();
+
+  const shape = style.shape ?? 'capsule';
+  const width = style.widthScale ?? 1;
+  const length = style.lengthScale ?? 1;
+  const dirty = style.shape !== undefined || style.widthScale !== undefined || style.lengthScale !== undefined;
+  // La cabeza es un círculo: no tiene "largo" a escalar por la cadena.
+  const showLength = part !== 'head';
+
+  return (
+    <Stack spacing={0.75} sx={{ px: 1, py: 1, mb: 0.5, borderRadius: 1, bgcolor: 'action.hover' }}>
+      <TextField
+        select
+        size="small"
+        label={t('Forma')}
+        value={shape}
+        onChange={(e) => setPartShape(part, e.target.value as AccessoryShape)}
+        fullWidth
+      >
+        {PART_SHAPES.map((s) => (
+          <MenuItem key={s.value} value={s.value}>
+            {t(s.label)}
+          </MenuItem>
+        ))}
+      </TextField>
+      <Box>
+        <Typography variant="caption" color="text.secondary">
+          {t('Grosor')} · ×{width.toFixed(2)}
+        </Typography>
+        <Slider
+          size="small"
+          value={width}
+          min={0.1}
+          max={4}
+          step={0.05}
+          onChange={(_, v) => setPartWidthScale(part, v as number)}
+        />
+      </Box>
+      {showLength && (
+        <Box>
+          <Typography variant="caption" color="text.secondary">
+            {t('Largo')} · ×{length.toFixed(2)}
+          </Typography>
+          <Slider
+            size="small"
+            value={length}
+            min={0.1}
+            max={4}
+            step={0.05}
+            onChange={(_, v) => setPartLengthScale(part, v as number)}
+          />
+        </Box>
+      )}
+      <Button
+        size="small"
+        variant="text"
+        startIcon={<RestartAltIcon fontSize="inherit" />}
+        disabled={!dirty}
+        onClick={() => resetPartSize(part)}
+        sx={{ alignSelf: 'flex-start' }}
+      >
+        {t('Restablecer forma/tamaño')}
+      </Button>
+    </Stack>
+  );
+};
 
 // Fila genérica de capa: ojo · color · nombre (selecciona) · subir/bajar · borrar.
 const LayerRow = ({
@@ -171,6 +263,8 @@ const HumanoidLayers = (): ReactElement => {
   const parts = useProjectStore((s) => s.project.parts);
   const accessories = useProjectStore((s) => s.project.accessories);
   const activeId = useProjectStore((s) => s.activeAccessoryId);
+  const activePart = useProjectStore((s) => s.activePartName);
+  const selectPart = useProjectStore((s) => s.selectPart);
   const togglePartVisible = useProjectStore((s) => s.togglePartVisible);
   const setPartColor = useProjectStore((s) => s.setPartColor);
   const resetPartColor = useProjectStore((s) => s.resetPartColor);
@@ -190,18 +284,22 @@ const HumanoidLayers = (): ReactElement => {
     <Stack spacing={0.25}>
       <GroupLabel>{t('Cuerpo')}</GroupLabel>
       {PART_NAMES.map((p) => (
-        <LayerRow
-          key={p}
-          indent
-          name={parts[p].name ?? t(PART_LABELS[p])}
-          visible={parts[p].visible}
-          color={parts[p].color ?? character.color}
-          onToggle={() => togglePartVisible(p)}
-          onColor={(v) => setPartColor(p, v)}
-          onColorReset={() => resetPartColor(p)}
-          canReset={parts[p].color !== null}
-          onRename={(v) => setPartName(p, v)}
-        />
+        <Box key={p}>
+          <LayerRow
+            indent
+            name={parts[p].name ?? t(PART_LABELS[p])}
+            visible={parts[p].visible}
+            selected={p === activePart}
+            color={parts[p].color ?? character.color}
+            onToggle={() => togglePartVisible(p)}
+            onColor={(v) => setPartColor(p, v)}
+            onColorReset={() => resetPartColor(p)}
+            canReset={parts[p].color !== null}
+            onSelect={() => selectPart(p === activePart ? null : p)}
+            onRename={(v) => setPartName(p, v)}
+          />
+          {p === activePart && <PartEditor part={p} />}
+        </Box>
       ))}
 
       <GroupLabel>{t('Accesorios')}</GroupLabel>
