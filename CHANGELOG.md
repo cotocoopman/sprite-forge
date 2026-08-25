@@ -4,6 +4,12 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.0.2] — 2026-08-24
+
+- **Docs** — README now documents the Privacy/Analytics behavior: the hosted demo
+  uses cookieless Vercel Web Analytics, scoped to that deployment only (forks and
+  local runs never send data).
+
 ## [2.0.1] — 2026-08-24
 
 - **Vercel Web Analytics** — added cookieless, anonymous pageview analytics for the

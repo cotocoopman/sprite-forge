@@ -1,8 +1,9 @@
 # Sprite Forge
 
 Parametric generator of **2D silhouette-style sprites** for games, with
-**Godot-ready** export. 100% local web app — no backend, no accounts, no
-telemetry. All state lives in `localStorage`.
+**Godot-ready** export. 100% local web app — no backend, no accounts. All
+state lives in `localStorage`. The only exception is anonymous, opt-in
+analytics on the official hosted demo — see [Privacy](#privacy).
 
 Design a silhouette character (or a non-humanoid creature), animate it with
 keyframes, and export sprite sheets / frames / SVG / Godot resources.
@@ -215,6 +216,23 @@ Vitest · jszip. No `any`, arrow functions only. `nodeLinker: node-modules`.
   use Claude as an asset copilot.
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) to contribute (fork + PR).
+
+---
+
+## Privacy
+
+The hosted demo at [sprite-forge-sigma.vercel.app](https://sprite-forge-sigma.vercel.app/)
+uses [Vercel Web Analytics](https://vercel.com/docs/analytics) — cookieless,
+anonymous pageview counts (no personal data, no cross-site tracking). It's
+enabled **only** for that specific Vercel deployment/project:
+
+- **Forks deployed elsewhere** (your own Vercel account, Netlify, Cloudflare
+  Pages, or self-hosted) send **nothing** to us — the analytics script only
+  resolves against the Vercel project it's enabled on.
+- **Running locally** (`yarn dev` or a local `yarn build`) never sends anything —
+  the package is a no-op outside of a deployed, analytics-enabled Vercel project.
+- No account, no login, no fingerprinting: it only tells us aggregate traffic
+  to the official demo (pageviews, referrers, rough geography).
 
 ---
 
