@@ -14,6 +14,11 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogActions from '@mui/material/DialogActions';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -25,6 +30,7 @@ import KeyboardIcon from '@mui/icons-material/Keyboard';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import TranslateIcon from '@mui/icons-material/Translate';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import { useProjectStore } from '@store/useProjectStore';
 import { useT } from '@/i18n';
 import { useActiveClip } from '@/hooks/useActiveClip';
@@ -32,7 +38,6 @@ import { useActiveRigClip } from '@/hooks/useActiveRigClip';
 import { parseProjectJson } from '@core/validation';
 import { exportProjectJson } from '@core/export';
 import { CharacterPanel } from '@components/CharacterPanel';
-import { PartsPanel } from '@components/PartsPanel';
 import { AccessoriesPanel } from '@components/AccessoriesPanel';
 import { EffectsPanel } from '@components/EffectsPanel';
 import { PresetLibrary } from '@components/PresetLibrary';
@@ -122,9 +127,11 @@ export const App = (): ReactElement => {
   const undo = useProjectStore((s) => s.undo);
   const redo = useProjectStore((s) => s.redo);
 
+  const resetProject = useProjectStore((s) => s.resetProject);
   const [exportOpen, setExportOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
   const [rightTab, setRightTab] = useState<'anim' | 'layers'>('anim');
 
   const rightTabs = (
@@ -352,6 +359,17 @@ export const App = (): ReactElement => {
                 {t('Exportar sprites')}
               </Button>
             </Tooltip>
+            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5 }} />
+            <Tooltip title={t('Reiniciar todo — borra el trabajo actual y vuelve al inicio')}>
+              <IconButton
+                size="small"
+                color="error"
+                onClick={() => setResetOpen(true)}
+                aria-label={t('Reiniciar todo')}
+              >
+                <DeleteSweepIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
           </Stack>
         </Toolbar>
       </AppBar>
@@ -403,8 +421,6 @@ export const App = (): ReactElement => {
               <Divider />
               <CharacterPanel />
               <Divider />
-              <PartsPanel />
-              <Divider />
               <AccessoriesPanel />
               <Divider />
               <EffectsPanel />
@@ -450,6 +466,30 @@ export const App = (): ReactElement => {
       <ExportDialog open={exportOpen} onClose={() => setExportOpen(false)} />
       <KeyboardShortcuts open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       <QuickGuide open={guideOpen} onClose={() => setGuideOpen(false)} />
+
+      <Dialog open={resetOpen} onClose={() => setResetOpen(false)}>
+        <DialogTitle>{t('¿Reiniciar todo?')}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {t('Se borra el trabajo actual (personaje, partes, accesorios, animaciones y rig) y vuelve al inicio. Tus presets guardados, el idioma y la imagen de referencia se mantienen. Podés deshacerlo con Ctrl+Z.')}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResetOpen(false)}>{t('Cancelar')}</Button>
+          <Button
+            color="error"
+            variant="contained"
+            startIcon={<DeleteSweepIcon />}
+            onClick={() => {
+              resetProject();
+              setResetOpen(false);
+              notify(t('Proyecto reiniciado'), 'success');
+            }}
+          >
+            {t('Reiniciar')}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={notification.open}

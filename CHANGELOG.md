@@ -4,6 +4,19 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.1.1] — 2026-08-25
+
+- **Master reset** — a reset button at the end of the top toolbar wipes the current
+  work (character, parts, accessories, animations, rig) back to the default, behind a
+  confirmation dialog. Saved presets, language and the reference image are kept, and
+  it can be undone with `Ctrl+Z`.
+- Note: work was already auto-saved to `localStorage` (debounced) and restored on
+  reload — F5 does not lose your design; only transient UI state (selection, current
+  frame) resets, which is expected.
+- **Removed the redundant "Partes" panel** from the left column — body-part
+  visibility, color, rename and now shape/size all live in the **Capas (Layers)**
+  panel, so the duplicate section is gone.
+
 ## [2.1.0] — 2026-08-25
 
 - **Body parts are editable layers now.** Each body part (head, torso, arms, legs)

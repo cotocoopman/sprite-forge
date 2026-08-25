@@ -276,6 +276,7 @@ export type ProjectState = {
 
   // Proyecto
   readonly importProject: (project: Project) => void;
+  readonly resetProject: () => void;
 
   // Historial (undo / redo)
   readonly canUndo: boolean;
@@ -1279,6 +1280,25 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         currentFrame: 0,
         isPlaying: false,
       }),
+
+    // Reset maestro: vuelve el trabajo actual al proyecto por defecto y limpia toda
+    // selección. La persistencia (debounce) guarda el default; se puede deshacer con
+    // Ctrl+Z (queda en el historial). Presets, idioma e imagen de referencia se mantienen.
+    resetProject: () => {
+      const p = buildDefaultProject();
+      set({
+        project: p,
+        activeAnimationId: p.animations[0]?.id ?? '',
+        activeKeyframeIndex: 0,
+        currentFrame: 0,
+        isPlaying: false,
+        activeAccessoryId: null,
+        activePartName: null,
+        activeBoneId: null,
+        activeRigClipId: p.customRig.animations[0]?.id ?? null,
+        activeRigKeyframeIndex: 0,
+      });
+    },
 
     undo: () => {
       flushHistory();
