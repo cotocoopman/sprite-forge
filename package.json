@@ -1,7 +1,7 @@
 {
   "name": "sprite-forge",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.0.1",
   "type": "module",
   "description": "Free, 100% local web tool to design, animate and export 2D silhouette sprites for games — sprite sheets, frames, SVG and Godot SpriteFrames.",
   "author": "Cristopher Coopman",
@@ -39,6 +39,7 @@
     "@emotion/styled": "^11.13.5",
     "@mui/icons-material": "^7.0.0",
     "@mui/material": "^7.0.0",
+    "@vercel/analytics": "^2.0.1",
     "jszip": "^3.10.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

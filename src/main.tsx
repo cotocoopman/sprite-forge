@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import { Analytics } from '@vercel/analytics/react';
 import { makeTheme } from './theme';
 import { App } from './App';
 
@@ -15,6 +16,7 @@ const Root = (): ReactElement => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <App />
+      <Analytics />
     </ThemeProvider>
   );
 };

@@ -4,6 +4,11 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.0.1] — 2026-08-24
+
+- **Vercel Web Analytics** — added cookieless, anonymous pageview analytics for the
+  hosted deployment only (self-hosted/forked copies never send data here).
+
 ## [2.0.0] — 2026-08-24
 
 **Canvas editor & Layers milestone.** This release cuts a version for the whole pool of
