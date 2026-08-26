@@ -83,6 +83,11 @@ export const boneBaseTip = (b: RBone): { base: Pt; tip: Pt } => {
 
 export const dist = (a: Pt, b: Pt): number => Math.hypot(a.x - b.x, a.y - b.y);
 
+// Cursor del handle de rotar: flecha circular (no hay keyword CSS estándar para
+// "rotar", así que se dibuja a mano como cursor SVG en vez de usar 'grab').
+export const ROTATE_CURSOR =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cpath d='M11 3a8 8 0 1 1-5.66 2.34' fill='none' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M11 3a8 8 0 1 1-5.66 2.34' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M3 2v5h5' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M3 2v5h5' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\") 11 11, grab";
+
 // --- Handles de resize por forma (estilo "esquinas reales", separados de rotar) ---
 // Cada forma expone sus vértices/puntas reales como handles independientes; cada uno
 // declara qué eje del objeto (largo/ancho/ambos/radial) controla al arrastrarlo, así

@@ -34,6 +34,7 @@ import {
   modelToPx,
   partGeom,
   pickPart,
+  ROTATE_CURSOR,
   rotateFarLength,
   rotateHandlePos,
   shapeLabel,
@@ -62,6 +63,10 @@ const accGeom = (
   };
   const sr = ((anchorAngle + acc.angle) * Math.PI) / 180;
   const dir = { x: Math.sin(sr), y: Math.cos(sr) };
+  // Perpendicular a `dir` (que ya incluye acc.angle) — NO el `perp` de arriba, que
+  // es del marco del ancla y queda fuera de sincro apenas el objeto tiene su propio
+  // ángulo. Si se reusara ese, los handles de esquina se ven "sheared" al rotar.
+  const perpS = { x: Math.cos(sr), y: -Math.sin(sr) };
   // Trazo libre: centro = centroide de sus puntos (en mundo), radio = bounding.
   if (acc.shape === 'path' && acc.points && acc.points.length > 0) {
     const w = acc.points.map((p) => ({
@@ -78,7 +83,7 @@ const accGeom = (
   const center = { x: base.x + dir.x * (len / 2), y: base.y + dir.y * (len / 2) };
   const tip = { x: base.x + dir.x * len, y: base.y + dir.y * len };
   const radius = Math.max(acc.width / 2, acc.length / 2) + 6;
-  return { base, center, tip, dir, along, perp, radius };
+  return { base, center, tip, dir, along, perp: perpS, radius };
 };
 
 const CHECKER =
@@ -695,7 +700,7 @@ export const PreviewCanvas = (): ReactElement => {
               {tool === 'select' && rotatePx && stemTipPx && (
                 <>
                   <line x1={stemTipPx.x} y1={stemTipPx.y} x2={rotatePx.x} y2={rotatePx.y} stroke="#f5b942" strokeWidth={1} strokeDasharray="2 2" opacity={0.7} />
-                  <circle cx={rotatePx.x} cy={rotatePx.y} r={5} fill="#f5b942" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'grab' }} />
+                  <circle cx={rotatePx.x} cy={rotatePx.y} r={5} fill="#f5b942" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: ROTATE_CURSOR }} />
                 </>
               )}
               {tool === 'select' && curvePx && (

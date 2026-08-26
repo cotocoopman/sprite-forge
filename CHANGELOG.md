@@ -4,6 +4,16 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.7.1] — 2026-08-26
+
+- **Fix: corner handles sheared on rotated accessories.** The perpendicular axis used
+  to place resize handles was computed from the anchor's angle only, not the
+  accessory's own rotation, so a rotated shape's corner handles drifted off its real
+  vertices (looked skewed/warped) instead of tracking them. Handles now use the same
+  rotated axis the silhouette itself is drawn with.
+- **Rotate handle gets a proper cursor.** Hovering it showed the generic "grab" hand;
+  now it shows a small circular-arrow cursor instead.
+
 ## [2.7.0] — 2026-08-26
 
 - **Standard corner handles for every shape.** Rect, triangle, trapezoid, star, bolt,

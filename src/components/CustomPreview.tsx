@@ -35,6 +35,7 @@ import {
   dist,
   modelToPx,
   pickBone,
+  ROTATE_CURSOR,
   rotateFarLength,
   rotateHandlePos,
   shapeLabel,
@@ -382,7 +383,7 @@ export const CustomPreview = (): ReactElement => {
               {tool === 'select' && rotatePx && stemTipPx && (
                 <>
                   <line x1={stemTipPx.x} y1={stemTipPx.y} x2={rotatePx.x} y2={rotatePx.y} stroke="#f5b942" strokeWidth={1} strokeDasharray="2 2" opacity={0.7} />
-                  <circle cx={rotatePx.x} cy={rotatePx.y} r={5} fill="#f5b942" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'grab' }} />
+                  <circle cx={rotatePx.x} cy={rotatePx.y} r={5} fill="#f5b942" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: ROTATE_CURSOR }} />
                 </>
               )}
               {tool === 'select' && curvePx && (
