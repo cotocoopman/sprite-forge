@@ -279,7 +279,7 @@ export const CustomPreview = (): ReactElement => {
     if (d.mode === 'move') {
       updateBone(d.id, { offset: { x: d.offset.x + (m.x - d.start.x), y: d.offset.y + (m.y - d.start.y) } });
     } else if (d.mode === 'resize') {
-      const r = applyHandleDrag(d.axis, d.base, d.dir, d.perp, m, d.prevLength, d.prevWidth);
+      const r = applyHandleDrag(d.axis, d.base, d.dir, d.perp, m, d.prevLength, d.prevWidth, shift);
       updateBone(d.id, { length: Math.round(r.length * 10) / 10, width: Math.round(r.width * 10) / 10 });
     } else if (d.mode === 'rotate') {
       const a = d.startAngle + (angleDeg(d.base, m) - d.grabA);

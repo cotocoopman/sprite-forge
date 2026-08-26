@@ -534,7 +534,7 @@ export const PreviewCanvas = (): ReactElement => {
         });
       }
     } else if (d.mode === 'resize') {
-      const r = applyHandleDrag(d.axis, d.base, d.dir, d.perp, m, d.prevLength, d.prevWidth);
+      const r = applyHandleDrag(d.axis, d.base, d.dir, d.perp, m, d.prevLength, d.prevWidth, shift);
       updateAccessory(d.id, { length: Math.round(r.length * 10) / 10, width: Math.round(r.width * 10) / 10 });
     } else if (d.mode === 'rotate') {
       // Convención de accesorios: el ángulo de pantalla decrece al crecer acc.angle → resta.

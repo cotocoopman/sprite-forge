@@ -4,6 +4,16 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.8.0] — 2026-08-26
+
+- **Shift-to-lock proportions when resizing.** Dragging any resize handle on an
+  existing shape (rect, triangle, trapezoid, bolt, capsule/line, arc) while holding
+  Shift now scales length and width together, keeping that shape's current
+  proportions — standard corner-resize behavior, distinct from creating a new shape
+  with Shift (which locks to a square/1:1, unchanged). Pencil's shift-for-a-straight-
+  line and the angle-snapping on rotate/create already worked this way and needed no
+  changes.
+
 ## [2.7.1] — 2026-08-26
 
 - **Fix: corner handles sheared on rotated accessories.** The perpendicular axis used

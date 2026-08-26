@@ -162,6 +162,9 @@ export const shapeResizeHandles = (
 };
 
 // Interpreta el arrastre de un handle de resize según su eje declarado.
+// `keepAspect` (Shift): en vez de mover largo/ancho por separado, escala ambos desde
+// la proporción ACTUAL de la forma — estándar Figma (a diferencia de crear una forma
+// nueva con Shift, que fuerza 1:1; ver BOX_SHAPES en onPointerMove de los canvas).
 export const applyHandleDrag = (
   axis: HandleAxis,
   base: Pt,
@@ -170,14 +173,21 @@ export const applyHandleDrag = (
   drag: Pt,
   prevLength: number,
   prevWidth: number,
+  keepAspect = false,
 ): { length: number; width: number } => {
   if (axis === 'radial') return { length: Math.max(1, dist(base, drag)), width: prevWidth };
   const u = (drag.x - base.x) * dir.x + (drag.y - base.y) * dir.y;
   const v = (drag.x - base.x) * perp.x + (drag.y - base.y) * perp.y;
-  return {
-    length: axis === 'width' ? prevLength : Math.max(1, u),
-    width: axis === 'length' ? prevWidth : Math.max(1, Math.abs(v) * 2),
-  };
+  const rawLength = axis === 'width' ? prevLength : Math.max(1, u);
+  const rawWidth = axis === 'length' ? prevWidth : Math.max(1, Math.abs(v) * 2);
+  if (!keepAspect || prevLength <= 0 || prevWidth <= 0) {
+    return { length: rawLength, width: rawWidth };
+  }
+  // Escala uniforme: el eje que cambió más (en proporción) manda.
+  const scaleLen = rawLength / prevLength;
+  const scaleWidth = rawWidth / prevWidth;
+  const scale = Math.abs(scaleLen - 1) >= Math.abs(scaleWidth - 1) ? scaleLen : scaleWidth;
+  return { length: Math.max(1, prevLength * scale), width: Math.max(1, prevWidth * scale) };
 };
 
 // Largo "efectivo" a lo largo de `dir` para ubicar el handle de rotar más allá de la
