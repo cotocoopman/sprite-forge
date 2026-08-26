@@ -224,7 +224,7 @@ export const skeletonToPrimitives = (
 
 // --- Accesorios ---
 export type AccPrim =
-  | { readonly kind: 'line'; readonly x1: number; readonly y1: number; readonly x2: number; readonly y2: number; readonly width: number; readonly color: string; readonly opacity: number; readonly front: boolean }
+  | { readonly kind: 'line'; readonly x1: number; readonly y1: number; readonly x2: number; readonly y2: number; readonly width: number; readonly color: string; readonly opacity: number; readonly front: boolean; readonly cx?: number; readonly cy?: number }
   | { readonly kind: 'circle'; readonly cx: number; readonly cy: number; readonly r: number; readonly color: string; readonly opacity: number; readonly front: boolean }
   | { readonly kind: 'poly'; readonly pts: readonly { x: number; y: number }[]; readonly color: string; readonly opacity: number; readonly front: boolean }
   | { readonly kind: 'path'; readonly pts: readonly { x: number; y: number }[]; readonly width: number; readonly color: string; readonly opacity: number; readonly front: boolean };
@@ -287,6 +287,11 @@ export const accessoriesToPrimitives = (
   const tf = makeTransform(render);
   const out: AccPrim[] = [];
   const geom = resolveAccessoryGeom(accessories, anchors);
+  // Giro 3D (facing) como el cuerpo: escorza la componente X de cada accesorio
+  // alrededor de su ancla por cos(facing), de modo que arma/accesorio "gira" en su
+  // eje vertical (a 90° queda de canto; pasado 90° se espeja, como la silueta).
+  const facing = (((render.facing ?? 0) % 360) + 360) % 360;
+  const fc = Math.cos(rad(render.facing ?? 0));
 
   for (const acc of accessories) {
     if (!acc.anchorTo && !anchors[acc.anchor]) continue;
@@ -303,26 +308,41 @@ export const accessoriesToPrimitives = (
     const dir = { x: Math.sin(sr), y: Math.cos(sr) };
     const perpS = { x: Math.cos(sr), y: -Math.sin(sr) };
     const common = { color: acc.color, opacity: acc.opacity, front: acc.front };
+    // Punto modelo → píxel, aplicando el escorzo 3D alrededor del ancla.
+    const px = (p: Vec2): { px: number; py: number } => {
+      const q = facing !== 0 ? { x: anchor.pos.x + (p.x - anchor.pos.x) * fc, y: p.y } : p;
+      return toPx(q.x, q.y, tf);
+    };
 
     if (acc.shape === 'path') {
       // Trazo libre: puntos en el marco local del ancla (along, perp).
       const pts = (acc.points ?? []).map((p) => {
         const w = { x: anchor.pos.x + p.x * along.x + p.y * perp.x, y: anchor.pos.y + p.x * along.y + p.y * perp.y };
-        const q = toPx(w.x, w.y, tf);
+        const q = px(w);
         return { x: q.px, y: q.py };
       });
       if (pts.length > 0) out.push({ kind: 'path', pts, width: acc.width * tf.scale, ...common });
     } else if (acc.shape === 'circle') {
-      const c = toPx(base.x, base.y, tf);
+      const c = px(base);
       out.push({ kind: 'circle', cx: c.px, cy: c.py, r: (acc.width / 2) * tf.scale, ...common });
     } else if (acc.shape === 'capsule') {
       const end = { x: base.x + dir.x * acc.length, y: base.y + dir.y * acc.length };
-      const a = toPx(base.x, base.y, tf);
-      const b = toPx(end.x, end.y, tf);
+      const a = px(base);
+      const b = px(end);
       out.push({ kind: 'line', x1: a.px, y1: a.py, x2: b.px, y2: b.py, width: acc.width * tf.scale, ...common });
+    } else if (acc.shape === 'arc') {
+      // Arco: curva cuadrática base→punta con el control desplazado perpendicular
+      // por `bend` (fracción del largo) → inclinación regulable del arco.
+      const end = { x: base.x + dir.x * acc.length, y: base.y + dir.y * acc.length };
+      const off = (acc.bend ?? 0.5) * acc.length;
+      const mid = { x: (base.x + end.x) / 2 + perpS.x * off, y: (base.y + end.y) / 2 + perpS.y * off };
+      const a = px(base);
+      const b = px(end);
+      const c = px(mid);
+      out.push({ kind: 'line', x1: a.px, y1: a.py, x2: b.px, y2: b.py, cx: c.px, cy: c.py, width: acc.width * tf.scale, ...common });
     } else if (isPolyShape(acc.shape)) {
       const pts = shapePolygon(acc.shape, base, dir, perpS, acc.length, acc.width).map((p) => {
-        const q = toPx(p.x, p.y, tf);
+        const q = px(p);
         return { x: q.px, y: q.py };
       });
       out.push({ kind: 'poly', pts, ...common });
@@ -345,7 +365,7 @@ export const accessoriesToPrimitives = (
               { x: tip.x + perpS.x * hw, y: tip.y + perpS.y * hw },
             ];
       const pts = corners.map((p) => {
-        const q = toPx(p.x, p.y, tf);
+        const q = px(p);
         return { x: q.px, y: q.py };
       });
       out.push({ kind: 'poly', pts, ...common });
@@ -362,7 +382,12 @@ const accMarkup = (prims: readonly AccPrim[] | undefined, offsetX: number, front
     .filter((p) => p.front === front)
     .map((p) => {
       if (p.kind === 'line') {
-        return `<path d="M ${fmt(p.x1 + offsetX)} ${fmt(p.y1)} L ${fmt(p.x2 + offsetX)} ${fmt(p.y2)}" stroke="${p.color}" stroke-width="${fmt(p.width)}" stroke-linecap="round" fill="none" opacity="${fmt(p.opacity)}" />`;
+        // Con punto de control (cx,cy) → arco (curva cuadrática); sin él → recta.
+        const d =
+          p.cx !== undefined && p.cy !== undefined
+            ? `M ${fmt(p.x1 + offsetX)} ${fmt(p.y1)} Q ${fmt(p.cx + offsetX)} ${fmt(p.cy)} ${fmt(p.x2 + offsetX)} ${fmt(p.y2)}`
+            : `M ${fmt(p.x1 + offsetX)} ${fmt(p.y1)} L ${fmt(p.x2 + offsetX)} ${fmt(p.y2)}`;
+        return `<path d="${d}" stroke="${p.color}" stroke-width="${fmt(p.width)}" stroke-linecap="round" fill="none" opacity="${fmt(p.opacity)}" />`;
       }
       if (p.kind === 'circle') {
         return `<circle cx="${fmt(p.cx + offsetX)}" cy="${fmt(p.cy)}" r="${fmt(p.r)}" fill="${p.color}" opacity="${fmt(p.opacity)}" />`;

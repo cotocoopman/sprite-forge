@@ -291,6 +291,7 @@ export const PreviewCanvas = (): ReactElement => {
         offsetPerp: dx * perp.x + dy * perp.y,
         angle: 0, length: 2, width: shapeKind === 'circle' ? 2 : brushWidth,
         color: character.color, opacity: 1, front: true,
+        ...(shapeKind === 'arc' ? { bend: 0.5 } : {}),
       };
       insertAccessory(acc);
       create.current = { id, base: m, anchorPos: anchor.pos, anchorAngle: anchor.angle, along, perp };

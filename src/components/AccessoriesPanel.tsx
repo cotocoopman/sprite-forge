@@ -172,6 +172,7 @@ const Editor = ({ acc }: { acc: Accessory }): ReactElement => {
         onChange={(_, v) => v && set({ shape: v as AccessoryShape })}
       >
         <ToggleButton value="capsule">{t('Barra')}</ToggleButton>
+        <ToggleButton value="arc">{t('Arco')}</ToggleButton>
         <ToggleButton value="circle">{t('Círculo')}</ToggleButton>
         <ToggleButton value="rect">{t('Rect')}</ToggleButton>
         <ToggleButton value="triangle">{t('Tri')}</ToggleButton>
@@ -182,6 +183,9 @@ const Editor = ({ acc }: { acc: Accessory }): ReactElement => {
       <Row label={t('Ángulo')} value={acc.angle} min={-180} max={180} step={1} onChange={(v) => set({ angle: v })} />
       {acc.shape !== 'circle' && (
         <Row label={t('Largo')} value={acc.length} min={0} max={40} step={0.5} onChange={(v) => set({ length: v })} />
+      )}
+      {acc.shape === 'arc' && (
+        <Row label={t('Inclinación del arco')} value={acc.bend ?? 0.5} min={-1.5} max={1.5} step={0.05} onChange={(v) => set({ bend: v })} />
       )}
       <Row label={acc.shape === 'circle' ? t('Diámetro') : t('Grosor')} value={acc.width} min={0.5} max={20} step={0.5} onChange={(v) => set({ width: v })} />
       <Row label={t('Opacidad')} value={acc.opacity} min={0} max={1} step={0.05} onChange={(v) => set({ opacity: v })} />

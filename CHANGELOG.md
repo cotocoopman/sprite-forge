@@ -4,6 +4,17 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.6.0] — 2026-08-26
+
+- **Arc tool.** The shape toolbar has a new "Arc" option that draws a curved (oval)
+  line. Its inclination is adjustable — drag to set the chord, then tune the "Arc
+  inclination" slider in the accessory editor (negative/positive curves either way).
+- **Accessories & weapons turn in 3D.** Drawn objects, accessories and weapons now
+  foreshorten with the character's 3D turn (facing) — around their anchor, just like
+  the body — so rotating a character (or exporting the 8 directions) also turns the
+  sword/shield/etc. Custom-rig weapons already turned; this brings the humanoid side
+  in line. At facing 0 nothing changes (no regression).
+
 ## [2.5.0] — 2026-08-25
 
 - **Panels remember their state.** Every collapsible section and accordion (Character

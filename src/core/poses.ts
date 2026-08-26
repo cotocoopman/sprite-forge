@@ -90,8 +90,9 @@ export const DEFAULT_PARTS: PartsConfig = PART_NAMES.reduce((acc, name) => {
 }, {} as Record<PartName, PartStyle>);
 
 // Accesorio anclado a un hueso (arma, sombrero, capa, escudo, etc.).
+// 'arc' = línea curva (ovalada) con inclinación regulable (campo `bend`).
 export type AccessoryShape =
-  | 'capsule' | 'circle' | 'rect' | 'triangle' | 'path' | 'star' | 'trapezoid' | 'bolt';
+  | 'capsule' | 'circle' | 'rect' | 'triangle' | 'path' | 'star' | 'trapezoid' | 'bolt' | 'arc';
 
 export type Accessory = {
   readonly id: string;
@@ -106,6 +107,7 @@ export type Accessory = {
   readonly color: string;
   readonly opacity: number;     // 0..1
   readonly front: boolean;      // delante (true) o detrás (false) de la silueta
+  readonly bend?: number;       // shape 'arc': inclinación del arco (fracción del largo; 0 = recto)
   readonly propId?: string;     // grupo de un prop/arma insertado (para toggle/duplicar)
   readonly hidden?: boolean;    // apagado: translúcido en el editor, excluido del export
   // shape 'path' (lápiz): puntos en el marco local del ancla (along, perp).

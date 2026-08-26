@@ -17,7 +17,7 @@ export const BOX_SHAPES = new Set(['rect', 'triangle', 'trapezoid', 'bolt']);
 // Nombre por defecto de una capa según su forma.
 const SHAPE_LABELS: Record<string, string> = {
   rect: 'Rectángulo', circle: 'Círculo', triangle: 'Triángulo', trapezoid: 'Trapecio',
-  star: 'Estrella', bolt: 'Rayo', capsule: 'Barra', path: 'Trazo',
+  star: 'Estrella', bolt: 'Rayo', capsule: 'Barra', path: 'Trazo', arc: 'Arco',
 };
 export const shapeLabel = (s: string): string => SHAPE_LABELS[s] ?? 'Forma';
 

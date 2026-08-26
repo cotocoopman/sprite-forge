@@ -33,8 +33,9 @@ export const propToRig = (tpl: PropTemplate): CustomRig => {
     angle: -p.angle,
     length: p.length,
     width: p.width,
-    shape: p.shape,
-    curve: 0,
+    // El rig no tiene 'arc'; se representa como cápsula curva.
+    shape: p.shape === 'arc' ? 'capsule' : p.shape,
+    curve: p.shape === 'arc' ? (p.bend ?? 0.5) : 0,
     color: p.color,
     z: i,
     offset: { x: -p.offsetPerp, y: -p.offsetAlong },

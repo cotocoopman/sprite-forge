@@ -121,9 +121,11 @@ export const CustomPreview = (): ReactElement => {
     if (tool === 'shape') {
       const id = genId();
       const maxZ = rig.bones.reduce((mx, b) => Math.max(mx, b.z), 0);
+      // El rig no tiene 'arc'; se dibuja como cápsula curva.
+      const boneShape = shapeKind === 'arc' ? 'capsule' : shapeKind;
       const bone: Bone = {
         id, name: shapeLabel(shapeKind), parentId: null, attach: 0, angle: 90, length: 2,
-        width: shapeKind === 'circle' ? 2 : brushWidth, shape: shapeKind, curve: 0,
+        width: shapeKind === 'circle' ? 2 : brushWidth, shape: boneShape, curve: shapeKind === 'arc' ? 0.5 : 0,
         color: null, z: maxZ + 1, offset: { x: m.x - rig.origin.x, y: m.y - rig.origin.y },
       };
       insertBone(bone);

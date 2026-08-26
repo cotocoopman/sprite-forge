@@ -31,7 +31,7 @@ const isStr = (v: unknown): v is string => typeof v === 'string';
 const isBool = (v: unknown): v is boolean => typeof v === 'boolean';
 
 // Formas válidas (accesorios y huesos comparten el set; 'capsule' es el fallback).
-const ACC_SHAPES = new Set(['capsule', 'circle', 'rect', 'triangle', 'path', 'star', 'trapezoid', 'bolt']);
+const ACC_SHAPES = new Set(['capsule', 'circle', 'rect', 'triangle', 'path', 'star', 'trapezoid', 'bolt', 'arc']);
 
 // Puntos de un trazo (shape 'path'); devuelve undefined si no hay ninguno válido.
 const parsePoints = (v: unknown): { x: number; y: number }[] | undefined => {
@@ -259,6 +259,7 @@ const validateAccessories = (v: unknown): Accessory[] => {
       color: isStr(item.color) ? item.color : '#000000',
       opacity: num(item.opacity, 1),
       front: isBool(item.front) ? item.front : true,
+      ...(isNum(item.bend) ? { bend: item.bend } : {}),
       ...(isStr(item.propId) ? { propId: item.propId } : {}),
       ...(isBool(item.hidden) ? { hidden: item.hidden } : {}),
       ...(points ? { points } : {}),

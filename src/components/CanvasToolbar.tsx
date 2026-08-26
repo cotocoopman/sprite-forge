@@ -36,6 +36,13 @@ const EraserIcon = (): RE => (
   </SvgIcon>
 );
 
+// Arco: línea curva (ovalada) — trazo cuadrático sin relleno.
+const ArcIcon = (): RE => (
+  <SvgIcon fontSize="small">
+    <path d="M3 19 Q 12 2 21 19" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" />
+  </SvgIcon>
+);
+
 export const CanvasToolbar = (): ReactElement => {
   const tool = useProjectStore((s) => s.tool);
   const shapeKind = useProjectStore((s) => s.shapeKind);
@@ -85,6 +92,7 @@ export const CanvasToolbar = (): ReactElement => {
           <ToggleButton value="star" aria-label="star"><Tooltip title={t('Estrella')}><StarIcon fontSize="small" /></Tooltip></ToggleButton>
           <ToggleButton value="bolt" aria-label="bolt"><Tooltip title={t('Rayo')}><BoltIcon fontSize="small" /></Tooltip></ToggleButton>
           <ToggleButton value="capsule" aria-label="capsule"><Tooltip title={t('Barra')}><RemoveIcon fontSize="small" /></Tooltip></ToggleButton>
+          <ToggleButton value="arc" aria-label="arc"><Tooltip title={t('Arco (línea curva)')}><ArcIcon /></Tooltip></ToggleButton>
         </ToggleButtonGroup>
       )}
       {(tool === 'shape' || tool === 'pencil') && (
