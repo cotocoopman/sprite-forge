@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { AnchorName, CharacterDefinition, CurveTarget, PartName, Pose } from '@core/rig';
+import type { AnchorName, CharacterDefinition, CurveTarget, PartName, Pose, PoseNumericKey } from '@core/rig';
 import { DEFAULT_CHARACTER, NEUTRAL_POSE, PART_NAMES } from '@core/rig';
 import { PROP_TEMPLATES, rotatePropParts } from '@core/props';
 import type {
@@ -81,6 +81,13 @@ export type DrawTool = 'select' | 'pencil' | 'shape' | 'eraser';
 // Portapapeles de objeto (accesorio o hueso), a nivel de módulo (no reactivo).
 type ClipboardItem = { kind: 'acc'; data: Accessory } | { kind: 'bone'; data: Bone } | null;
 let clipboard: ClipboardItem = null;
+
+// Portapapeles de keyframe (humanoide o rig), a nivel de módulo.
+type KeyframeClip =
+  | { kind: 'pose'; pose: Pose; easing: EasingKind }
+  | { kind: 'rig'; pose: RigPose; easing: EasingKind }
+  | null;
+let keyframeClipboard: KeyframeClip = null;
 
 const flipPoints = (
   pts: readonly { x: number; y: number }[] | undefined,
@@ -267,8 +274,21 @@ export type ProjectState = {
   readonly moveKeyframe: (index: number, t: number) => void;
   readonly setKeyframeEasing: (index: number, easing: EasingKind) => void;
 
+  // Selección activa (qué borra/copia el teclado): un objeto o un keyframe.
+  readonly activeSelection: 'object' | 'keyframe';
+  readonly deleteActiveKeyframe: () => void;
+  readonly duplicateActiveKeyframe: () => void;
+  readonly copyActiveKeyframe: () => void;
+  readonly cutActiveKeyframe: () => void;
+  readonly pasteKeyframe: () => void;
+
+  // Reordenar animaciones (drag & drop en el listado)
+  readonly moveAnimationToIndex: (id: string, toIndex: number) => void;
+  readonly moveRigClipToIndex: (id: string, toIndex: number) => void;
+
   // Pose
-  readonly setPoseField: (key: keyof Pose, value: number) => void;
+  readonly setPoseField: (key: PoseNumericKey, value: number) => void;
+  readonly setPosePartOffset: (part: PartName, x: number, y: number) => void;
   readonly mirrorPose: () => void;
   readonly copyPose: () => void;
   readonly pastePose: () => void;
@@ -313,18 +333,43 @@ let timeTraveling = false;
 const clampFrame = (frame: number, frames: number): number =>
   Math.max(0, Math.min(frames - 1, frame));
 
-// Intercambia los valores cercano ↔ lejano de una pose.
-const mirror = (p: Pose): Pose => ({
-  ...p,
-  armFarUpper: p.armNearUpper,
-  armFarLower: p.armNearLower,
-  armNearUpper: p.armFarUpper,
-  armNearLower: p.armFarLower,
-  legFarUpper: p.legNearUpper,
-  legFarLower: p.legNearLower,
-  legNearUpper: p.legFarUpper,
-  legNearLower: p.legFarLower,
-});
+// Al espejar, cada parte pasa al lado opuesto y su offset X se invierte.
+const MIRROR_PART: Record<PartName, PartName> = {
+  head: 'head',
+  torso: 'torso',
+  armNear: 'armFar',
+  armFar: 'armNear',
+  legNear: 'legFar',
+  legFar: 'legNear',
+};
+
+const mirrorOffsets = (offs: Pose['offsets']): Pose['offsets'] => {
+  if (!offs) return undefined;
+  const out: Record<string, { x: number; y: number }> = {};
+  for (const name of PART_NAMES) {
+    const o = offs[name];
+    if (o) out[MIRROR_PART[name]] = { x: -o.x, y: o.y };
+  }
+  return Object.keys(out).length > 0 ? (out as Pose['offsets']) : undefined;
+};
+
+// Intercambia los valores cercano ↔ lejano de una pose (incluye offsets por parte).
+const mirror = (p: Pose): Pose => {
+  const offsets = mirrorOffsets(p.offsets);
+  const { offsets: _drop, ...rest } = p;
+  return {
+    ...rest,
+    armFarUpper: p.armNearUpper,
+    armFarLower: p.armNearLower,
+    armNearUpper: p.armFarUpper,
+    armNearLower: p.armFarLower,
+    legFarUpper: p.legNearUpper,
+    legFarLower: p.legNearLower,
+    legNearUpper: p.legFarUpper,
+    legNearLower: p.legFarLower,
+    ...(offsets ? { offsets } : {}),
+  };
+};
 
 export const useProjectStore = create<ProjectState>((set, get) => {
   // Reemplaza el clip activo aplicando un updater inmutable.
@@ -456,6 +501,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     notification: { open: false, type: 'info', message: '' },
     activeRigClipId: initialProject.customRig.animations[0]?.id ?? null,
     activeRigKeyframeIndex: 0,
+    activeSelection: 'keyframe',
 
     setCharacterField: (key, value) =>
       set((s) => ({ project: { ...s.project, character: { ...s.project.character, [key]: value } } })),
@@ -512,7 +558,8 @@ export const useProjectStore = create<ProjectState>((set, get) => {
 
     // Seleccionar una parte deselecciona el accesorio activo (y viceversa) para
     // que el canvas y los editores muestren un solo objeto activo a la vez.
-    selectPart: (part) => set({ activePartName: part, ...(part ? { activeAccessoryId: null } : {}) }),
+    selectPart: (part) =>
+      set({ activePartName: part, ...(part ? { activeAccessoryId: null, activeSelection: 'object' } : {}) }),
 
     togglePartVisible: (part) =>
       set((s) => ({
@@ -757,7 +804,8 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         activeAccessoryId: acc.id,
       })),
 
-    selectAccessory: (id) => set({ activeAccessoryId: id, ...(id ? { activePartName: null } : {}) }),
+    selectAccessory: (id) =>
+      set({ activeAccessoryId: id, ...(id ? { activePartName: null, activeSelection: 'object' } : {}) }),
 
     tool: 'select',
     shapeKind: 'rect',
@@ -838,7 +886,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       })),
 
     activeBoneId: null,
-    selectBone: (id) => set({ activeBoneId: id }),
+    selectBone: (id) => set({ activeBoneId: id, ...(id ? { activeSelection: 'object' } : {}) }),
 
     addBone: () => {
       const id = genId();
@@ -1049,8 +1097,8 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       set((s) => {
         const clip = s.project.customRig.animations.find((c) => c.id === s.activeRigClipId);
         const kf = clip?.keyframes[index];
-        if (!kf || !clip) return { activeRigKeyframeIndex: index };
-        return { activeRigKeyframeIndex: index, currentFrame: tToFrame(kf.t, clip.frames, clip.loop) };
+        if (!kf || !clip) return { activeRigKeyframeIndex: index, activeSelection: 'keyframe' };
+        return { activeRigKeyframeIndex: index, currentFrame: tToFrame(kf.t, clip.frames, clip.loop), activeSelection: 'keyframe' };
       }),
 
     addRigKeyframeAt: (t) => {
@@ -1059,7 +1107,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       const frame = tToFrame(t, clip.frames, clip.loop);
       const existing = kfIndexAtFrame(clip.keyframes, clip.frames, clip.loop, frame);
       if (existing >= 0) {
-        set({ activeRigKeyframeIndex: existing, currentFrame: frame });
+        set({ activeRigKeyframeIndex: existing, currentFrame: frame, activeSelection: 'keyframe' });
         return;
       }
       const snapT = frameToT(frame, clip.frames, clip.loop);
@@ -1069,7 +1117,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       );
       const index = keyframes.findIndex((kf) => kf.t === snapT);
       updateActiveRigClip((c) => ({ ...c, keyframes }));
-      set({ activeRigKeyframeIndex: index < 0 ? keyframes.length - 1 : index, currentFrame: frame });
+      set({ activeRigKeyframeIndex: index < 0 ? keyframes.length - 1 : index, currentFrame: frame, activeSelection: 'keyframe' });
     },
 
     duplicateRigKeyframe: (index) => {
@@ -1285,8 +1333,8 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       set((s) => {
         const clip = s.project.animations.find((c) => c.id === s.activeAnimationId);
         const kf = clip?.keyframes[index];
-        if (!kf || !clip) return { activeKeyframeIndex: index };
-        return { activeKeyframeIndex: index, currentFrame: tToFrame(kf.t, clip.frames, clip.loop) };
+        if (!kf || !clip) return { activeKeyframeIndex: index, activeSelection: 'keyframe' };
+        return { activeKeyframeIndex: index, currentFrame: tToFrame(kf.t, clip.frames, clip.loop), activeSelection: 'keyframe' };
       }),
 
     // Agregar keyframe en el frame `t` (0..1): lo pega a la grilla de frames. Si ya
@@ -1297,7 +1345,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       const frame = tToFrame(t, clip.frames, clip.loop);
       const existing = kfIndexAtFrame(clip.keyframes, clip.frames, clip.loop, frame);
       if (existing >= 0) {
-        set({ activeKeyframeIndex: existing, currentFrame: frame });
+        set({ activeKeyframeIndex: existing, currentFrame: frame, activeSelection: 'keyframe' });
         return;
       }
       const snapT = frameToT(frame, clip.frames, clip.loop);
@@ -1307,7 +1355,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       );
       const index = keyframes.findIndex((kf) => kf.t === snapT);
       updateActiveClip((c) => ({ ...c, keyframes }));
-      set({ activeKeyframeIndex: index < 0 ? keyframes.length - 1 : index, currentFrame: frame });
+      set({ activeKeyframeIndex: index < 0 ? keyframes.length - 1 : index, currentFrame: frame, activeSelection: 'keyframe' });
     },
 
     duplicateKeyframe: (index) => {
@@ -1353,7 +1401,126 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         return { ...c, keyframes };
       }),
 
+    // Borra/duplica/copia/corta/pega el keyframe activo según el modo. El teclado
+    // enruta a estas cuando la selección activa es 'keyframe'.
+    deleteActiveKeyframe: () => {
+      const s = get();
+      if (s.project.mode === 'custom') s.deleteRigKeyframe(s.activeRigKeyframeIndex);
+      else s.deleteKeyframe(s.activeKeyframeIndex);
+    },
+
+    duplicateActiveKeyframe: () => {
+      const s = get();
+      if (s.project.mode === 'custom') s.duplicateRigKeyframe(s.activeRigKeyframeIndex);
+      else s.duplicateKeyframe(s.activeKeyframeIndex);
+    },
+
+    copyActiveKeyframe: () => {
+      const s = get();
+      if (s.project.mode === 'custom') {
+        const clip = s.project.customRig.animations.find((c) => c.id === s.activeRigClipId);
+        const kf = clip?.keyframes[s.activeRigKeyframeIndex];
+        if (kf) {
+          keyframeClipboard = { kind: 'rig', pose: kf.pose, easing: kf.easing ?? 'linear' };
+          s.notify('Keyframe copiado', 'success');
+        }
+      } else {
+        const clip = s.project.animations.find((c) => c.id === s.activeAnimationId);
+        const kf = clip?.keyframes[s.activeKeyframeIndex];
+        if (kf) {
+          keyframeClipboard = { kind: 'pose', pose: kf.pose, easing: kf.easing ?? 'linear' };
+          s.notify('Keyframe copiado', 'success');
+        }
+      }
+    },
+
+    cutActiveKeyframe: () => {
+      get().copyActiveKeyframe();
+      get().deleteActiveKeyframe();
+    },
+
+    // Pega el keyframe copiado en el playhead: si ya hay uno ahí, reemplaza su pose;
+    // si no, inserta uno nuevo. Solo pega si el tipo coincide con el modo actual.
+    pasteKeyframe: () => {
+      const s = get();
+      const cb = keyframeClipboard;
+      if (!cb) {
+        s.notify('No hay keyframe copiado', 'warning');
+        return;
+      }
+      const frame = s.currentFrame;
+      if (s.project.mode === 'custom' && cb.kind === 'rig') {
+        const clip = activeRigClip();
+        if (!clip) return;
+        const snapT = frameToT(frame, clip.frames, clip.loop);
+        const existing = kfIndexAtFrame(clip.keyframes, clip.frames, clip.loop, frame);
+        if (existing >= 0) {
+          updateActiveRigClip((c) => ({
+            ...c,
+            keyframes: c.keyframes.map((kf, i) => (i === existing ? { ...kf, pose: cb.pose, easing: cb.easing } : kf)),
+          }));
+          set({ activeRigKeyframeIndex: existing, currentFrame: frame, activeSelection: 'keyframe' });
+        } else {
+          const keyframes = [...clip.keyframes, { t: snapT, pose: cb.pose, easing: cb.easing }].sort((a, b) => a.t - b.t);
+          const index = keyframes.findIndex((kf) => kf.t === snapT);
+          updateActiveRigClip((c) => ({ ...c, keyframes }));
+          set({ activeRigKeyframeIndex: index < 0 ? keyframes.length - 1 : index, currentFrame: frame, activeSelection: 'keyframe' });
+        }
+        s.notify('Keyframe pegado', 'success');
+      } else if (s.project.mode !== 'custom' && cb.kind === 'pose') {
+        const clip = s.project.animations.find((c) => c.id === s.activeAnimationId);
+        if (!clip) return;
+        const snapT = frameToT(frame, clip.frames, clip.loop);
+        const existing = kfIndexAtFrame(clip.keyframes, clip.frames, clip.loop, frame);
+        if (existing >= 0) {
+          updateActiveClip((c) => ({
+            ...c,
+            keyframes: c.keyframes.map((kf, i) => (i === existing ? { ...kf, pose: cb.pose, easing: cb.easing } : kf)),
+          }));
+          set({ activeKeyframeIndex: existing, currentFrame: frame, activeSelection: 'keyframe' });
+        } else {
+          const keyframes = [...clip.keyframes, { t: snapT, pose: cb.pose, easing: cb.easing }].sort((a, b) => a.t - b.t);
+          const index = keyframes.findIndex((kf) => kf.t === snapT);
+          updateActiveClip((c) => ({ ...c, keyframes }));
+          set({ activeKeyframeIndex: index < 0 ? keyframes.length - 1 : index, currentFrame: frame, activeSelection: 'keyframe' });
+        }
+        s.notify('Keyframe pegado', 'success');
+      }
+    },
+
+    // Reordena una animación (humanoide) a una posición del listado (0 = arriba).
+    moveAnimationToIndex: (id, toIndex) =>
+      set((s) => {
+        const arr = [...s.project.animations];
+        const from = arr.findIndex((a) => a.id === id);
+        if (from < 0) return {};
+        const [moved] = arr.splice(from, 1);
+        arr.splice(Math.max(0, Math.min(arr.length, toIndex)), 0, moved);
+        return { project: { ...s.project, animations: arr } };
+      }),
+
+    moveRigClipToIndex: (id, toIndex) =>
+      set((s) => {
+        const arr = [...s.project.customRig.animations];
+        const from = arr.findIndex((a) => a.id === id);
+        if (from < 0) return {};
+        const [moved] = arr.splice(from, 1);
+        arr.splice(Math.max(0, Math.min(arr.length, toIndex)), 0, moved);
+        return { project: { ...s.project, customRig: { ...s.project.customRig, animations: arr } } };
+      }),
+
     setPoseField: (key, value) => updateActivePose((p) => ({ ...p, [key]: value })),
+
+    // Offset X/Y de una parte EN EL KEYFRAME actual (0,0 = quita el offset de esa parte).
+    setPosePartOffset: (part, x, y) =>
+      updateActivePose((p) => {
+        const offsets: Record<string, { x: number; y: number }> = { ...(p.offsets ?? {}) };
+        if (x === 0 && y === 0) delete offsets[part];
+        else offsets[part] = { x, y };
+        const { offsets: _drop, ...rest } = p;
+        return Object.keys(offsets).length > 0 ? { ...rest, offsets: offsets as Pose['offsets'] } : rest;
+      }),
+
     mirrorPose: () => updateActivePose((p) => mirror(p)),
 
     copyPose: () => {

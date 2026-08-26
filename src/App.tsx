@@ -35,6 +35,7 @@ import TranslateIcon from '@mui/icons-material/Translate';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import { useProjectStore } from '@store/useProjectStore';
 import { useT } from '@/i18n';
+import { usePersistedChoice } from '@/hooks/usePersistedExpanded';
 import { useActiveClip } from '@/hooks/useActiveClip';
 import { useActiveRigClip } from '@/hooks/useActiveRigClip';
 import { parseProjectJson } from '@core/validation';
@@ -137,7 +138,7 @@ export const App = (): ReactElement => {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
-  const [rightTab, setRightTab] = useState<'anim' | 'layers'>('anim');
+  const [rightTab, setRightTab] = usePersistedChoice<'anim' | 'layers'>('rightTab', 'anim', ['anim', 'layers']);
 
   const rightTabs = (
     <Tabs
@@ -174,6 +175,8 @@ export const App = (): ReactElement => {
   }, []);
 
   // Atajos: Ctrl+Z/Y = undo/redo · Espacio = play/pausa · ←/→ = frame ant./sig.
+  // Copiar/cortar/pegar/borrar operan sobre el objeto o el keyframe según cuál sea
+  // la última selección activa (activeSelection).
   useEffect(() => {
     // Solo tipos de texto real cuentan como "editable" — un <input type="range">
     // (el thumb de un Slider MUI) NO, para que Ctrl+Z aplique al historial global.
@@ -185,63 +188,73 @@ export const App = (): ReactElement => {
         (target.tagName === 'TEXTAREA' ||
           target.isContentEditable ||
           (target.tagName === 'INPUT' && TEXT_INPUT_TYPES.has((target as HTMLInputElement).type)));
+      // Un slider con foco: las flechas ya lo mueven, no navegamos frames sobre él.
+      const onSlider =
+        !!target &&
+        ((target.tagName === 'INPUT' && (target as HTMLInputElement).type === 'range') ||
+          !!target.closest('[role="slider"]') ||
+          !!target.closest('.MuiSlider-root'));
+
+      const st = useProjectStore.getState();
+      const onKeyframe = st.activeSelection === 'keyframe';
 
       if (e.ctrlKey || e.metaKey) {
         const key = e.key.toLowerCase();
         if (key === 'z' && !e.shiftKey) {
           if (editable) return; // dejá el undo nativo del campo de texto
           e.preventDefault();
-          useProjectStore.getState().undo();
+          st.undo();
         } else if (key === 'y' || (key === 'z' && e.shiftKey)) {
           if (editable) return;
           e.preventDefault();
-          useProjectStore.getState().redo();
+          st.redo();
         } else if (key === 'c' && !editable) {
           e.preventDefault();
-          useProjectStore.getState().copySelected();
+          if (onKeyframe) st.copyActiveKeyframe();
+          else st.copySelected();
         } else if (key === 'x' && !editable) {
           e.preventDefault();
-          useProjectStore.getState().cutSelected();
+          if (onKeyframe) st.cutActiveKeyframe();
+          else st.cutSelected();
         } else if (key === 'v' && !editable) {
           e.preventDefault();
-          useProjectStore.getState().pasteClipboard();
+          if (onKeyframe) st.pasteKeyframe();
+          else st.pasteClipboard();
         } else if (key === 'd' && !editable) {
           e.preventDefault();
-          useProjectStore.getState().duplicateSelected();
+          if (onKeyframe) st.duplicateActiveKeyframe();
+          else st.duplicateSelected();
         }
         return;
       }
 
-      // Reproducción (sin modificadores) — ignorar si hay un control con foco.
-      // Incluye sliders MUI: si un slider tiene foco, la flecha ya lo mueve; sin
-      // este guard además dispararía prev/nextFrame y saltaría 2 frames.
-      const onControl =
-        editable ||
-        (!!target &&
-          (target.tagName === 'BUTTON' ||
-            target.tagName === 'SELECT' ||
-            (target.tagName === 'INPUT' && (target as HTMLInputElement).type === 'range') ||
-            !!target.closest('[role="slider"]') ||
-            !!target.closest('.MuiSlider-root')));
-      if (onControl) return;
+      // Espacio = play/pausa SIEMPRE (salvo escribiendo en un campo de texto), sin
+      // importar si un botón/otro control tiene el foco.
       if (e.key === ' ') {
+        if (editable) return;
         e.preventDefault();
-        useProjectStore.getState().togglePlay();
+        st.togglePlay();
       } else if (e.key === 'ArrowLeft') {
+        if (editable || onSlider) return;
         e.preventDefault();
-        useProjectStore.getState().prevFrame();
+        st.prevFrame();
       } else if (e.key === 'ArrowRight') {
+        if (editable || onSlider) return;
         e.preventDefault();
-        useProjectStore.getState().nextFrame();
+        st.nextFrame();
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (editable) return;
         e.preventDefault();
-        useProjectStore.getState().deleteSelected();
+        if (onKeyframe) st.deleteActiveKeyframe();
+        else st.deleteSelected();
       } else if (e.key === 'h' || e.key === 'H') {
+        if (editable) return;
         e.preventDefault();
-        useProjectStore.getState().flipSelected('h');
+        st.flipSelected('h');
       } else if (e.key === 'v' || e.key === 'V') {
+        if (editable) return;
         e.preventDefault();
-        useProjectStore.getState().flipSelected('v');
+        st.flipSelected('v');
       }
     };
     window.addEventListener('keydown', onKeyDown);

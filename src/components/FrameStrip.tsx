@@ -7,7 +7,7 @@ import { useActiveClip } from '@/hooks/useActiveClip';
 import { buildSkeleton } from '@core/rig';
 import { sampleClip } from '@core/poses';
 import type { RenderConfig } from '@core/poses';
-import { partScales, skeletonToPrimitives } from '@core/svg';
+import { partsWithOffsets, partScales, skeletonToPrimitives } from '@core/svg';
 
 const THUMB = 72;
 
@@ -29,10 +29,11 @@ export const FrameStrip = (): ReactElement => {
   return (
     <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', py: 1 }}>
       {poses.map((pose, i) => {
+        const mParts = partsWithOffsets(parts, pose);
         const prims = skeletonToPrimitives(
-          buildSkeleton(character, pose, thumbRender.facing, partScales(parts)),
+          buildSkeleton(character, pose, thumbRender.facing, partScales(mParts)),
           thumbRender,
-          parts,
+          mParts,
         );
         const active = i === currentFrame;
         return (

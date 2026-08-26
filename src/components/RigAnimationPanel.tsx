@@ -19,6 +19,7 @@ import AddIcon from '@mui/icons-material/Add';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { useProjectStore } from '@store/useProjectStore';
 import { useActiveRigClip } from '@/hooks/useActiveRigClip';
 import { NumberInput } from '@components/NumberInput';
@@ -76,6 +77,7 @@ export const RigAnimationPanel = (): ReactElement => {
   const deleteRigKeyframe = useProjectStore((s) => s.deleteRigKeyframe);
   const moveRigKeyframe = useProjectStore((s) => s.moveRigKeyframe);
   const setRigKeyframeEasing = useProjectStore((s) => s.setRigKeyframeEasing);
+  const moveRigClipToIndex = useProjectStore((s) => s.moveRigClipToIndex);
   const autoKey = useProjectStore((s) => s.autoKey);
   const setAutoKey = useProjectStore((s) => s.setAutoKey);
   const clip = useActiveRigClip();
@@ -85,6 +87,7 @@ export const RigAnimationPanel = (): ReactElement => {
   const [draft, setDraft] = useState('');
   const trackRef = useRef<HTMLDivElement>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
 
   const frames = Math.max(1, clip?.frames ?? 1);
   const scrubT = frames > 1 ? currentFrame / (frames - 1) : 0;
@@ -107,8 +110,31 @@ export const RigAnimationPanel = (): ReactElement => {
       </Stack>
 
       <List dense disablePadding sx={{ maxHeight: 150, overflowY: 'auto' }}>
-        {animations.map((c) => (
-          <ListItemButton key={c.id} selected={c.id === activeClipId} onClick={() => selectRigClip(c.id)} sx={{ borderRadius: 1 }}>
+        {animations.map((c, i) => (
+          <ListItemButton
+            key={c.id}
+            selected={c.id === activeClipId}
+            onClick={() => selectRigClip(c.id)}
+            onDragOver={(e) => { e.preventDefault(); if (overId !== c.id) setOverId(c.id); }}
+            onDragLeave={() => setOverId((cur) => (cur === c.id ? null : cur))}
+            onDrop={(e) => {
+              e.preventDefault();
+              setOverId(null);
+              const from = e.dataTransfer.getData('text/plain');
+              if (from && from !== c.id) moveRigClipToIndex(from, i);
+            }}
+            sx={{ borderRadius: 1, borderTop: '2px solid', borderColor: overId === c.id ? 'primary.main' : 'transparent' }}
+          >
+            <Box
+              component="span"
+              draggable
+              onClick={(e) => e.stopPropagation()}
+              onDragStart={(e) => e.dataTransfer.setData('text/plain', c.id)}
+              onDragEnd={() => setOverId(null)}
+              sx={{ display: 'flex', alignItems: 'center', cursor: 'grab', color: 'text.disabled', mr: 0.25, '&:active': { cursor: 'grabbing' } }}
+            >
+              <DragIndicatorIcon fontSize="small" />
+            </Box>
             {renaming === c.id ? (
               <TextField size="small" autoFocus value={draft} onChange={(e) => setDraft(e.target.value)}
                 onBlur={() => { if (draft.trim()) renameRigClip(c.id, draft.trim()); setRenaming(null); }}

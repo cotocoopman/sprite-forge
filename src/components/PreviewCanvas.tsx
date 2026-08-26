@@ -11,7 +11,7 @@ import { useActiveClip } from '@/hooks/useActiveClip';
 import { buildSkeleton } from '@core/rig';
 import type { PartName, Pose } from '@core/rig';
 import { sampleClip } from '@core/poses';
-import { makeTransform, partScales, renderCharacterInner, resolveAccessoryGeom, skeletonToPrimitives } from '@core/svg';
+import { makeTransform, partsWithOffsets, partScales, renderCharacterInner, resolveAccessoryGeom, skeletonToPrimitives } from '@core/svg';
 import type { SvgPrimitive } from '@core/svg';
 import { CanvasToolbar } from '@components/CanvasToolbar';
 import { CanvasContextMenu } from '@components/CanvasContextMenu';
@@ -160,8 +160,11 @@ export const PreviewCanvas = (): ReactElement => {
     return { poses: sampled, frame: f };
   }, [clip, currentFrame]);
 
-  const primsFor = (pose: Pose): SvgPrimitive[] =>
-    skeletonToPrimitives(buildSkeleton(character, pose, render.facing, partScales(parts)), render, parts);
+  // Incluye los offsets X/Y por parte de la pose (animación por frame) en el dibujo.
+  const primsFor = (pose: Pose): SvgPrimitive[] => {
+    const mParts = partsWithOffsets(parts, pose);
+    return skeletonToPrimitives(buildSkeleton(character, pose, render.facing, partScales(mParts)), render, mParts);
+  };
 
   const current = poses[frame] ? primsFor(poses[frame]) : [];
   const n = poses.length;

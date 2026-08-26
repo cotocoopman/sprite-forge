@@ -14,6 +14,7 @@ import { useProjectStore } from '@store/useProjectStore';
 import { NumberInput } from '@components/NumberInput';
 import { ColorField } from '@components/ColorField';
 import { useT } from '@/i18n';
+import { usePersistedExpanded } from '@/hooks/usePersistedExpanded';
 import { DEFAULT_CHARACTER } from '@core/rig';
 import type { CharacterDefinition, CurveTarget } from '@core/rig';
 
@@ -106,6 +107,35 @@ const NumberField = ({ config }: { config: FieldConfig }): ReactElement => {
   );
 };
 
+// Acordeón de un grupo de campos, con estado abierto/cerrado persistido.
+const GroupAccordion = ({
+  group,
+  defaultExpanded,
+}: {
+  group: FieldGroup;
+  defaultExpanded: boolean;
+}): ReactElement => {
+  const t = useT();
+  const [expanded, setExpanded] = usePersistedExpanded(`char:${group.title}`, defaultExpanded);
+  return (
+    <Accordion disableGutters expanded={expanded} onChange={(_, v) => setExpanded(v)}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Typography variant="body2" fontWeight={600}>
+          {t(group.title)}
+        </Typography>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Stack spacing={1.5}>
+          {group.fields.map((f) => (
+            <NumberField key={f.key} config={f} />
+          ))}
+          {group.curve && <CurveTargetToggle kind={group.curve} />}
+        </Stack>
+      </AccordionDetails>
+    </Accordion>
+  );
+};
+
 const CurveTargetToggle = ({ kind }: { kind: CurveKind }): ReactElement => {
   const target = useProjectStore((s) =>
     kind === 'arm' ? s.project.character.armCurveTarget : s.project.character.legCurveTarget,
@@ -173,21 +203,7 @@ export const CharacterPanel = (): ReactElement => {
       <Divider />
 
       {GROUPS.map((group, gi) => (
-        <Accordion key={group.title} disableGutters defaultExpanded={gi === 0}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="body2" fontWeight={600}>
-              {t(group.title)}
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Stack spacing={1.5}>
-              {group.fields.map((f) => (
-                <NumberField key={f.key} config={f} />
-              ))}
-              {group.curve && <CurveTargetToggle kind={group.curve} />}
-            </Stack>
-          </AccordionDetails>
-        </Accordion>
+        <GroupAccordion key={group.title} group={group} defaultExpanded={gi === 0} />
       ))}
 
     </Stack>

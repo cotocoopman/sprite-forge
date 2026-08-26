@@ -3,7 +3,8 @@
 
 import type { Anchor, AnchorName, CharacterDefinition, PartName, PartScales, Pose, Skeleton, Vec2 } from './rig';
 import { applyPartXform, buildSkeleton, PART_NAMES } from './rig';
-import type { Accessory, AccessoryShape, EffectsConfig, PartsConfig, RenderConfig } from './poses';
+import type { Accessory, AccessoryShape, EffectsConfig, PartsConfig, PartStyle, RenderConfig } from './poses';
+import { DEFAULT_PARTS } from './poses';
 import type { CustomRig, RBone, RigPose } from './customRig';
 import { buildCustomSkeleton } from './customRig';
 import { shapePolygon, isPolyShape } from './shapes';
@@ -38,6 +39,25 @@ export type SvgPoly = {
 };
 
 export type SvgPrimitive = SvgLine | SvgCircle | SvgPoly;
+
+// Combina los offsets X/Y por parte de la pose (animación por frame) con el
+// desplazamiento global de cada parte (dx/dy en la config). Devuelve `parts` sin
+// cambios si la pose no trae offsets (comportamiento histórico intacto).
+export const partsWithOffsets = (
+  parts: PartsConfig | undefined,
+  pose: Pose,
+): PartsConfig | undefined => {
+  const offs = pose.offsets;
+  if (!offs) return parts;
+  const base = parts ?? DEFAULT_PARTS;
+  const out = {} as Record<PartName, PartStyle>;
+  for (const name of PART_NAMES) {
+    const st = base[name];
+    const o = offs[name];
+    out[name] = o ? { ...st, dx: (st.dx ?? 0) + o.x, dy: (st.dy ?? 0) + o.y } : st;
+  }
+  return out;
+};
 
 // Escalas de largo por parte derivadas de la config de partes (para buildSkeleton).
 // Devuelve undefined si ninguna parte cambia de largo (evita trabajo/ruido).
@@ -519,8 +539,9 @@ export const renderCharacterInner = (
   ghostHidden = false,
   accessories: readonly Accessory[] = [],
 ): string => {
-  const skel = buildSkeleton(character, poseValue, render.facing, partScales(parts));
-  const prims = skeletonToPrimitives(skel, render, parts);
+  const mParts = partsWithOffsets(parts, poseValue);
+  const skel = buildSkeleton(character, poseValue, render.facing, partScales(mParts));
+  const prims = skeletonToPrimitives(skel, render, mParts);
   const accPrims = accessoriesToPrimitives(accessories, skel.anchors, render);
   const tf = makeTransform(render);
   const defs = effectDefs(effects, tf.scale);
@@ -530,7 +551,7 @@ export const renderCharacterInner = (
     rotation: render.rotation,
     effects,
     scale: tf.scale,
-    parts,
+    parts: mParts,
     ghostHidden,
     accPrims,
   });
@@ -562,8 +583,9 @@ export const renderSheet = (
   const defs = effectDefs(effects, tf.scale);
   const groups = poses
     .map((p, i) => {
-      const skel = buildSkeleton(character, p, render.facing, partScales(parts));
-      const prims = skeletonToPrimitives(skel, render, parts);
+      const mParts = partsWithOffsets(parts, p);
+      const skel = buildSkeleton(character, p, render.facing, partScales(mParts));
+      const prims = skeletonToPrimitives(skel, render, mParts);
       const accPrims = accessoriesToPrimitives(accessories, skel.anchors, render);
       return renderCharacterGroup(prims, character.color, {
         offsetX: i * render.cellSize,
@@ -572,7 +594,7 @@ export const renderSheet = (
         rotation: render.rotation,
         effects,
         scale: tf.scale,
-        parts,
+        parts: mParts,
         accPrims,
       });
     })

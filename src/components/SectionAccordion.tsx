@@ -6,6 +6,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useT } from '@/i18n';
+import { usePersistedExpanded } from '@/hooks/usePersistedExpanded';
 
 type Props = {
   readonly title: string;
@@ -15,10 +16,12 @@ type Props = {
 };
 
 // Sección colapsable estándar (título como summary). Título en h6 traducido.
+// Recuerda su estado abierto/cerrado entre sesiones (keyed por título).
 export const SectionAccordion = ({ title, defaultExpanded = false, icon, children }: Props): ReactElement => {
   const t = useT();
+  const [expanded, setExpanded] = usePersistedExpanded(`section:${title}`, defaultExpanded);
   return (
-    <Accordion disableGutters defaultExpanded={defaultExpanded}>
+    <Accordion disableGutters expanded={expanded} onChange={(_, v) => setExpanded(v)}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Stack direction="row" spacing={0.75} alignItems="center">
           {icon}

@@ -19,7 +19,8 @@ import { useProjectStore } from '@store/useProjectStore';
 import { useActiveClip } from '@/hooks/useActiveClip';
 import { NumberInput } from '@components/NumberInput';
 import { useT } from '@/i18n';
-import type { Pose } from '@core/rig';
+import { usePersistedExpanded } from '@/hooks/usePersistedExpanded';
+import type { PartName, PoseNumericKey } from '@core/rig';
 import type { EasingKind } from '@core/poses';
 import { frameToT, poseAt } from '@core/poses';
 
@@ -32,8 +33,14 @@ const EASINGS: readonly { value: EasingKind; label: string; desc: string }[] = [
 
 const easingLabel = (v: EasingKind): string => EASINGS.find((e) => e.value === v)?.label ?? String(v);
 
-type Joint = { readonly key: keyof Pose; readonly label: string; readonly min: number; readonly max: number };
-type Group = { readonly title: string; readonly joints: readonly Joint[] };
+type Joint = { readonly key: PoseNumericKey; readonly label: string; readonly min: number; readonly max: number };
+type PartOffsetTarget = { readonly part: PartName; readonly label: string };
+type Group = {
+  readonly title: string;
+  readonly joints: readonly Joint[];
+  // Partes cuyo desplazamiento X/Y se puede animar por frame dentro de este grupo.
+  readonly offsets?: readonly PartOffsetTarget[];
+};
 
 const GROUPS: readonly Group[] = [
   {
@@ -49,6 +56,10 @@ const GROUPS: readonly Group[] = [
       { key: 'torsoLean', label: 'Inclinación', min: -180, max: 180 },
       { key: 'headTilt', label: 'Cabeza', min: -180, max: 180 },
     ],
+    offsets: [
+      { part: 'torso', label: 'Torso' },
+      { part: 'head', label: 'Cabeza' },
+    ],
   },
   {
     title: 'Brazo derecho',
@@ -56,6 +67,7 @@ const GROUPS: readonly Group[] = [
       { key: 'armNearUpper', label: 'Superior', min: -180, max: 180 },
       { key: 'armNearLower', label: 'Antebrazo', min: -180, max: 180 },
     ],
+    offsets: [{ part: 'armNear', label: 'Brazo derecho' }],
   },
   {
     title: 'Brazo izquierdo',
@@ -63,6 +75,7 @@ const GROUPS: readonly Group[] = [
       { key: 'armFarUpper', label: 'Superior', min: -180, max: 180 },
       { key: 'armFarLower', label: 'Antebrazo', min: -180, max: 180 },
     ],
+    offsets: [{ part: 'armFar', label: 'Brazo izquierdo' }],
   },
   {
     title: 'Pierna derecha',
@@ -70,6 +83,7 @@ const GROUPS: readonly Group[] = [
       { key: 'legNearUpper', label: 'Muslo', min: -180, max: 180 },
       { key: 'legNearLower', label: 'Pantorrilla', min: -180, max: 180 },
     ],
+    offsets: [{ part: 'legNear', label: 'Pierna derecha' }],
   },
   {
     title: 'Pierna izquierda',
@@ -77,8 +91,51 @@ const GROUPS: readonly Group[] = [
       { key: 'legFarUpper', label: 'Muslo', min: -180, max: 180 },
       { key: 'legFarLower', label: 'Pantorrilla', min: -180, max: 180 },
     ],
+    offsets: [{ part: 'legFar', label: 'Pierna izquierda' }],
   },
 ];
+
+// Desplazamiento X/Y de una parte EN EL FRAME actual (se interpola entre keyframes).
+const OFF_MIN = -50;
+const OFF_MAX = 50;
+
+const PartOffsetControl = ({ target }: { target: PartOffsetTarget }): ReactElement => {
+  // Valor muestreado en el playhead (frame actual), no del keyframe activo.
+  const x = useProjectStore((s) => {
+    const clip = s.project.animations.find((c) => c.id === s.activeAnimationId);
+    if (!clip) return 0;
+    const tt = frameToT(s.currentFrame, clip.frames, clip.loop);
+    return poseAt(clip.keyframes, tt).offsets?.[target.part]?.x ?? 0;
+  });
+  const y = useProjectStore((s) => {
+    const clip = s.project.animations.find((c) => c.id === s.activeAnimationId);
+    if (!clip) return 0;
+    const tt = frameToT(s.currentFrame, clip.frames, clip.loop);
+    return poseAt(clip.keyframes, tt).offsets?.[target.part]?.y ?? 0;
+  });
+  const setPosePartOffset = useProjectStore((s) => s.setPosePartOffset);
+  const t = useT();
+
+  return (
+    <Box sx={{ px: 1, py: 0.75, borderRadius: 1, bgcolor: 'action.hover' }}>
+      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+        {t('Mover')} {t(target.label)} · X {Math.round(x)} · Y {Math.round(y)}
+      </Typography>
+      <Stack direction="row" spacing={1} alignItems="center">
+        <Typography variant="caption" sx={{ width: 12 }}>X</Typography>
+        <Slider size="small" value={x} min={OFF_MIN} max={OFF_MAX} step={1}
+          onChange={(_, v) => setPosePartOffset(target.part, v as number, y)} sx={{ flex: 1 }} />
+        <NumberInput value={x} step={1} onChange={(v) => setPosePartOffset(target.part, v, y)} inputStyle={{ width: 48, padding: '2px 6px' }} />
+      </Stack>
+      <Stack direction="row" spacing={1} alignItems="center">
+        <Typography variant="caption" sx={{ width: 12 }}>Y</Typography>
+        <Slider size="small" value={y} min={OFF_MIN} max={OFF_MAX} step={1}
+          onChange={(_, v) => setPosePartOffset(target.part, x, v as number)} sx={{ flex: 1 }} />
+        <NumberInput value={y} step={1} onChange={(v) => setPosePartOffset(target.part, x, v)} inputStyle={{ width: 48, padding: '2px 6px' }} />
+      </Stack>
+    </Box>
+  );
+};
 
 const JointSlider = ({ joint }: { joint: Joint }): ReactElement => {
   // Valor = pose muestreada EN EL PLAYHEAD (frame actual), no del keyframe activo.
@@ -109,6 +166,31 @@ const JointSlider = ({ joint }: { joint: Joint }): ReactElement => {
         <NumberInput value={value} step={1} onChange={(v) => setPoseField(joint.key, v)} inputStyle={{ width: 52, padding: '2px 6px' }} />
       </Stack>
     </Box>
+  );
+};
+
+// Acordeón de un grupo de la pose (articulaciones + offsets), con estado persistido.
+const PoseGroupAccordion = ({ group }: { group: Group }): ReactElement => {
+  const t = useT();
+  const [expanded, setExpanded] = usePersistedExpanded(`pose:${group.title}`, group.title === 'Torso');
+  return (
+    <Accordion disableGutters expanded={expanded} onChange={(_, v) => setExpanded(v)}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Typography variant="body2" fontWeight={600}>
+          {t(group.title)}
+        </Typography>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Stack spacing={1}>
+          {group.joints.map((j) => (
+            <JointSlider key={j.key} joint={j} />
+          ))}
+          {group.offsets?.map((o) => (
+            <PartOffsetControl key={o.part} target={o} />
+          ))}
+        </Stack>
+      </AccordionDetails>
+    </Accordion>
   );
 };
 
@@ -189,20 +271,7 @@ export const PoseEditor = (): ReactElement => {
 
       <Box sx={{ opacity: editsIgnored ? 0.5 : 1 }}>
         {GROUPS.map((group) => (
-          <Accordion key={group.title} disableGutters defaultExpanded={group.title === 'Torso'}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="body2" fontWeight={600}>
-                {t(group.title)}
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Stack spacing={1}>
-                {group.joints.map((j) => (
-                  <JointSlider key={j.key} joint={j} />
-                ))}
-              </Stack>
-            </AccordionDetails>
-          </Accordion>
+          <PoseGroupAccordion key={group.title} group={group} />
         ))}
       </Box>
     </Stack>

@@ -1,6 +1,6 @@
 // Validación manual (sin Zod) del shape de un proyecto importado.
 
-import type { CharacterDefinition, Pose } from './rig';
+import type { CharacterDefinition, PartOffsets, Pose } from './rig';
 import { POSE_KEYS } from './rig';
 import { ANCHOR_NAMES, PART_NAMES } from './rig';
 import type { AnchorName, PartName } from './rig';
@@ -92,12 +92,28 @@ const validateCharacter = (v: unknown): CharacterDefinition | string => {
   };
 };
 
+// Offsets X/Y por parte (animación por frame). Tolerante: descarta lo inválido y
+// preserva lo válido tal cual venía en el JSON.
+const parsePartOffsets = (v: unknown): PartOffsets | undefined => {
+  if (!isRecord(v)) return undefined;
+  const out: Record<string, { x: number; y: number }> = {};
+  for (const name of PART_NAMES) {
+    const o = v[name];
+    if (isRecord(o) && isNum(o.x) && isNum(o.y)) out[name] = { x: o.x, y: o.y };
+  }
+  return Object.keys(out).length > 0 ? (out as PartOffsets) : undefined;
+};
+
 const validatePose = (v: unknown, ctx: string): Pose | string => {
   if (!isRecord(v)) return `${ctx} no es un objeto`;
+  const pose: Record<string, unknown> = {};
   for (const key of POSE_KEYS) {
     if (!isNum(v[key])) return `${ctx}.${key} debe ser número`;
+    pose[key] = v[key];
   }
-  return v as unknown as Pose;
+  const offsets = parsePartOffsets(v.offsets);
+  if (offsets) pose.offsets = offsets;
+  return pose as unknown as Pose;
 };
 
 const isEasing = (v: unknown): v is 'linear' | 'easeIn' | 'easeOut' | 'easeInOut' =>

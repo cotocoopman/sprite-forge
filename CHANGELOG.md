@@ -4,6 +4,27 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.5.0] — 2026-08-25
+
+- **Panels remember their state.** Every collapsible section and accordion (Character
+  groups, Pose groups, Layers, Accessories, Effects, …) and the Animations/Layers tab
+  now persist their last open/closed choice across reloads instead of always resetting.
+- **Per-frame part offsets (animation).** Each body part can now be nudged on X and Y
+  *per keyframe* from the Pose editor (interpolated between keyframes), on top of the
+  global part transform — much more flexibility when animating. Imported projects are
+  respected exactly as they were: poses without offsets render identically.
+- **Space always plays/pauses.** The shortcut no longer needs the canvas focused — it
+  toggles playback regardless of which button/control has focus (only text fields are
+  exempt).
+- **Keyframe keyboard actions.** With a keyframe selected, Delete/Supr removes it, and
+  Ctrl+C / Ctrl+X / Ctrl+V / Ctrl+D copy, cut, paste and duplicate it. When an object
+  (accessory/bone/part) is the active selection, those keys still act on the object.
+- **Reorder animations by drag & drop.** The animation clips list (humanoid and rig)
+  now has drag handles to move clips up/down, like other lists.
+- **Fixed skin export recolor.** Color variants (skins) now recolor the *whole*
+  silhouette — a part or bone with its own color override (e.g. a torso left on black)
+  no longer stays that color; it follows the skin color as expected.
+
 ## [2.4.4] — 2026-08-25
 
 - **Easing descriptions.** The easing dropdown (humanoid and rig) now shows a short

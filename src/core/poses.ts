@@ -1,7 +1,7 @@
 // Animación: tipos, interpolación de poses, muestreo de clips y clips por defecto.
 // Núcleo puro — sin React ni DOM.
 
-import type { AnchorName, CharacterDefinition, PartName, Pose } from './rig';
+import type { AnchorName, CharacterDefinition, PartName, PartOffsets, Pose } from './rig';
 import { DEFAULT_CHARACTER, NEUTRAL_POSE, PART_NAMES, POSE_KEYS } from './rig';
 import type { CustomRig } from './customRig';
 import { buildDefaultCustomRig } from './customRig';
@@ -156,13 +156,33 @@ export const DEFAULT_EFFECTS: EffectsConfig = {
 // Construye una pose completa a partir de un parcial, rellenando con la neutra.
 const pose = (partial: Partial<Pose>): Pose => ({ ...NEUTRAL_POSE, ...partial });
 
-// Interpolación lineal entre dos poses, campo por campo.
+// Interpola los offsets X/Y por parte entre dos poses. Devuelve undefined si
+// ninguna de las dos define offsets (pose "legacy" → sin cambios en el render).
+const lerpOffsets = (a?: PartOffsets, b?: PartOffsets, k = 0): PartOffsets | undefined => {
+  if (!a && !b) return undefined;
+  const out: Record<string, { x: number; y: number }> = {};
+  for (const name of PART_NAMES) {
+    const oa = a?.[name];
+    const ob = b?.[name];
+    if (!oa && !ob) continue;
+    const ax = oa?.x ?? 0;
+    const ay = oa?.y ?? 0;
+    const bx = ob?.x ?? 0;
+    const by = ob?.y ?? 0;
+    out[name] = { x: ax + (bx - ax) * k, y: ay + (by - ay) * k };
+  }
+  return Object.keys(out).length > 0 ? (out as PartOffsets) : undefined;
+};
+
+// Interpolación lineal entre dos poses, campo por campo (+ offsets por parte).
 export const lerpPose = (a: Pose, b: Pose, k: number): Pose => {
   const out: Record<string, number> = {};
   for (const key of POSE_KEYS) {
     out[key] = a[key] + (b[key] - a[key]) * k;
   }
-  return out as unknown as Pose;
+  const offsets = lerpOffsets(a.offsets, b.offsets, k);
+  const pose = out as unknown as Pose;
+  return offsets ? { ...pose, offsets } : pose;
 };
 
 // Devuelve la pose en el tiempo t (0..1) interpolando entre keyframes.

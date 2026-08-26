@@ -115,6 +115,11 @@ export type CharacterDefinition = {
   readonly color: string;             // color base del personaje
 };
 
+// Desplazamiento libre (x, y en unidades) de una parte, por frame de la animación.
+// Opcional: una pose sin `offsets` se renderiza idéntica a como lo hacía antes de
+// existir esta feature (compat total con JSON viejos).
+export type PartOffsets = Partial<Record<PartName, { readonly x: number; readonly y: number }>>;
+
 export type Pose = {
   readonly rootOffsetY: number;
   readonly rootRotation: number;
@@ -128,6 +133,8 @@ export type Pose = {
   readonly legFarLower: number;
   readonly legNearUpper: number;
   readonly legNearLower: number;
+  // Desplazamiento X/Y por parte, animable por keyframe (encima de la cinemática).
+  readonly offsets?: PartOffsets;
 };
 
 // Personaje por defecto — cabeza + torso + piernas = 35 + 22 + 43 = 100.
@@ -173,7 +180,10 @@ export const NEUTRAL_POSE: Pose = {
   legNearLower: 0,
 };
 
-export const POSE_KEYS: readonly (keyof Pose)[] = [
+// Claves numéricas de la pose (todas menos `offsets`), interpolables campo a campo.
+export type PoseNumericKey = Exclude<keyof Pose, 'offsets'>;
+
+export const POSE_KEYS: readonly PoseNumericKey[] = [
   'rootOffsetY',
   'rootRotation',
   'torsoLean',

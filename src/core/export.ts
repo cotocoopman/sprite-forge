@@ -2,8 +2,9 @@
 // Única parte del core que toca el DOM (canvas/Image), permitido por diseño.
 
 import JSZip from 'jszip';
-import type { EffectsConfig, Project, RenderConfig } from './poses';
+import type { EffectsConfig, PartsConfig, Project, RenderConfig } from './poses';
 import { sampleClip } from './poses';
+import { PART_NAMES } from './rig';
 import type { CustomRig } from './customRig';
 import { sampleRigClip } from './customRig';
 import { renderCustomSheet, renderCustomSvg, renderSheet, renderSvg } from './svg';
@@ -295,21 +296,26 @@ export const buildZip = async (
   }
 
   // Variantes de color (skins): sheets/frames por color, en su propia carpeta.
+  // Una skin recolorea TODA la silueta: además del color base, se neutralizan los
+  // colores por parte (torso, cabeza, etc.) para que sigan el color de la variante
+  // en vez de quedarse con su override previo.
   for (const color of options.skins) {
     const skinChar = { ...project.character, color };
+    const skinParts = {} as PartsConfig;
+    for (const name of PART_NAMES) skinParts[name] = { ...parts[name], color: null };
     const skinRoot = root.folder(`skins/${safeName(color.replace('#', ''))}`) ?? root;
     const render = { ...project.render };
     for (const clip of project.animations) {
       const poses = sampleClip(clip);
       const base = safeName(clip.name);
       if (options.sheets) {
-        const svg = renderSheet(skinChar, poses, render, effects, parts, accessories);
+        const svg = renderSheet(skinChar, poses, render, effects, skinParts, accessories);
         skinRoot.file(`sheets/${base}.png`, await svgToPngBlob(svg, cellSize * poses.length, cellSize));
         tick();
       }
       if (options.frames) {
         for (let i = 0; i < poses.length; i += 1) {
-          const svg = renderSvg(skinChar, poses[i], render, effects, parts, accessories);
+          const svg = renderSvg(skinChar, poses[i], render, effects, skinParts, accessories);
           skinRoot.file(`frames/${base}_${pad2(i)}.png`, await svgToPngBlob(svg, cellSize, cellSize));
           tick();
         }
@@ -445,7 +451,9 @@ export const buildRigZip = async (
   }
 
   for (const color of options.skins) {
-    const skinRig = { ...rig, color };
+    // Skin = recolor total: además del color base, se neutraliza el color por hueso
+    // para que toda la silueta tome el color de la variante.
+    const skinRig = { ...rig, color, bones: rig.bones.map((b) => ({ ...b, color: null })) };
     const skinRoot = root.folder(`skins/${safeName(color.replace('#', ''))}`) ?? root;
     for (const clip of rig.animations) {
       const poses = sampleRigClip(clip);

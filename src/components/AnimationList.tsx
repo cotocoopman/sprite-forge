@@ -16,6 +16,7 @@ import AddIcon from '@mui/icons-material/Add';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { useProjectStore } from '@store/useProjectStore';
 import { NumberInput } from '@components/NumberInput';
 import { useT } from '@/i18n';
@@ -29,6 +30,7 @@ export const AnimationList = (): ReactElement => {
   const duplicateAnimation = useProjectStore((s) => s.duplicateAnimation);
   const deleteAnimation = useProjectStore((s) => s.deleteAnimation);
   const renameAnimation = useProjectStore((s) => s.renameAnimation);
+  const moveAnimationToIndex = useProjectStore((s) => s.moveAnimationToIndex);
   const setClipFrames = useProjectStore((s) => s.setClipFrames);
   const setClipFps = useProjectStore((s) => s.setClipFps);
   const setClipLoop = useProjectStore((s) => s.setClipLoop);
@@ -37,6 +39,7 @@ export const AnimationList = (): ReactElement => {
   const t = useT();
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
+  const [overId, setOverId] = useState<string | null>(null);
 
   const startRename = (id: string, name: string): void => {
     setRenamingId(id);
@@ -59,13 +62,38 @@ export const AnimationList = (): ReactElement => {
       </Stack>
 
       <List dense disablePadding sx={{ maxHeight: 220, overflowY: 'auto' }}>
-        {animations.map((c) => (
+        {animations.map((c, i) => (
           <ListItemButton
             key={c.id}
             selected={c.id === activeId}
             onClick={() => selectAnimation(c.id)}
-            sx={{ borderRadius: 1 }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              if (overId !== c.id) setOverId(c.id);
+            }}
+            onDragLeave={() => setOverId((cur) => (cur === c.id ? null : cur))}
+            onDrop={(e) => {
+              e.preventDefault();
+              setOverId(null);
+              const from = e.dataTransfer.getData('text/plain');
+              if (from && from !== c.id) moveAnimationToIndex(from, i);
+            }}
+            sx={{
+              borderRadius: 1,
+              borderTop: '2px solid',
+              borderColor: overId === c.id ? 'primary.main' : 'transparent',
+            }}
           >
+            <Box
+              component="span"
+              draggable
+              onClick={(e) => e.stopPropagation()}
+              onDragStart={(e) => e.dataTransfer.setData('text/plain', c.id)}
+              onDragEnd={() => setOverId(null)}
+              sx={{ display: 'flex', alignItems: 'center', cursor: 'grab', color: 'text.disabled', mr: 0.25, '&:active': { cursor: 'grabbing' } }}
+            >
+              <DragIndicatorIcon fontSize="small" />
+            </Box>
             {renamingId === c.id ? (
               <TextField
                 size="small"
