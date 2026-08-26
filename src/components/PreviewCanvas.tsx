@@ -1,10 +1,15 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, ReactElement } from 'react';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import ZoomOutIcon from '@mui/icons-material/ZoomOut';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { useProjectStore } from '@store/useProjectStore';
 import { useT } from '@/i18n';
 import { useActiveClip } from '@/hooks/useActiveClip';
@@ -15,10 +20,32 @@ import { makeTransform, partsWithOffsets, partScales, renderCharacterInner, reso
 import type { SvgPrimitive } from '@core/svg';
 import { CanvasToolbar } from '@components/CanvasToolbar';
 import { CanvasContextMenu } from '@components/CanvasContextMenu';
-import { accWorldAngleTo, angleDeg, BOX_SHAPES, clientToModel, clientToViewBox, dist, modelToPx, partGeom, pickPart, shapeLabel } from '@components/canvasInteract';
-import type { Pt } from '@components/canvasInteract';
+import {
+  accWorldAngleTo,
+  angleDeg,
+  applyCurveDrag,
+  applyHandleDrag,
+  BOX_SHAPES,
+  canvasViewBox,
+  clientToModel,
+  clientToViewBox,
+  curveHandlePos,
+  dist,
+  modelToPx,
+  partGeom,
+  pickPart,
+  rotateFarLength,
+  rotateHandlePos,
+  shapeLabel,
+  shapeResizeHandles,
+  zoomViewBox,
+} from '@components/canvasInteract';
+import type { HandleAxis, Pt } from '@components/canvasInteract';
 import { genId } from '@store/useProjectStore';
 import type { Accessory } from '@core/poses';
+
+// Handle de rotar: separado del de resize, más allá de la punta (unidades de modelo).
+const ROTATE_GAP = 8;
 
 // Geometría de un accesorio (base, punta, ejes) para hit-test y transform.
 const accGeom = (
@@ -152,6 +179,12 @@ export const PreviewCanvas = (): ReactElement => {
   const [onion, setOnion] = useState(false);
   const [guides, setGuides] = useState(true);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState<Pt>({ x: 0, y: 0 });
+  const panDrag = useRef<{ startClientX: number; startClientY: number; startPan: Pt; vw: number; vh: number; rectW: number; rectH: number } | null>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const viewRef = useRef({ zoom, pan });
+  useEffect(() => { viewRef.current = { zoom, pan }; });
 
   const { poses, frame } = useMemo(() => {
     if (!clip) return { poses: [] as Pose[], frame: 0 };
@@ -174,6 +207,23 @@ export const PreviewCanvas = (): ReactElement => {
   const tf = makeTransform(render);
   const bbox = current.length > 0 ? boundingBox(current) : null;
   const cs = render.cellSize;
+  const vb0 = canvasViewBox(cs, zoom, pan);
+  // Listener nativo (no pasivo): el onWheel de React es pasivo por defecto y no
+  // permite preventDefault (el navegador haría scroll de la página en vez de zoom).
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const handler = (e: WheelEvent): void => {
+      e.preventDefault();
+      const anchor = clientToViewBox(el, e.clientX, e.clientY);
+      const { zoom: z, pan: p } = viewRef.current;
+      const r = zoomViewBox(cs, z, p, e.deltaY < 0 ? 1.15 : 1 / 1.15, anchor);
+      setZoom(r.zoom);
+      setPan(r.pan);
+    };
+    el.addEventListener('wheel', handler, { passive: false });
+    return () => el.removeEventListener('wheel', handler);
+  }, [cs]);
   const rot = render.rotation
     ? `rotate(${render.rotation} ${cs / 2} ${cs / 2})`
     : undefined;
@@ -197,19 +247,32 @@ export const PreviewCanvas = (): ReactElement => {
   const isPath = selAcc?.shape === 'path';
   const selPx = selG ? modelToPx(selG.center.x, selG.center.y, tf) : null;
   const selR = selG ? selG.radius * tf.scale : 0;
-  const tipPx = selG && !isCircle && !isPath ? modelToPx(selG.tip.x, selG.tip.y, tf) : null;
+  // Handles de resize: uno por vértice/punta real de la forma (ver canvasInteract.ts).
+  const selHandles = selG && selAcc && !isCircle && !isPath
+    ? shapeResizeHandles(selAcc.shape, selG.base, selG.dir, selG.perp, selAcc.length, selAcc.width)
+    : [];
+  const selHandlesPx = selHandles.map((h) => ({ ...h, px: modelToPx(h.pos.x, h.pos.y, tf) }));
+  // Handle de rotar: dedicado, más allá de la punta — nunca se pisa con los de resize.
+  const rotatePos = selG && selAcc && !isCircle && !isPath
+    ? rotateHandlePos(selG.base, selG.dir, rotateFarLength(selAcc.shape, selAcc.length), ROTATE_GAP)
+    : null;
+  const rotatePx = rotatePos ? modelToPx(rotatePos.x, rotatePos.y, tf) : null;
+  const stemTipPx = selG && !isCircle && !isPath ? modelToPx(selG.tip.x, selG.tip.y, tf) : null;
+  // Handle de curvatura (solo 'arc'): sobre el punto de control de la curva.
+  const curvePos = selG && selAcc?.shape === 'arc' ? curveHandlePos(selG.base, selG.dir, selG.perp, selAcc.length, selAcc.bend ?? 0.5) : null;
+  const curvePx = curvePos ? modelToPx(curvePos.x, curvePos.y, tf) : null;
+  // Círculo: único handle radial (no tiene orientación ni vértices que separar).
   const wOff = selAcc ? selAcc.width / 2 + 3 : 0;
-  // Handle de ancho en la ESQUINA (punta + perpendicular) para formas; círculo al lado.
-  const widthPx = selG
-    ? isCircle
-      ? modelToPx(selG.center.x + selG.perp.x * wOff, selG.center.y + selG.perp.y * wOff, tf)
-      : modelToPx(selG.tip.x + selG.perp.x * (selAcc!.width / 2), selG.tip.y + selG.perp.y * (selAcc!.width / 2), tf)
+  const circleWidthPx = selG && isCircle
+    ? modelToPx(selG.center.x + selG.perp.x * wOff, selG.center.y + selG.perp.y * wOff, tf)
     : null;
 
   const drag = useRef<
     | { mode: 'move'; start: Pt; members: { id: string; a0: number; p0: number; along: Pt; perp: Pt }[] }
-    | { mode: 'tip'; id: string; base: Pt; startAngle: number; grabA: number }
-    | { mode: 'width'; id: string; base: Pt; perp: Pt; circle: boolean }
+    | { mode: 'resize'; id: string; axis: HandleAxis; base: Pt; dir: Pt; perp: Pt; prevLength: number; prevWidth: number }
+    | { mode: 'rotate'; id: string; base: Pt; startAngle: number; grabA: number }
+    | { mode: 'curve'; id: string; base: Pt; dir: Pt; perp: Pt; length: number }
+    | { mode: 'circleWidth'; id: string; base: Pt }
     | { mode: 'partTip'; part: PartName; pivot: Pt; startTipAngle: number; startRotate: number; startDist: number; startScale: number }
     | { mode: 'partWidth'; part: PartName; ref: Pt; perp: Pt; baseWidth: number; circle: boolean }
     | { mode: 'partMove'; part: PartName; start: Pt; startDx: number; startDy: number }
@@ -248,6 +311,15 @@ export const PreviewCanvas = (): ReactElement => {
     const svg = e.currentTarget;
     const vb = clientToViewBox(svg, e.clientX, e.clientY);
     const m = clientToModel(svg, e.clientX, e.clientY, tf);
+
+    if (e.button === 1) {
+      // Botón central: paneo (no interfiere con seleccionar/dibujar/menú contextual).
+      e.preventDefault();
+      const rect = svg.getBoundingClientRect();
+      panDrag.current = { startClientX: e.clientX, startClientY: e.clientY, startPan: pan, vw: vb0.w, vh: vb0.h, rectW: rect.width, rectH: rect.height };
+      svg.setPointerCapture(e.pointerId);
+      return;
+    }
 
     if (tool === 'eraser') {
       const id = pickAccessory(m);
@@ -300,13 +372,24 @@ export const PreviewCanvas = (): ReactElement => {
     }
 
     if (selAcc && selG) {
-      if (tipPx && dist(vb, tipPx) < 13) {
-        drag.current = { mode: 'tip', id: selAcc.id, base: selG.base, startAngle: selAcc.angle, grabA: angleDeg(selG.base, selG.tip) };
+      if (rotatePx && dist(vb, rotatePx) < 13) {
+        drag.current = { mode: 'rotate', id: selAcc.id, base: selG.base, startAngle: selAcc.angle, grabA: angleDeg(selG.base, selG.tip) };
         svg.setPointerCapture(e.pointerId);
         return;
       }
-      if (widthPx && dist(vb, widthPx) < 13) {
-        drag.current = { mode: 'width', id: selAcc.id, base: isCircle ? selG.center : selG.center, perp: selG.perp, circle: !!isCircle };
+      if (curvePx && dist(vb, curvePx) < 13) {
+        drag.current = { mode: 'curve', id: selAcc.id, base: selG.base, dir: selG.dir, perp: selG.perp, length: selAcc.length };
+        svg.setPointerCapture(e.pointerId);
+        return;
+      }
+      const hit = selHandlesPx.find((h) => dist(vb, h.px) < 13);
+      if (hit) {
+        drag.current = { mode: 'resize', id: selAcc.id, axis: hit.axis, base: selG.base, dir: selG.dir, perp: selG.perp, prevLength: selAcc.length, prevWidth: selAcc.width };
+        svg.setPointerCapture(e.pointerId);
+        return;
+      }
+      if (circleWidthPx && dist(vb, circleWidthPx) < 13) {
+        drag.current = { mode: 'circleWidth', id: selAcc.id, base: selG.center };
         svg.setPointerCapture(e.pointerId);
         return;
       }
@@ -381,6 +464,13 @@ export const PreviewCanvas = (): ReactElement => {
 
   const onPointerMove = (e: ReactPointerEvent<SVGSVGElement>): void => {
     const shift = e.shiftKey;
+    if (panDrag.current) {
+      const pd = panDrag.current;
+      const dx = e.clientX - pd.startClientX;
+      const dy = e.clientY - pd.startClientY;
+      setPan({ x: pd.startPan.x - dx * (pd.vw / pd.rectW), y: pd.startPan.y - dy * (pd.vh / pd.rectH) });
+      return;
+    }
     if (pencil.current) {
       const m = clientToModel(e.currentTarget, e.clientX, e.clientY, tf);
       const pc = pencil.current;
@@ -438,16 +528,17 @@ export const PreviewCanvas = (): ReactElement => {
           offsetPerp: mem.p0 + dx * mem.perp.x + dy * mem.perp.y,
         });
       }
-    } else if (d.mode === 'tip') {
+    } else if (d.mode === 'resize') {
+      const r = applyHandleDrag(d.axis, d.base, d.dir, d.perp, m, d.prevLength, d.prevWidth);
+      updateAccessory(d.id, { length: Math.round(r.length * 10) / 10, width: Math.round(r.width * 10) / 10 });
+    } else if (d.mode === 'rotate') {
       // Convención de accesorios: el ángulo de pantalla decrece al crecer acc.angle → resta.
       const a = d.startAngle - (angleDeg(d.base, m) - d.grabA);
-      updateAccessory(d.id, {
-        angle: Math.round(shift ? Math.round(a / 15) * 15 : a),
-        length: Math.round(Math.max(1, dist(d.base, m)) * 10) / 10,
-      });
-    } else if (d.mode === 'width') {
-      const off = Math.abs((m.x - d.base.x) * d.perp.x + (m.y - d.base.y) * d.perp.y);
-      updateAccessory(d.id, { width: Math.max(1, Math.round((d.circle ? dist(d.base, m) * 2 : off * 2) * 10) / 10) });
+      updateAccessory(d.id, { angle: Math.round(shift ? Math.round(a / 15) * 15 : a) });
+    } else if (d.mode === 'curve') {
+      updateAccessory(d.id, { bend: Math.round(applyCurveDrag(d.base, d.dir, d.perp, d.length, m) * 100) / 100 });
+    } else if (d.mode === 'circleWidth') {
+      updateAccessory(d.id, { width: Math.max(1, Math.round(dist(d.base, m) * 2 * 10) / 10) });
     } else if (d.mode === 'partTip') {
       // Punta: rota la parte alrededor de su base y escala el largo (como accesorio).
       const scale = d.startScale * (dist(d.pivot, m) / d.startDist);
@@ -472,11 +563,12 @@ export const PreviewCanvas = (): ReactElement => {
   };
 
   const endDrag = (e: ReactPointerEvent<SVGSVGElement>): void => {
-    if (create.current || drag.current || pencil.current) {
+    if (create.current || drag.current || pencil.current || panDrag.current) {
       try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* noop */ }
       create.current = null;
       drag.current = null;
       pencil.current = null;
+      panDrag.current = null;
     }
   };
 
@@ -485,6 +577,16 @@ export const PreviewCanvas = (): ReactElement => {
     const id = pickAccessory(clientToModel(e.currentTarget, e.clientX, e.clientY, tf));
     if (id) selectAccessory(id);
     setMenu({ x: e.clientX, y: e.clientY });
+  };
+
+  const zoomBy = (factor: number): void => {
+    const z = zoomViewBox(cs, zoom, pan, factor, { x: cs / 2 + pan.x, y: cs / 2 + pan.y });
+    setZoom(z.zoom);
+    setPan(z.pan);
+  };
+  const resetView = (): void => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
   };
 
   return (
@@ -502,6 +604,20 @@ export const PreviewCanvas = (): ReactElement => {
           control={<Switch size="small" checked={guides} onChange={(e) => setGuides(e.target.checked)} />}
           label={t('Guías')}
         />
+        <Stack direction="row" spacing={0} alignItems="center">
+          <Tooltip title={t('Alejar')}>
+            <IconButton size="small" onClick={() => zoomBy(1 / 1.3)}><ZoomOutIcon fontSize="small" /></IconButton>
+          </Tooltip>
+          <Typography variant="caption" color="text.secondary" sx={{ minWidth: 40, textAlign: 'center' }}>
+            {Math.round(zoom * 100)}%
+          </Typography>
+          <Tooltip title={t('Acercar')}>
+            <IconButton size="small" onClick={() => zoomBy(1.3)}><ZoomInIcon fontSize="small" /></IconButton>
+          </Tooltip>
+          <Tooltip title={t('Restablecer zoom')}>
+            <IconButton size="small" onClick={resetView}><RestartAltIcon fontSize="small" /></IconButton>
+          </Tooltip>
+        </Stack>
       </Stack>
 
       <CanvasToolbar />
@@ -534,7 +650,8 @@ export const PreviewCanvas = (): ReactElement => {
           />
         )}
         <svg
-          viewBox={`${-cs * 0.12} ${-cs * 0.12} ${cs * 1.24} ${cs * 1.24}`}
+          ref={svgRef}
+          viewBox={`${vb0.x} ${vb0.y} ${vb0.w} ${vb0.h}`}
           style={{ width: '100%', maxWidth: 480, maxHeight: '100%', display: 'block', touchAction: 'none', cursor: tool === 'select' ? 'default' : 'crosshair' }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -572,12 +689,21 @@ export const PreviewCanvas = (): ReactElement => {
           {selPx && (
             <>
               <circle cx={selPx.x} cy={selPx.y} r={selR} fill="none" stroke="#22d3ee" strokeWidth={1} strokeDasharray="3 3" opacity={0.55} />
-              {tool === 'select' && tipPx && (
-                <circle cx={tipPx.x} cy={tipPx.y} r={5} fill="#22d3ee" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'grab' }} />
+              {tool === 'select' && isCircle && circleWidthPx && (
+                <rect x={circleWidthPx.x - 5} y={circleWidthPx.y - 5} width={10} height={10} rx={2} fill="#a5f3fc" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'nwse-resize' }} />
               )}
-              {tool === 'select' && widthPx && (
-                <rect x={widthPx.x - 5} y={widthPx.y - 5} width={10} height={10} rx={2} fill="#a5f3fc" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'nwse-resize' }} />
+              {tool === 'select' && rotatePx && stemTipPx && (
+                <>
+                  <line x1={stemTipPx.x} y1={stemTipPx.y} x2={rotatePx.x} y2={rotatePx.y} stroke="#f5b942" strokeWidth={1} strokeDasharray="2 2" opacity={0.7} />
+                  <circle cx={rotatePx.x} cy={rotatePx.y} r={5} fill="#f5b942" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'grab' }} />
+                </>
               )}
+              {tool === 'select' && curvePx && (
+                <circle cx={curvePx.x} cy={curvePx.y} r={5} fill="#c4b5fd" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'ns-resize' }} />
+              )}
+              {tool === 'select' && selHandlesPx.map((h) => (
+                <rect key={h.id} x={h.px.x - 4.5} y={h.px.y - 4.5} width={9} height={9} rx={2} fill="#22d3ee" stroke="#0b1220" strokeWidth={1.5} style={{ cursor: 'nwse-resize' }} />
+              ))}
             </>
           )}
           {/* Parte del cuerpo seleccionada: contorno + handles de largo/grosor (ámbar). */}

@@ -16,9 +16,11 @@ const add = (base: Vec2, dir: Vec2, perp: Vec2, u: number, v: number): Vec2 => (
 
 // Rayo (lightning) normalizado: u a lo largo del eje (0..1), v cruzado (−0.5..0.5).
 // El ancho escala con el largo (no con `width`) para que siempre luzca proporcionado.
+// Mismo perfil de zigzag que el ícono de la toolbar (MUI BoltIcon), para que la forma
+// dibujada coincida con su miniatura.
 const BOLT: readonly [number, number][] = [
-  [0.0, 0.5], [0.62, 0.06], [0.34, 0.06], [1.0, -0.5],
-  [0.38, -0.06], [0.66, -0.06],
+  [0.0, -0.5], [0.55, -0.5], [0.55, -0.2], [1.0, -0.2],
+  [0.4, 0.5], [0.4, 0.1], [0.0, 0.5],
 ];
 
 export const shapePolygon = (

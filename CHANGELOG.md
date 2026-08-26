@@ -4,6 +4,26 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.7.0] — 2026-08-26
+
+- **Standard corner handles for every shape.** Rect, triangle, trapezoid, star, bolt,
+  line/capsule and arc now show a resize handle on each real vertex/tip of the shape
+  (4 corners on rect/trapezoid, 3 points on triangle, 5 points on star, the 2 extreme
+  tips on bolt) instead of a single generic "tip" handle — matching how design tools
+  usually expose resize.
+- **Rotate is now a separate handle.** Every shape gets a dedicated rotate handle
+  (amber circle, connected by a stem line) sitting past the tip, so it never
+  overlaps or fights with the resize handles for clicks.
+- **Arc curvature has a canvas handle.** Dragging the new violet handle on the curve
+  bends it directly (in addition to the existing "Arc inclination" slider); same for
+  curved capsule bones on the custom rig.
+- **Bolt shape redrawn to actually look like lightning**, matching its toolbar icon
+  (previously an unrelated hexagon silhouette). Custom trapezoid toolbar icon too
+  (was a plain rounded square before).
+- **Canvas zoom & pan.** Zoom in/out buttons and percentage readout above the canvas,
+  mouse-wheel zoom centered on the cursor, and middle-click-drag panning — for both
+  the humanoid and custom-rig editors.
+
 ## [2.6.0] — 2026-08-26
 
 - **Arc tool.** The shape toolbar has a new "Arc" option that draws a curved (oval)

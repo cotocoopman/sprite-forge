@@ -17,7 +17,6 @@ import ChangeHistoryIcon from '@mui/icons-material/ChangeHistory';
 import RemoveIcon from '@mui/icons-material/Remove';
 import StarIcon from '@mui/icons-material/Star';
 import BoltIcon from '@mui/icons-material/Bolt';
-import Crop75Icon from '@mui/icons-material/Crop75';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ContentPasteIcon from '@mui/icons-material/ContentPaste';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
@@ -40,6 +39,13 @@ const EraserIcon = (): RE => (
 const ArcIcon = (): RE => (
   <SvgIcon fontSize="small">
     <path d="M3 19 Q 12 2 21 19" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" />
+  </SvgIcon>
+);
+
+// Trapecio real (no hay ícono estándar en MUI — Crop75Icon es solo un rectángulo).
+const TrapezoidIcon = (): RE => (
+  <SvgIcon fontSize="small">
+    <path d="M4 19 L20 19 L15.6 5 L8.4 5 Z" />
   </SvgIcon>
 );
 
@@ -88,7 +94,7 @@ export const CanvasToolbar = (): ReactElement => {
           <ToggleButton value="rect" aria-label="rect"><Tooltip title={t('Rectángulo')}><CropSquareIcon fontSize="small" /></Tooltip></ToggleButton>
           <ToggleButton value="circle" aria-label="circle"><Tooltip title={t('Círculo')}><CircleIcon fontSize="small" /></Tooltip></ToggleButton>
           <ToggleButton value="triangle" aria-label="triangle"><Tooltip title={t('Triángulo')}><ChangeHistoryIcon fontSize="small" /></Tooltip></ToggleButton>
-          <ToggleButton value="trapezoid" aria-label="trapezoid"><Tooltip title={t('Trapecio')}><Crop75Icon fontSize="small" /></Tooltip></ToggleButton>
+          <ToggleButton value="trapezoid" aria-label="trapezoid"><Tooltip title={t('Trapecio')}><TrapezoidIcon /></Tooltip></ToggleButton>
           <ToggleButton value="star" aria-label="star"><Tooltip title={t('Estrella')}><StarIcon fontSize="small" /></Tooltip></ToggleButton>
           <ToggleButton value="bolt" aria-label="bolt"><Tooltip title={t('Rayo')}><BoltIcon fontSize="small" /></Tooltip></ToggleButton>
           <ToggleButton value="capsule" aria-label="capsule"><Tooltip title={t('Barra')}><RemoveIcon fontSize="small" /></Tooltip></ToggleButton>
