@@ -17,9 +17,10 @@ Project status — what's done and what's pending. Updated by hand.
   export) and per-part color with reset to base.
 - **Effects**: shadow (floor / drop mode), glow outline, outline/border.
 - **Accessories & objects**: shapes (bar/circle/rect/triangle/trapezoid/star/bolt/
-  freehand path) anchored to a bone **or to another object** (base/center/tip),
+  arc/freehand path) anchored to a bone **or to another object** (base/center/tip),
   following the animation.
-- **3D turn** (facing) with an 8-direction dial + slider.
+- **3D turn** (facing) with an 8-direction dial + slider. Accessories/weapons/drawn
+  objects foreshorten with it too, around their anchor.
 - **Animation**: 9 default clips, draggable timeline, per-joint pose editor
   (mirror/copy/paste), per-keyframe easing, playback, onion skin, guides, thumbnails.
 
@@ -31,11 +32,14 @@ Project status — what's done and what's pending. Updated by hand.
   per-bone angle editor, easing, playback, thumbnails, and animated-rig export
   (sheets/frames/SVG/manifest/Godot `.tres`).
 
-### Canvas editor / "mini-Krita" (v1.1–1.11)
+### Canvas editor / "mini-Krita" (v1.1–2.8)
 - **Drawing tools**: pencil (freehand → polyline primitive, Shift = straight line),
-  shape tool (rect/circle/triangle/trapezoid/star/bolt/bar, Shift = 45° snap), eraser.
-- **On-canvas transform**: select, move, rotate + resize (tip handle), width (corner
-  handle), Shift = 15° snap.
+  shape tool (rect/circle/triangle/trapezoid/star/bolt/arc/bar, Shift = 45° snap),
+  eraser.
+- **On-canvas transform**: select, move; a resize handle per real vertex/tip (not
+  one generic handle) plus a dedicated rotate handle (Shift = 15° snap on rotate,
+  Shift = lock proportions on resize). Arcs get an extra handle to bend the curve.
+- **Zoom & pan**: zoom buttons + wheel-zoom (cursor-centered), middle-drag pan.
 - **Object ops**: copy/cut/paste/duplicate, flip H/V — keyboard, toolbar and a
   right-click context menu.
 - **Layers panel** (tab): show/hide, color, rename (incl. body parts), duplicate,

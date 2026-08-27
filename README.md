@@ -96,10 +96,14 @@ There are **two modes** (toggle in the top bar):
 - **Outline / border**: color and width.
 
 ### Accessories & objects
-- Shapes (capsule / circle / rect / triangle / trapezoid / star / bolt / freehand
-  path) **anchored to a bone** (hand, head, shoulder, foot, hip…) — or to
+- Shapes (capsule / circle / rect / triangle / trapezoid / star / bolt / arc /
+  freehand path) **anchored to a bone** (hand, head, shoulder, foot, hip…) — or to
   **another object** (its base / center / tip) — that follow the animation. Color,
   opacity, offset, angle, front/behind the silhouette.
+- **Arc**: a curved (oval) line with an adjustable inclination (bend), via a slider
+  or a violet on-canvas handle on the curve itself.
+- Accessories, weapons and drawn objects **foreshorten with the character's 3D
+  turn** (facing), around their anchor, just like the body.
 - Weapon/prop gallery (sword, axe, staff, pistol, dual pistols, shield, bow, rifle,
   bomb, bazooka, laser, projectile, flag). The same weapons are available as
   standalone rigs in custom mode.
@@ -107,12 +111,20 @@ There are **two modes** (toggle in the top bar):
 ### Editing & drawing (canvas editor)
 - **Toolbar** over the canvas: Select · Pencil · Shape · Eraser.
 - **Pencil**: freehand strokes (hold `Shift` for a straight line), adjustable thickness.
-- **Shape tool**: draw rectangle / circle / triangle / trapezoid / star / bolt / bar by
-  click-and-drag (`Shift` snaps the angle to 45°). Each shape becomes a real object.
+- **Shape tool**: draw rectangle / circle / triangle / trapezoid / star / bolt / arc /
+  bar by click-and-drag (`Shift` snaps the angle to 45°). Each shape becomes a real
+  object.
 - **Eraser**: click an object to delete it.
-- **On-canvas transform**: click to select, drag to move, the tip handle to rotate +
-  resize length, the corner handle to change width (`Shift` snaps rotation to 15°).
-  Dragging a weapon piece moves the whole group.
+- **On-canvas transform**: click to select, drag to move. Every shape shows a resize
+  handle at each real vertex/tip (4 corners on rect/trapezoid, 3 points on triangle,
+  5 on star, 2 tips on bolt) plus a **separate rotate handle** (amber circle on a
+  stem) so resize and rotate never fight for clicks (`Shift` while rotating snaps to
+  15°). Holding `Shift` while dragging a resize handle **locks proportions**,
+  scaling length and width together from the shape's current ratio. Arcs get an
+  extra violet handle on the curve to bend it directly. Dragging a weapon piece
+  moves the whole group.
+- **Zoom & pan**: zoom in/out buttons with a percentage readout, mouse-wheel zoom
+  centered on the cursor, and middle-click-drag panning — on both canvases.
 - **Object ops**: copy / cut / paste / duplicate and flip horizontal / vertical — via
   keyboard (`Ctrl+C/X/V/D`, `Del`, `H`, `V`), toolbar buttons, or a **right-click
   context menu** (Figma-style).
@@ -139,6 +151,8 @@ There are **two modes** (toggle in the top bar):
   back) by foreshortening the lateral axis. 8-direction dial + slider + a **typeable
   degrees field** (0–359, wraps at 360). Directions follow screen angles: `→ 0°`,
   `↘ 45°`, `↓ 90°`, `↙ 135°`, `← 180°`, `↖ 225°`, `↑ 270°`, `↗ 315°`.
+- Accessories, weapons and drawn objects turn with the body (foreshorten around
+  their anchor too), not just the silhouette.
 - Export can generate **all 8 directions** (`_d0`…`_d7`).
 
 ### Mobile

@@ -4,6 +4,13 @@ All notable changes are documented here and in the
 [GitHub Releases](https://github.com/cotocoopman/sprite-forge/releases).
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.8.1] — 2026-08-26
+
+- **Docs refresh.** README and ROADMAP now describe the arc shape, 3D turn on
+  accessories/weapons, per-vertex resize handles + dedicated rotate handle, canvas
+  zoom/pan and Shift-lock proportions on resize — all shipped in 2.6.0–2.8.0 but
+  missing from the docs.
+
 ## [2.8.0] — 2026-08-26
 
 - **Shift-to-lock proportions when resizing.** Dragging any resize handle on an
